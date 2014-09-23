@@ -1,12 +1,19 @@
+#include "robot.h"
+/*
 #include <opencv2/opencv.hpp>
 
 using namespace cv;
 using namespace std;
 
 std::string color = "green";
+*/
 
 int main( int argc, char** argv )
 {
+    Robot robotiina;
+    return robotiina.run();
+
+    /*TODO: move to right place
     VideoCapture cap(0); //capture the video from web cam
 
     if ( !cap.isOpened() )  // if not success, exit program
@@ -130,7 +137,7 @@ int main( int argc, char** argv )
             break;
         }
     }
-
+*/
     return 0;
 
 }
