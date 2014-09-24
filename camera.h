@@ -1,13 +1,14 @@
+#pragma  once
 #include <opencv2/opencv.hpp>
 
-class Camera: protected VideoCap
+class Camera: protected cv::VideoCapture
 {
 private:
-    Mat frame, buffer;
+    cv::Mat frame, buffer;
 public:
     Camera();
-    const Mat & Capture();
-    const Mat & CaptureHSV();
+    const cv::Mat & Capture();
+    const cv::Mat & CaptureHSV();
     ~Camera(){ }
 
 };

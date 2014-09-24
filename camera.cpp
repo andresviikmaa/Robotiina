@@ -1,25 +1,26 @@
 #include "camera.h"
+#include <opencv2/opencv.hpp>
 
-void Camera::Camera(), VideoCap(0)
+Camera::Camera(): cv::VideoCapture(0)
 {
 
-    if ( !cap.isOpened() )  // if not success, exit program
+    if ( !isOpened() )  // if not success, exit program
     {
-       throw new Exception("Camera is missing");
+       throw std::string("Camera is missing");
     }
 
 }
-const Mat & Camera::Capture()
+const cv::Mat &Camera::Capture()
 {
-    bool bSuccess = cap.read(frame); // read a new frame from video
+    bool bSuccess = read(frame); // read a new frame from video
 
     if (!bSuccess) //if not success, break loop
     {
-        throw new Exception("Cannot read a frame from video stream");
+        throw std::string("Cannot read a frame from video stream");
     }
     return frame;
 }
-const Mat &Camera::CaptureHSV() {
-    cvtColor(frame, buffer, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
+const cv::Mat &Camera::CaptureHSV() {
+    cvtColor(frame, buffer, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
     return buffer;
 }

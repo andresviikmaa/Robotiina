@@ -1,5 +1,5 @@
 #include "objectfinder.h"
 
-CvPoint ObjectFinder::Locate(const ColorRange &Hue, const ColorRange &Sat, const ColorRange &Val) {
+CvPoint ObjectFinder::Locate(const HSVColorRange &HSVRange) {
     return CvPoint();
 }
