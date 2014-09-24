@@ -2,10 +2,13 @@
 #include <opencv2/opencv.hpp>
 
 class ColorCalibrator {
+protected:
+    HSVColorRange range;
+    cv::Mat image;
 public:
-    ColorCalibrator(){ };
-    void ClusterImage(const cv::Mat &image, int numberOfClusters){};
-    HSVColorRange GetObjectThresholds (int index) {};
-    ~ColorCalibrator(){ }
+    ColorCalibrator();
+    void LoacImage(const cv::Mat &image, int numberOfObjects);
+    HSVColorRange GetObjectThresholds (int index);
+    ~ColorCalibrator();
 
 };

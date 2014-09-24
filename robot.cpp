@@ -4,7 +4,7 @@
 
 Robot::Robot()
 {
-    // Enumerate fields
+
     CalibrateObjects();
 }
 
@@ -12,15 +12,17 @@ void Robot::CalibrateObjects()
 {
     cv::Mat image = camera.Capture();
     ColorCalibrator calibrator;
-    calibrator.ClusterImage(image, NUMBER_OF_OBJECTS);
+    calibrator.LoacImage(image, NUMBER_OF_OBJECTS);
     for(int i = 0; i < NUMBER_OF_OBJECTS; i++)
     {
         objectThresholds[(OBJECTS)i] = calibrator.GetObjectThresholds(i);
     }
 }
 
-int Robot::run() {
-    while (true) {
+int Robot::run()
+{
+    while (true)
+    {
         if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
         {
             const cv::Mat frame = camera.CaptureHSV();
