@@ -2,10 +2,10 @@
 #include "objectfinder.h"
 
 class Robot {
-protected:
+private:
     ICamera *camera;
-    ObjectFinder objectFinder;
-    std::map<OBJECTS, HSVColorRange> objectThresholds;
+    std::map<OBJECT, HSVColorRange> objectThresholds;
+    STATE state = LOCATE_BALL;
     void CalibrateObjects();
 public:
     Robot();
