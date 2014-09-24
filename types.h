@@ -1,4 +1,5 @@
 #pragma once
+#include <opencv2/opencv.hpp>
 
 struct ColorRange
 {
@@ -14,7 +15,14 @@ struct HSVColorRange
 };
 
 
-enum OBJECTS{
+enum OBJECTS
+{
     BALL = 0, FIELD, GATE, BORDER1, BORDER2, NUMBER_OF_OBJECTS
 };
 
+
+class ICamera
+{
+public:
+    virtual const cv::Mat & Capture() = 0;
+};

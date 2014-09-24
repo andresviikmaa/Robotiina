@@ -1,7 +1,7 @@
 #pragma  once
-#include <opencv2/opencv.hpp>
+#include "types.h"
 
-class Camera: protected cv::VideoCapture
+class Camera: public ICamera, protected cv::VideoCapture
 {
 private:
     cv::Mat frame, buffer;
@@ -9,6 +9,6 @@ public:
     Camera();
     const cv::Mat & Capture();
     const cv::Mat & CaptureHSV();
-    ~Camera(){ }
+    virtual ~Camera(){ }
 
 };

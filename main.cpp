@@ -14,26 +14,6 @@ int main( int argc, char** argv )
     return robotiina.run();
 
     /*TODO: move to right place
-    VideoCapture cap(0); //capture the video from web cam
-
-    if ( !cap.isOpened() )  // if not success, exit program
-    {
-        cout << "Cannot open the web cam" << endl;
-        return -1;
-    }
-
-    namedWindow("Control", CV_WINDOW_AUTOSIZE); //create a window called "Control"
-    int iLowH = 0;
-    int iHighH = 179;
-
-
-    int iLowS = 0;
-    int iHighS = 255;
-
-
-    int iLowV = 0;
-    int iHighV = 255;
-
 
     if (color == "orange"){
          iLowH = 0;
@@ -55,20 +35,6 @@ int main( int argc, char** argv )
         iLowV = 47;
         iHighV = 153;
     }
-
-
-    //Create trackbars in "Control" window
-    cvCreateTrackbar("LowH", "Control", &iLowH, 179); //Hue (0 - 179)
-    cvCreateTrackbar("HighH", "Control", &iHighH, 179);
-
-
-    cvCreateTrackbar("LowS", "Control", &iLowS, 255); //Saturation (0 - 255)
-    cvCreateTrackbar("HighS", "Control", &iHighS, 255);
-
-
-    cvCreateTrackbar("LowV", "Control", &iLowV, 255); //Value (0 - 255)
-    cvCreateTrackbar("HighV", "Control", &iHighV, 255);
-
 
 
 
