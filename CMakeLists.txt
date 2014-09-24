@@ -3,7 +3,7 @@ project(robotiina)
 
 find_package( OpenCV REQUIRED )
 
-set(SOURCE_FILES robot.cpp main.cpp)
+set(SOURCE_FILES main.cpp camera.cpp robot.cpp objectfinder.cpp colorcalibrator.cpp)
 
 add_executable(robotiina ${SOURCE_FILES})
 target_link_libraries( robotiina ${OpenCV_LIBS} )

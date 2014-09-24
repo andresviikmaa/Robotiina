@@ -1,8 +1,13 @@
 #include <opencv2/opencv.hpp>
 
-class Camera {
-    public:
-        Camera(){ };
-        ~Camera(){ }
+class Camera: protected VideoCap
+{
+private:
+    Mat frame, buffer;
+public:
+    Camera();
+    const Mat & Capture();
+    const Mat & CaptureHSV();
+    ~Camera(){ }
 
 };
