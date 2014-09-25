@@ -88,7 +88,6 @@
     <ClInclude Include="objectfinder.h" />
     <ClInclude Include="robot.h" />
     <ClInclude Include="stillcamera.h" />
-    <ClInclude Include="targetver.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="wheelcontroller.h" />
   </ItemGroup>
