@@ -6,16 +6,17 @@
 #include "objectfinder.h"
 
 #include <opencv2/opencv.hpp>
-#define USE_STILL_CAMERA
+
+std::pair<OBJECT, std::string> objects[] = {
+	std::pair<OBJECT, std::string>(BALL, "Ball"),
+	std::pair<OBJECT, std::string>(GATE, "Gate"),
+
+};
+
+std::map<OBJECT, std::string> OBJECT_LABELS(objects, objects + sizeof(objects) / sizeof(objects[0]));
+
 Robot::Robot()
 {
-    #ifdef USE_STILL_CAMERA
-    camera = new StillCamera("test_images/face.jpg");
-    #else
-    camera = new Camera();
-    #endif
-
-    CalibrateObjects();
 }
 Robot::~Robot()
 {
@@ -28,11 +29,54 @@ void Robot::CalibrateObjects()
     calibrator.LoadImage(image, NUMBER_OF_OBJECTS);
     for(int i = 0; i < NUMBER_OF_OBJECTS; i++)
     {
-        objectThresholds[(OBJECT)i] = calibrator.GetObjectThresholds(i);
+		objectThresholds[(OBJECT)i] = calibrator.GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
     }
 }
 
-int Robot::run()
+bool Robot::Launch(int argc, char* argv[])
+{
+	if (!ParseOptions(argc, argv)) return false;
+	
+	/*
+	cv::namedWindow("Launch Robotiina", CV_WINDOW_AUTOSIZE);
+	cv::createButton("button1", [](int state, void* self){ ((Robot*)self)->Configure(); }, this, CV_PUSH_BUTTON, 0);
+	//cv::createButton("button2", Robot::ButtonConfigure, NULL, CV_PUSH_BUTTON, 0);
+	*/
+
+	camera = config.count("camera") ? new Camera(config["camera"].as<std::string>()) : new Camera(0);
+
+	while (true) // mode loop
+	{
+		std::cout << "choose (C)onfigure or (R)un or <esc> to exit" << std::endl;
+		cv::imshow("Launch Robotiina", cv::imread("ui/launch.png", CV_LOAD_IMAGE_COLOR));
+		while (true) // key press loop
+		{
+			int key = cv::waitKey(30);
+			if (key == 'c')
+			{
+				cv::destroyWindow("Launch Robotiina");
+				CalibrateObjects();
+				break;
+			}
+			else if (key == 'r')
+			{
+				cv::destroyWindow("Launch Robotiina");
+				Run();
+				break;
+			}
+			else if (key == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
+			{
+				std::cout << "mission completed" << std::endl;
+				return true;
+			}
+		}
+	}
+
+	return true;
+
+}
+
+void Robot::Run()
 {
     ObjectFinder finder(camera);
     WheelController wheels;
@@ -75,7 +119,26 @@ int Robot::run()
 
             std::cout << "esc key is pressed by user" << std::endl;
             state = END_OF_GAME;
+			break;
         }
     }
-        return 0;
+}
+
+bool Robot::ParseOptions(int argc, char* argv[])
+{
+	po::options_description desc("Allowed options");
+	desc.add_options()
+		("help", "produce help message")
+		("camera", po::value<std::string>(), "set camera index or path")
+		;
+
+	po::store(po::parse_command_line(argc, argv, desc), config);
+	po::notify(config);
+
+	if (config.count("help")) {
+		std::cout << desc << std::endl;
+		return false;
+	}
+
+	return true;
 }

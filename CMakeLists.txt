@@ -3,7 +3,14 @@ project(robotiina)
 
 find_package( OpenCV REQUIRED )
 
-set(SOURCE_FILES main.cpp camera.cpp robot.cpp objectfinder.cpp colorcalibrator.cpp stillcamera.cpp wheelcontroller.cpp)
+set(Boost_USE_STATIC_LIBS OFF) 
+set(Boost_USE_MULTITHREADED ON)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+find_package(Boost 1.56.0 COMPONENTS PropertyTree Program_options) 
+
+include_directories(${Boost_INCLUDE_DIRS}) 
+
+set(SOURCE_FILES Robotiina.cpp camera.cpp robot.cpp objectfinder.cpp colorcalibrator.cpp stillcamera.cpp wheelcontroller.cpp)
 
 add_executable(robotiina ${SOURCE_FILES})
-target_link_libraries( robotiina ${OpenCV_LIBS} )
+target_link_libraries( robotiina ${OpenCV_LIBS} ${Boost_LIBRARIES} )

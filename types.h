@@ -34,3 +34,6 @@ class ICamera
 public:
     virtual const cv::Mat & Capture() = 0;
 };
+
+extern std::map<OBJECT, std::string> OBJECT_LABELS;
+

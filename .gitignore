@@ -29,3 +29,10 @@
 
 # CLion
 .idea/
+# Visual Studio
+Debug/
+ipch/
+*.opensdf
+*.sdf
+*.suo
+*.vcxproj.user

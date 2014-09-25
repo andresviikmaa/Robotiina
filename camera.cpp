@@ -1,23 +1,30 @@
 #include "camera.h"
 #include <opencv2/opencv.hpp>
 
-Camera::Camera(): cv::VideoCapture(0)
+Camera::Camera(const std::string &device)
 {
 
-    if ( !isOpened() )  // if not success, exit program
+	cap = new cv::VideoCapture(device.c_str());
+	if (!cap->isOpened())  // if not success, exit program
     {
-       throw std::string("Camera is missing");
+       throw std::string("Camera not found");
     }
 
 }
+Camera::Camera(int device)
+{
+
+	cap = new cv::VideoCapture(device);
+	if (!cap->isOpened())  // if not success, exit program
+	{
+		throw std::string("Camera is missing");
+	}
+
+}
+
 const cv::Mat &Camera::Capture()
 {
-    bool bSuccess = read(frame); // read a new frame from video
-
-    if (!bSuccess) //if not success, break loop
-    {
-        throw std::string("Cannot read a frame from video stream");
-    }
+	*cap >> frame;
     return frame;
 }
 const cv::Mat &Camera::CaptureHSV() {
