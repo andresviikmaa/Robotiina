@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.4)
 project(robotiina)
 
+list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -g -ftest-coverage -fprofile-arcs")
+
 find_package( OpenCV REQUIRED )
 
 set(Boost_USE_STATIC_LIBS OFF) 
