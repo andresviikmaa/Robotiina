@@ -1,6 +1,8 @@
 #include "objectfinder.h"
+#include <math.h> 
+#define PI 3.14159265
 
-CvPoint ObjectFinder::Locate(const HSVColorRange &r) {
+std::pair<int, double> ObjectFinder::Locate(const HSVColorRange &r) {
 
 	cv::Mat	imgOriginal = m_pCamera->Capture();
 	cv::Mat imgHSV;
@@ -41,14 +43,36 @@ CvPoint ObjectFinder::Locate(const HSVColorRange &r) {
 	if (contours.size() > largest_contour_index){
 		cv::Moments M = cv::moments(contours[largest_contour_index]);
 		center = cv::Point2f(M.m10 / M.m00, M.m01 / M.m00);
-		std::cout << center.x << ", " << center.y << std::endl;
+		
 	}
+
 
 
 	//Draw circle
 	cv::circle(dst, center, 10, colorCircle, 3);
-
 	cv::imshow("Thresholded Image", dst); //show the thresholded image
 
-    return CvPoint();
+	//Vars
+	float Vfov = 21.65; //half of cameras vertical field of view (degrees)
+	int CamHeight = 345; //cameras height from ground (mm)
+	int frameHeight = dst.rows/2; //half of frame height in pixels
+	int frameWidth = dst.cols / 2; //half of frame width in pixels
+	int CamAngleDev = 26; //deviation from 90* between ground
+	//Calculating distance
+	float angle = (Vfov * (center.y - frameHeight) / frameHeight)+CamAngleDev;
+	float distance = CamHeight / tan(angle * PI / 180);
+	//Calculating horizontal deviation
+	int HorizontalDev = frameWidth - center.x; //positive value, if left, negative if right compared to center axis
+
+	std::cout << distance << std::endl;
+
+
+	if (center.y == 0 && center.x == 0){ //If there is no object found
+		return std::make_pair(-1, -1);
+	}
+	else{
+		return std::make_pair(HorizontalDev, distance);
+	}
+
+	
 }

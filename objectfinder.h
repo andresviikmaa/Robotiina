@@ -7,7 +7,7 @@ private:
     ICamera *m_pCamera;
 public:
     ObjectFinder(ICamera *pCamera){m_pCamera = pCamera; };
-    CvPoint Locate(const HSVColorRange &HSVRange);
+	std::pair<int, double> Locate(const HSVColorRange &HSVRange);
     ~ObjectFinder(){ }
 
 };

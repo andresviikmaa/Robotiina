@@ -43,7 +43,7 @@ bool Robot::Launch(int argc, char* argv[])
 	//cv::createButton("button2", Robot::ButtonConfigure, NULL, CV_PUSH_BUTTON, 0);
 	*/
 
-	camera = config.count("camera") ? new Camera(config["camera"].as<std::string>()) : new Camera(0);
+	camera = config.count("camera") ? new Camera(config["camera"].as<std::string>()) : new Camera(1);
 
 	while (true) // mode loop
 	{
@@ -83,26 +83,47 @@ void Robot::Run()
     while (state != END_OF_GAME)
     {
         if (LOCATE_BALL == state) {
-            CvPoint location = finder.Locate(objectThresholds[BALL]);
+			std::pair<int, double> location = finder.Locate(objectThresholds[BALL]);
+			int HorizontalDev = location.first;
+			float distance = location.second;
+
             //TODO: transform to real word coordinates
-            if(location.x == -1) /* Ball not found */
+            if(location.second == -1) /* Ball not found */
             {
                 wheels.Rotate(0.5 /* radians or degrees ?*/);
             }
-            if (location.x == 0 && location.y == 0)
+            if (location.second != -1 && location.first != -1)
             {
                 state = BALL_LOCATED;
             }
-            wheels.MoveTo(location);
+
+            /*wheels.MoveTo(location);*/
+
             //TODO: decide when to stop looking for balls
         }
         else if(BALL_LOCATED == state) {
             //TODO: start tribbler
+
+			std::pair<int, double> location = finder.Locate(objectThresholds[BALL]);
+			int HorizontalDev = location.first;
+			float distance = location.second;
+
+			if (distance < 100 && (HorizontalDev > -10 || HorizontalDev < 10)){
+				//TODO: start catching the ball with tribbler
+			}
+			else if (distance < 100){
+				//TODO: turn depending on HorizontalDev
+				wheels.Rotate(HorizontalDev);
+			}
+			else{
+				//TODO: move closer to ball
+			}
+
             state = LOCATE_GATE;
         }
         else if (LOCATE_GATE == state)
         {
-            CvPoint location = finder.Locate(objectThresholds[GATE]);
+            /*CvPoint location = finder.Locate(objectThresholds[GATE]);*/
             //TODO: how
             wheels.Rotate(0);
             state = GATE_LOCATED;
