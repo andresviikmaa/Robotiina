@@ -4,8 +4,12 @@
 #include "stillcamera.h"
 #include "wheelcontroller.h"
 #include "objectfinder.h"
+#include "dialog.h"
 
 #include <opencv2/opencv.hpp>
+
+#define BUTTON(dialog, name, new_state) \
+dialog.createButton(name, [](int state, void* self){ ((Robot*)self)->state = new_state; }, this, CV_PUSH_BUTTON, 0);
 
 std::pair<OBJECT, std::string> objects[] = {
 	std::pair<OBJECT, std::string>(BALL, "Ball"),
@@ -38,53 +42,31 @@ void Robot::CalibrateObjects()
 bool Robot::Launch(int argc, char* argv[])
 {
 	if (!ParseOptions(argc, argv)) return false;
-	
-	/*
-	cv::namedWindow("Launch Robotiina", CV_WINDOW_AUTOSIZE);
-	cv::createButton("button1", [](int state, void* self){ ((Robot*)self)->Configure(); }, this, CV_PUSH_BUTTON, 0);
-	//cv::createButton("button2", Robot::ButtonConfigure, NULL, CV_PUSH_BUTTON, 0);
-	*/
 
-	camera = config.count("camera") ? new Camera(config["camera"].as<std::string>()) : new Camera(1);
-
-	while (true) // mode loop
-	{
-		std::cout << "choose (C)onfigure or (R)un or <esc> to exit" << std::endl;
-		cv::imshow("Launch Robotiina", cv::imread("ui/launch.png", CV_LOAD_IMAGE_COLOR));
-		while (true) // key press loop
-		{
-			int key = cv::waitKey(30);
-			if (key == 'c')
-			{
-				cv::destroyWindow("Launch Robotiina");
-				CalibrateObjects();
-				break;
-			}
-			else if (key == 'r')
-			{
-				cv::destroyWindow("Launch Robotiina");
-				Run();
-				break;
-			}
-			else if (key == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
-			{
-				std::cout << "mission completed" << std::endl;
-				return true;
-			}
-		}
-	}
-
-	return true;
-
+	camera = config.count("camera") ? new Camera(config["camera"].as<std::string>()) : new Camera(0);
+    Run();
 }
 
 void Robot::Run()
 {
     ObjectFinder finder(camera);
     WheelController wheels;
-    while (state != END_OF_GAME)
+    while (state != STATE_END_OF_GAME)
     {
-        if (LOCATE_BALL == state) {
+        if (STATE_NONE == state) {
+
+            Dialog launchWindow("Launch Robotiina", CV_WINDOW_AUTOSIZE);
+            BUTTON(launchWindow, "Configure USB devices", STATE_CONFIGURE_USB)
+            BUTTON(launchWindow, "Calibrate objects", STATE_CALIBRATE)
+            BUTTON(launchWindow, "Start Robot", STATE_LOCATE_BALL)
+            BUTTON(launchWindow, "Exit", STATE_END_OF_GAME)
+            launchWindow.show();
+
+        }
+        if (STATE_CALIBRATE == state) {
+            CalibrateObjects();
+        }
+        if (STATE_LOCATE_BALL == state) {
 			std::pair<int, double> location = finder.Locate(objectThresholds[BALL]);
 			int HorizontalDev = location.first;
 			float distance = location.second;
@@ -96,14 +78,14 @@ void Robot::Run()
             }
             if (location.second != -1 && location.first != -1)
             {
-                state = BALL_LOCATED;
+                state = STATE_BALL_LOCATED;
             }
 
             /*wheels.MoveTo(location);*/
 
             //TODO: decide when to stop looking for balls
         }
-        else if(BALL_LOCATED == state) {
+        if(STATE_BALL_LOCATED == state) {
             //TODO: start tribbler
 
 			std::pair<int, double> location = finder.Locate(objectThresholds[BALL]);
@@ -121,19 +103,19 @@ void Robot::Run()
 				//TODO: move closer to ball
 			}
 
-            state = LOCATE_GATE;
+            state = STATE_LOCATE_GATE;
         }
-        else if (LOCATE_GATE == state)
+        if (STATE_LOCATE_GATE == state)
         {
             /*CvPoint location = finder.Locate(objectThresholds[GATE]);*/
             //TODO: how
             wheels.Rotate(0);
-            state = GATE_LOCATED;
+            state = STATE_GATE_LOCATED;
         }
-        else if(GATE_LOCATED == state)
+        if(STATE_GATE_LOCATED == state)
         {
             //TODO: kick ball
-            state = LOCATE_BALL;
+            state = STATE_LOCATE_BALL;
         }
 
         if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
@@ -141,7 +123,7 @@ void Robot::Run()
           //  const cv::Mat frame = camera->Capture();
 
             std::cout << "esc key is pressed by user" << std::endl;
-            state = END_OF_GAME;
+            state = STATE_END_OF_GAME;
 			break;
         }
     }

@@ -11,7 +11,7 @@ private:
 
     ICamera *camera;
     std::map<OBJECT, HSVColorRange> objectThresholds;
-    STATE state = LOCATE_BALL;
+    STATE state = STATE_NONE;
     void CalibrateObjects();
 	bool ParseOptions(int argc, char* argv[]);
 
