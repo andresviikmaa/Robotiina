@@ -9,7 +9,7 @@ ENDIF()
 # SET(CMAKE_PREFIX_PATH Libs)
 
 #boost
-SET(Boost_ADDITIONAL_VERSIONS "1.56" "1.56.0")
+SET(Boost_ADDITIONAL_VERSIONS "1.56" "1.56.0" "1.55" "1.55.0")
 
 list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -g -ftest-coverage -fprofile-arcs")
 
@@ -18,7 +18,7 @@ find_package( OpenCV REQUIRED )
 set(Boost_USE_STATIC_LIBS OFF) 
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost 1.56.0 COMPONENTS PropertyTree Program_options)
+find_package(Boost 1.55.0 COMPONENTS propertytree program_options)
 
 include_directories(${Boost_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
