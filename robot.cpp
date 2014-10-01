@@ -17,10 +17,12 @@ std::map<OBJECT, std::string> OBJECT_LABELS(objects, objects + sizeof(objects) /
 
 Robot::Robot()
 {
+	camera = NULL;
 }
 Robot::~Robot()
 {
-    delete camera;
+	if (camera)
+		delete camera;
 }
 void Robot::CalibrateObjects()
 {
