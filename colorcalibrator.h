@@ -10,8 +10,8 @@ protected:
 	void SaveConf(const std::string &name);
 public:
     ColorCalibrator();
-    void LoadImage(const cv::Mat &image, int numberOfObjects);
-	HSVColorRange GetObjectThresholds(int index, const std::string &name);
-    ~ColorCalibrator();
+    virtual void LoadImage(const cv::Mat &image);
+	virtual HSVColorRange GetObjectThresholds(int index, const std::string &name);
+    virtual ~ColorCalibrator();
 
 };

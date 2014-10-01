@@ -36,3 +36,6 @@ ipch/
 *.sdf
 *.suo
 *.vcxproj.user
+
+# conf
+conf/*.ini

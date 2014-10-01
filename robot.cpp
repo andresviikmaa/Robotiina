@@ -1,7 +1,7 @@
 #include "robot.h"
 #include "colorcalibrator.h"
+#include "autocalibrator.h"
 #include "camera.h"
-#include "stillcamera.h"
 #include "wheelcontroller.h"
 #include "objectfinder.h"
 #include "dialog.h"
@@ -13,7 +13,10 @@ dialog.createButton(name, [](int state, void* self){ ((Robot*)self)->state = new
 
 std::pair<OBJECT, std::string> objects[] = {
 	std::pair<OBJECT, std::string>(BALL, "Ball"),
-	std::pair<OBJECT, std::string>(GATE, "Gate"),
+    std::pair<OBJECT, std::string>(GATE, "Gate"),
+    std::pair<OBJECT, std::string>(FIELD, "Field"),
+    std::pair<OBJECT, std::string>(INNER_BORDER, "Inner Border2"),
+    std::pair<OBJECT, std::string>(OUTER_BORDER, "Outer Border2"),
 
 };
 
@@ -28,15 +31,17 @@ Robot::~Robot()
 	if (camera)
 		delete camera;
 }
-void Robot::CalibrateObjects()
+void Robot::CalibrateObjects(bool autoCalibrate/* = false*/)
 {
     cv::Mat image = camera->Capture();
-    ColorCalibrator calibrator;
-    calibrator.LoadImage(image, NUMBER_OF_OBJECTS);
-    for(int i = 0; i < NUMBER_OF_OBJECTS; i++)
-    {
-		objectThresholds[(OBJECT)i] = calibrator.GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
+    ColorCalibrator* calibrator = autoCalibrate ? new AutoCalibrator() : new ColorCalibrator();
+    calibrator->LoadImage(image);
+
+    for(int i = 0; i < NUMBER_OF_OBJECTS; i++) {
+        objectThresholds[(OBJECT) i] = calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT) i]);
     }
+    delete calibrator;
+
 }
 
 bool Robot::Launch(int argc, char* argv[])
@@ -57,7 +62,8 @@ void Robot::Run()
 
             Dialog launchWindow("Launch Robotiina", CV_WINDOW_AUTOSIZE);
             BUTTON(launchWindow, "Configure USB devices", STATE_CONFIGURE_USB)
-            BUTTON(launchWindow, "Calibrate objects", STATE_CALIBRATE)
+            BUTTON(launchWindow, "AutoCalibrate objects", STATE_AUTOCALIBRATE)
+            BUTTON(launchWindow, "ManualCalibrate objects", STATE_CALIBRATE)
             BUTTON(launchWindow, "Start Robot", STATE_LOCATE_BALL)
             BUTTON(launchWindow, "Exit", STATE_END_OF_GAME)
             launchWindow.show();
@@ -65,6 +71,11 @@ void Robot::Run()
         }
         if (STATE_CALIBRATE == state) {
             CalibrateObjects();
+            state = STATE_NONE;
+        }
+        if (STATE_AUTOCALIBRATE == state) {
+            CalibrateObjects(true);
+            state = STATE_NONE;
         }
         if (STATE_LOCATE_BALL == state) {
 			std::pair<int, double> location = finder.Locate(objectThresholds[BALL]);
@@ -123,7 +134,8 @@ void Robot::Run()
           //  const cv::Mat frame = camera->Capture();
 
             std::cout << "esc key is pressed by user" << std::endl;
-            state = STATE_END_OF_GAME;
+            //state = STATE_END_OF_GAME;
+            state = STATE_NONE;
 			break;
         }
     }

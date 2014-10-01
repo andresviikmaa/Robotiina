@@ -6,22 +6,11 @@
 ColorCalibrator::ColorCalibrator()
 {
 	range = {{0,179},{0,255},{0,255}};
-    cvNamedWindow("ColorCalibrator", CV_WINDOW_AUTOSIZE); //create a window called "Control"
-    cvCreateTrackbar("LowH", "ColorCalibrator", &range.hue.low, range.hue.high); //Hue (0 - 179)
-    cvCreateTrackbar("HighH", "ColorCalibrator", &range.hue.high, range.hue.high);
-
-
-    cvCreateTrackbar("LowS", "ColorCalibrator", &range.sat.low, range.sat.high); //Saturation (0 - 255)
-    cvCreateTrackbar("HighS", "ColorCalibrator", &range.sat.high, range.sat.high);
-
-
-    cvCreateTrackbar("LowV", "ColorCalibrator", &range.val.low, range.val.high); //Value (0 - 255)
-    cvCreateTrackbar("HighV", "ColorCalibrator", &range.val.high, range.val.high);
 
 
 };
 
-void ColorCalibrator::LoadImage(const cv::Mat &image, int numberOfObjects)
+void ColorCalibrator::LoadImage(const cv::Mat &image)
 {
     this->image = image;
 };
@@ -32,6 +21,19 @@ HSVColorRange ColorCalibrator::GetObjectThresholds (int index, const std::string
 		LoadConf(name);
 	}
 	catch (...){};
+
+    cvNamedWindow("ColorCalibrator", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+    cvCreateTrackbar("LowH", "ColorCalibrator", &range.hue.low, 179); //Hue (0 - 179)
+    cvCreateTrackbar("HighH", "ColorCalibrator", &range.hue.high, 179);
+
+
+    cvCreateTrackbar("LowS", "ColorCalibrator", &range.sat.low, 255); //Saturation (0 - 255)
+    cvCreateTrackbar("HighS", "ColorCalibrator", &range.sat.high, 255);
+
+
+    cvCreateTrackbar("LowV", "ColorCalibrator", &range.val.low, 255); //Value (0 - 255)
+    cvCreateTrackbar("HighV", "ColorCalibrator", &range.val.high, 255);
+
     cv::Mat imgThresholded, imgHSV;
     cvtColor(image, imgHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
