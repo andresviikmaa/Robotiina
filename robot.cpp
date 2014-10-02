@@ -61,7 +61,7 @@ bool Robot::Launch(int argc, char* argv[])
 
 void Robot::Run()
 {
-    ObjectFinder finder(camera);
+    ObjectFinder finder;
     WheelController wheels;
     while (state != STATE_END_OF_GAME)
     {
@@ -98,7 +98,7 @@ void Robot::Run()
 			}
 		}
         if (STATE_LOCATE_BALL == state) {
-			std::pair<int, double> location = finder.Locate(objectThresholds[BALL]);
+			std::pair<int, double> location = finder.Locate(objectThresholds[BALL], camera->Capture());
 			int HorizontalDev = location.first;
 			float distance = location.second;
 
@@ -119,7 +119,7 @@ void Robot::Run()
         if(STATE_BALL_LOCATED == state) {
             //TODO: start tribbler
 
-			std::pair<int, double> location = finder.Locate(objectThresholds[BALL]);
+			std::pair<int, double> location = finder.Locate(objectThresholds[BALL], camera->Capture());
 			int HorizontalDev = location.first;
 			float distance = location.second;
 

@@ -78,7 +78,7 @@ void AutoCalibrator::mouseClicked(int x, int y) {
 
 	//cv::imshow("original", image); //show the thresholded image
 
-	//done = true;
+	done = true;
 
 }
 AutoCalibrator::~AutoCalibrator(){
@@ -89,17 +89,15 @@ void AutoCalibrator::DetectThresholds(int number_of_objects){
     cv::Mat img(image);
     //cvtColor(img,image,CV_BGR2HSV);
     int origRows = img.rows;
-    std::cout << "original image is: " << img.rows << "x" << img.cols << std::endl;
     cv::Mat colVec = img.reshape(1, img.rows*img.cols); // change to a Nx3 column vector
-    std::cout << "colVec is of size: " << colVec.rows << "x" << colVec.cols << std::endl;
     cv::Mat colVecD;
     int attempts = 5;
 
-    double eps = 0.001;
+    double eps = 0.1;
     colVec.convertTo(colVecD, CV_32FC3, 1.0/255.0); // convert to floating point
     double compactness = cv::kmeans(colVecD, number_of_objects, bestLabels,
             cv::TermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, attempts, eps),
-			attempts, cv::KMEANS_RANDOM_CENTERS, centers);
+			attempts, cv::KMEANS_PP_CENTERS, centers);
     cv::Mat labelsImg = bestLabels.reshape(1, origRows); // single channel image of labels
     std::cout << "Compactness = " << compactness << std::endl;
     clustered = cv::Mat(1, img.rows*img.cols , CV_32FC3, 255);
@@ -110,9 +108,10 @@ void AutoCalibrator::DetectThresholds(int number_of_objects){
     std::cout << centers.at<float>(bestLabels.at<int>(0), 1) << std::endl;
     std::cout << img.cols*img.rows << ":" << bestLabels.rows << std::endl;
     for(int i=0; i<img.cols*img.rows; i++) {
-		clustered.at<cv::Point3f>(i) = cv::Point3f(centers.at<float>(bestLabels.at<int>(i), 0),
-			centers.at<float>(bestLabels.at<int>(i), 1),
-			centers.at<float>(bestLabels.at<int>(i), 2)
+		clustered.at<cv::Point3f>(i) = cv::Point3f(
+				centers.at<float>(bestLabels.at<int>(i), 0),
+				centers.at<float>(bestLabels.at<int>(i), 1),
+				centers.at<float>(bestLabels.at<int>(i), 2)
 			);
     }
 

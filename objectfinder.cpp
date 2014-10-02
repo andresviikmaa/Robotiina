@@ -2,13 +2,44 @@
 #include <math.h> 
 #define PI 3.14159265
 
-std::pair<int, double> ObjectFinder::Locate(const HSVColorRange &r) {
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
-	cv::Mat	imgOriginal = m_pCamera->Capture();
+ObjectFinder::ObjectFinder()
+{
+	using boost::property_tree::ptree;
+	try {
+
+		ptree pt;
+		read_ini("conf/camera.ini", pt);
+		Vfov = pt.get<float>("Vfov");
+		CamHeight = pt.get<float>("Height");
+		CamAngleDev = pt.get<float>("AngleDev");
+	}
+	catch (...){
+		ptree pt;
+		pt.put("Height", CamHeight);
+		pt.put("AngleDev", CamAngleDev);
+		pt.put("Vfov", Vfov);
+
+
+
+		write_ini("conf/camera.ini", pt);
+	};
+}
+std::pair<int, double> ObjectFinder::Locate(const HSVColorRange &r, const cv::Mat &frame) {
+	cv::Point2f point = LocateOnScreen(r, frame);
+
+	return ConvertPixelToRealWorld(point, cv::Point2i(frame.cols, frame.rows));
+}
+
+cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &frame) {
+
+	cv::Mat	imgOriginal = frame;
 	cv::Mat imgHSV;
-	cv::imshow("Thresholded Image 2", imgOriginal); //show the thresholded image
+	//	cv::imshow("Thresholded Image 2", imgOriginal); //show the thresholded image
 	cvtColor(imgOriginal, imgHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
-	cv::imshow("Thresholded Image 3", imgHSV); //show the thresholded image
+	//	cv::imshow("Thresholded Image 3", imgHSV); //show the thresholded image
 	cv::Mat imgThresholded;
 
 	inRange(imgHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), imgThresholded); //Threshold the image
@@ -23,10 +54,10 @@ std::pair<int, double> ObjectFinder::Locate(const HSVColorRange &r) {
 	int largest_contour_index = 0;
 	cv::Rect bounding_rect;
 	findContours(imgThresholded, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE); // Find the contours in the image
-	for (int i = 0; i< contours.size(); i++) // iterate through each contour.
+	for (int i = 0; i < contours.size(); i++) // iterate through each contour.
 	{
 		double a = cv::contourArea(contours[i], false);  //  Find the area of contour
-		if (a>largest_area){
+		if (a > largest_area){
 			largest_area = a;
 			largest_contour_index = i;                //Store the index of largest contour
 			bounding_rect = cv::boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
@@ -35,7 +66,7 @@ std::pair<int, double> ObjectFinder::Locate(const HSVColorRange &r) {
 	cv::Scalar color(255, 255, 255);
 
 
-	drawContours(dst, contours, largest_contour_index, color, CV_FILLED, 8, hierarchy); // Draw the largest contour using previously stored index.
+	//drawContours(dst, contours, largest_contour_index, color, CV_FILLED, 8, hierarchy); // Draw the largest contour using previously stored index.
 
 	//find center
 	cv::Scalar colorCircle(133, 33, 55);
@@ -43,26 +74,25 @@ std::pair<int, double> ObjectFinder::Locate(const HSVColorRange &r) {
 	if (contours.size() > largest_contour_index){
 		cv::Moments M = cv::moments(contours[largest_contour_index]);
 		center = cv::Point2f(M.m10 / M.m00, M.m01 / M.m00);
-		
+
 	}
 
 
 
 	//Draw circle
-	cv::circle(dst, center, 10, colorCircle, 3);
-	cv::imshow("Thresholded Image", dst); //show the thresholded image
+	cv::circle(imgOriginal, center, 10, colorCircle, 3);
+	cv::imshow("Thresholded Image", imgOriginal); //show the thresholded image
+	return center;
+}
+std::pair<int, double> ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size)
+{
+	const cv::Point2d center; (frame_size.x / 2.0, frame_size.y / 2.0);
 
-	//Vars
-	float Vfov = 21.65; //half of cameras vertical field of view (degrees)
-	int CamHeight = 345; //cameras height from ground (mm)
-	int frameHeight = dst.rows/2; //half of frame height in pixels
-	int frameWidth = dst.cols / 2; //half of frame width in pixels
-	int CamAngleDev = 26; //deviation from 90* between ground
 	//Calculating distance
-	float angle = (Vfov * (center.y - frameHeight) / frameHeight)+CamAngleDev;
+	float angle = (Vfov * (point.y - center.y) / center.y) + CamAngleDev;
 	float distance = CamHeight / tan(angle * PI / 180);
 	//Calculating horizontal deviation
-	int HorizontalDev = frameWidth - center.x; //positive value, if left, negative if right compared to center axis
+	int HorizontalDev = center.x - point.x; //positive value, if left, negative if right compared to center axis
 
 	std::cout << distance << std::endl;
 
