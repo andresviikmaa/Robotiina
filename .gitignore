@@ -36,4 +36,11 @@ ipch/
 *.sdf
 *.suo
 *.vcxproj.user
+<<<<<<< HEAD
 Robotiina.vcxproj
+=======
+
+# conf
+conf/*.ini
+*.TMP
+>>>>>>> 2a271dedd3ca9c170a6a8642454e418ec81b090d

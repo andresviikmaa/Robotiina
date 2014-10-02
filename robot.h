@@ -12,7 +12,7 @@ private:
     ICamera *camera;
     std::map<OBJECT, HSVColorRange> objectThresholds;
     STATE state = STATE_NONE;
-    void CalibrateObjects();
+    void CalibrateObjects(bool autoCalibrate = false);
 	bool ParseOptions(int argc, char* argv[]);
 
 	void Run();

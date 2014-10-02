@@ -6,9 +6,9 @@ std::pair<int, double> ObjectFinder::Locate(const HSVColorRange &r) {
 
 	cv::Mat	imgOriginal = m_pCamera->Capture();
 	cv::Mat imgHSV;
-
+	cv::imshow("Thresholded Image 2", imgOriginal); //show the thresholded image
 	cvtColor(imgOriginal, imgHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
-
+	cv::imshow("Thresholded Image 3", imgHSV); //show the thresholded image
 	cv::Mat imgThresholded;
 
 	inRange(imgHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), imgThresholded); //Threshold the image

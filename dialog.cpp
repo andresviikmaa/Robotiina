@@ -4,7 +4,7 @@ Dialog::Dialog(const std::string &title, int flags/* = CV_WINDOW_AUTOSIZE*/) {
 
     m_title = title;
     int baseLine;
-    m_buttonHeight = cv::getTextSize("Ajig6", cv::FONT_HERSHEY_DUPLEX, 1.0, 1, &baseLine).height * 2;
+    m_buttonHeight = cv::getTextSize("Ajig6", cv::FONT_HERSHEY_DUPLEX, 1.5, 1, &baseLine).height * 2;
 };
 
 int Dialog::createButton( const std::string& bar_name, cv::ButtonCallback on_change,
@@ -13,17 +13,22 @@ int Dialog::createButton( const std::string& bar_name, cv::ButtonCallback on_cha
 		m_buttons.push_back(std::make_tuple(bar_name, on_change, userdata));
 		return 0;
 
+<<<<<<< HEAD
+=======
+    m_buttons.push_back(std::make_tuple(bar_name, on_change, userdata));
+	return 0;
+>>>>>>> 2a271dedd3ca9c170a6a8642454e418ec81b090d
 };
 
 int Dialog::show() {
 
     int window_width = 1024;
-    int window_height = 766;
+    int window_height = 760;
     cv::Mat image = cv::Mat::zeros( window_height, window_width, CV_8UC3 );
 
     int i = 0;
     for (const auto& button : m_buttons) {
-        cv::putText(image, std::get<0>(button), cv::Point(30, (++i)*m_buttonHeight ), cv::FONT_HERSHEY_DUPLEX, 1, cv::Scalar(255,255,255));
+        cv::putText(image, std::get<0>(button), cv::Point(30, (++i)*m_buttonHeight ), cv::FONT_HERSHEY_DUPLEX, 1.5, cv::Scalar(255,255,255));
 
     }
     cv::namedWindow(m_title, CV_WINDOW_FULLSCREEN);

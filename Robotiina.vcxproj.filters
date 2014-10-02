@@ -33,15 +33,13 @@
     <ClInclude Include="robot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="stillcamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="wheelcontroller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+<<<<<<< HEAD
     <ClInclude Include="dialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -49,6 +47,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="wheel.h">
+=======
+    <ClInclude Include="autocalibrator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stillcamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="calibrationconfreader.h">
+>>>>>>> 2a271dedd3ca9c170a6a8642454e418ec81b090d
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -68,10 +78,19 @@
     <ClCompile Include="robot.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="wheelcontroller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="autocalibrator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="stillcamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="wheelcontroller.cpp">
+    <ClCompile Include="calibrationconfreader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="dialog.cpp">

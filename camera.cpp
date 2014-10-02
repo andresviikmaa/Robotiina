@@ -24,7 +24,8 @@ Camera::Camera(int device)
 
 const cv::Mat &Camera::Capture()
 {
-	*cap >> frame;
+	if (cap->isOpened())
+		*cap >> frame;
     return frame;
 }
 const cv::Mat &Camera::CaptureHSV() {
