@@ -12,6 +12,7 @@ int Dialog::createButton( const std::string& bar_name, cv::ButtonCallback on_cha
         bool initial_button_state/*=0*/){
 
     m_buttons.push_back(std::make_tuple(bar_name, on_change, userdata));
+	return 0;
 };
 
 int Dialog::show() {

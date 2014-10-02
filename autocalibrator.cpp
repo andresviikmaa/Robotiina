@@ -10,8 +10,8 @@ AutoCalibrator::AutoCalibrator()
 void AutoCalibrator::LoadImage(const cv::Mat &image)
 {
     ColorCalibrator::LoadImage(image);
-    float data[6][3] = {{1, 0, 0/*blue*/}, {0, 0, 1 /* orange*/}, {1 ,1, 0 /* yellow*/}, {0,1, 0}/*green*/, {1,1,1}, {0,0,0}};
-    centers = cv::Mat(5,1, CV_32FC3, &data); //BGR
+    //float data[6][3] = {{1, 0, 0/*blue*/}, {0, 0, 1 /* orange*/}, {1 ,1, 0 /* yellow*/}, {0,1, 0}/*green*/, {1,1,1}, {0,0,0}};
+	//bestLabels = cv::Mat(6, 3, CV_32F, &data); //BGR
     DetectThresholds(6);
 };
 
@@ -41,26 +41,44 @@ HSVColorRange AutoCalibrator::GetObjectThresholds (int index, const std::string 
 };
 
 void AutoCalibrator::mouseClicked(int x, int y) {
-    cv::Mat imgHSV(image);
-    cvtColor(imgHSV,image,CV_BGR2HSV);
+    cv::Mat imgHSV;
+	cvtColor(image, imgHSV, CV_BGR2HSV);
 
-    int label = bestLabels.at<int>(y*image.rows + x);
+    int label = bestLabels.at<int>(y*image.cols + x);
     range =  {{179,0},{255,0},{255,0}} /* reverse initial values for min/max to work*/;
+	std::vector<int> hue, sat, val;
+
     for(int i=0; i<image.cols*image.rows; i++) {
         if(bestLabels.at<int>(i) == label){
-            int hue = imgHSV.at<cv::Vec3b>(i).val[0];
-            int sat = imgHSV.at<cv::Vec3b>(i).val[1];
-            int val = imgHSV.at<cv::Vec3b>(i).val[2];
+            hue.push_back(imgHSV.at<cv::Vec3b>(i).val[0]);
+			sat.push_back(imgHSV.at<cv::Vec3b>(i).val[1]);
+			val.push_back(imgHSV.at<cv::Vec3b>(i).val[2]);
 
-            range.hue.low = std::min(range.hue.low, hue);
-            range.hue.high = std::max(range.hue.high, hue);
-            range.sat.low = std::min(range.sat.low, sat);
-            range.sat.high = std::max(range.sat.high, sat);
-            range.val.low = std::min(range.val.low, val);
-            range.val.high = std::max(range.val.high, val);
         }
     }
-    done = true;
+	//get 5% and 95% percenties
+	std::sort(hue.begin(), hue.end());
+	std::sort(sat.begin(), sat.end());
+	std::sort(val.begin(), val.end());
+
+	int min = hue.size() * 0.05;
+	int max = hue.size() * 0.95;
+
+	range.hue.low = hue[min];
+	range.hue.high = hue[max];
+	range.sat.low = sat[min];
+	range.sat.high = sat[max];
+	range.val.low = val[min];
+	range.val.high = val[max];
+
+	cv::Mat imgThresholded;
+	cv::inRange(imgHSV, cv::Scalar(range.hue.low, range.sat.low, range.val.low), cv::Scalar(range.hue.high, range.sat.high, range.val.high), imgThresholded); //Threshold the image
+
+	//cv::imshow("auto thresholded", imgThresholded); //show the thresholded image
+
+	//cv::imshow("original", image); //show the thresholded image
+
+	//done = true;
 
 }
 AutoCalibrator::~AutoCalibrator(){
@@ -81,17 +99,21 @@ void AutoCalibrator::DetectThresholds(int number_of_objects){
     colVec.convertTo(colVecD, CV_32FC3, 1.0/255.0); // convert to floating point
     double compactness = cv::kmeans(colVecD, number_of_objects, bestLabels,
             cv::TermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, attempts, eps),
-            attempts, cv::KMEANS_USE_INITIAL_LABELS, centers);
+			attempts, cv::KMEANS_RANDOM_CENTERS, centers);
     cv::Mat labelsImg = bestLabels.reshape(1, origRows); // single channel image of labels
     std::cout << "Compactness = " << compactness << std::endl;
     clustered = cv::Mat(1, img.rows*img.cols , CV_32FC3, 255);
 
     std::cout << centers << std::endl;
-    std::cout << ">" << " " << centers.at<cv::Point3f>(0) << " " << bestLabels.at<int>(3) << std::endl;
+
+    //std::cout << ">" << " " << centers.at<cv::Point3f>(0) << " " << bestLabels.at<int>(3) << std::endl;
     std::cout << centers.at<float>(bestLabels.at<int>(0), 1) << std::endl;
     std::cout << img.cols*img.rows << ":" << bestLabels.rows << std::endl;
     for(int i=0; i<img.cols*img.rows; i++) {
-        clustered.at<cv::Point3f>(i) = centers.at<cv::Point3f>(bestLabels.at<int>(i));
+		clustered.at<cv::Point3f>(i) = cv::Point3f(centers.at<float>(bestLabels.at<int>(i), 0),
+			centers.at<float>(bestLabels.at<int>(i), 1),
+			centers.at<float>(bestLabels.at<int>(i), 2)
+			);
     }
 
     //clustered.convertTo(clustered, CV_8UC3, 255);

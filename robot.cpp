@@ -2,6 +2,7 @@
 #include "colorcalibrator.h"
 #include "autocalibrator.h"
 #include "camera.h"
+#include "stillcamera.h"
 #include "wheelcontroller.h"
 #include "objectfinder.h"
 #include "dialog.h"
@@ -40,6 +41,7 @@ void Robot::CalibrateObjects(bool autoCalibrate/* = false*/)
     for(int i = 0; i < NUMBER_OF_OBJECTS; i++) {
         objectThresholds[(OBJECT) i] = calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT) i]);
     }
+	
     delete calibrator;
 
 }
@@ -48,7 +50,12 @@ bool Robot::Launch(int argc, char* argv[])
 {
 	if (!ParseOptions(argc, argv)) return false;
 
-	camera = config.count("camera") ? new Camera(config["camera"].as<std::string>()) : new Camera(0);
+	
+	if (config.count("camera"))
+		camera = new StillCamera(config["camera"].as<std::string>());
+	else
+		new Camera(0);
+
     Run();
 }
 
@@ -64,7 +71,7 @@ void Robot::Run()
             BUTTON(launchWindow, "Configure USB devices", STATE_CONFIGURE_USB)
             BUTTON(launchWindow, "AutoCalibrate objects", STATE_AUTOCALIBRATE)
             BUTTON(launchWindow, "ManualCalibrate objects", STATE_CALIBRATE)
-            BUTTON(launchWindow, "Start Robot", STATE_LOCATE_BALL)
+			BUTTON(launchWindow, "Start Robot", STATE_LAUNCH)
             BUTTON(launchWindow, "Exit", STATE_END_OF_GAME)
             launchWindow.show();
 
@@ -77,6 +84,19 @@ void Robot::Run()
             CalibrateObjects(true);
             state = STATE_NONE;
         }
+		if (STATE_LAUNCH == state) {
+			try {
+				CalibrationConfReader calibrator;
+				for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
+					objectThresholds[(OBJECT)i] = calibrator.GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
+				}
+				state = STATE_LOCATE_BALL;
+			}
+			catch (...){
+				//TODO: display error
+				state = STATE_NONE; // no conf
+			}
+		}
         if (STATE_LOCATE_BALL == state) {
 			std::pair<int, double> location = finder.Locate(objectThresholds[BALL]);
 			int HorizontalDev = location.first;

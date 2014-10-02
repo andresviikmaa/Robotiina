@@ -84,22 +84,26 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="autocalibrator.h" />
+    <ClInclude Include="calibrationconfreader.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="colorcalibrator.h" />
     <ClInclude Include="dialog.h" />
     <ClInclude Include="objectfinder.h" />
     <ClInclude Include="robot.h" />
+    <ClInclude Include="stillcamera.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="wheelcontroller.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="autocalibrator.cpp" />
+    <ClCompile Include="calibrationconfreader.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="colorcalibrator.cpp" />
     <ClCompile Include="dialog.cpp" />
     <ClCompile Include="objectfinder.cpp" />
     <ClCompile Include="robot.cpp" />
     <ClCompile Include="Robotiina.cpp" />
+    <ClCompile Include="stillcamera.cpp" />
     <ClCompile Include="wheelcontroller.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -9,8 +9,7 @@ public:
 
     ~AutoCalibrator();
 protected:
-    cv::Mat bestLabels, clustered;
-    cv::Mat centers;
+    cv::Mat bestLabels, clustered, centers;
     void DetectThresholds(int number_of_objects);
     void mouseClicked(int x, int y);
 private:

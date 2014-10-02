@@ -1,13 +1,8 @@
 #include "colorcalibrator.h"
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
 
 ColorCalibrator::ColorCalibrator()
 {
-	range = {{0,179},{0,255},{0,255}};
-
-
 };
 
 void ColorCalibrator::LoadImage(const cv::Mat &image)
@@ -55,33 +50,6 @@ HSVColorRange ColorCalibrator::GetObjectThresholds (int index, const std::string
     }
 
 };
-void ColorCalibrator::SaveConf(const std::string &name){
-	using boost::property_tree::ptree;
-
-	ptree pt;
-	pt.put("hue.low", range.hue.low);
-	pt.put("hue.high", range.hue.high);
-	pt.put("sat.low", range.sat.low);
-	pt.put("sat.high", range.sat.high);
-	pt.put("val.low", range.val.low);
-	pt.put("val.high", range.val.high);
-
-
-	write_ini(std::string("conf/") +name +".ini", pt);
-}
-void ColorCalibrator::LoadConf(const std::string &name){
-	using boost::property_tree::ptree;
-
-	ptree pt;
-	read_ini(std::string("conf/") + name + ".ini", pt);
-	range.hue.low = pt.get<int>("hue.low");
-	range.hue.high = pt.get<int>("hue.high");
-	range.sat.low = pt.get<int>("sat.low");
-	range.sat.high = pt.get<int>("sat.high");
-	range.val.low = pt.get<int>("val.low");
-	range.val.high = pt.get<int>("val.high");
-
-}
 
 ColorCalibrator::~ColorCalibrator(){
     cvDestroyWindow("ColorCalibrator");

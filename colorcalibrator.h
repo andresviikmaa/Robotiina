@@ -1,13 +1,9 @@
 #pragma once
-#include "types.h"
-#include <opencv2/opencv.hpp>
+#include "calibrationconfreader.h"
 
-class ColorCalibrator {
+class ColorCalibrator : public CalibrationConfReader {
 protected:
-    HSVColorRange range/* =  {{0,179},{0,255},{0,255}}*/;
     cv::Mat image;
-	void LoadConf(const std::string &name);
-	void SaveConf(const std::string &name);
 public:
     ColorCalibrator();
     virtual void LoadImage(const cv::Mat &image);
