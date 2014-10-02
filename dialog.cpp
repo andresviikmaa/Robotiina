@@ -10,9 +10,8 @@ Dialog::Dialog(const std::string &title, int flags/* = CV_WINDOW_AUTOSIZE*/) {
 int Dialog::createButton( const std::string& bar_name, cv::ButtonCallback on_change,
         void* userdata/*=NULL*/, int type/*=CV_PUSH_BUTTON*/,
         bool initial_button_state/*=0*/){
-
-    m_buttons.push_back(std::make_tuple(bar_name, on_change, userdata));
-	return 0;
+		m_buttons.push_back(std::make_tuple(bar_name, on_change, userdata));
+		return 0;
 };
 
 int Dialog::show() {

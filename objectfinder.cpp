@@ -46,7 +46,6 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 	cv::Mat dst(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));
 
 
-
 	//biggest area
 	std::vector<std::vector<cv::Point> > contours; // Vector for storing contour
 	std::vector<cv::Vec4i> hierarchy;
@@ -64,7 +63,6 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 		}
 	}
 	cv::Scalar color(255, 255, 255);
-
 
 	//drawContours(dst, contours, largest_contour_index, color, CV_FILLED, 8, hierarchy); // Draw the largest contour using previously stored index.
 
@@ -84,6 +82,7 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 	cv::imshow("Thresholded Image", imgOriginal); //show the thresholded image
 	return center;
 }
+
 std::pair<int, double> ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size)
 {
 	const cv::Point2d center; (frame_size.x / 2.0, frame_size.y / 2.0);
@@ -93,9 +92,6 @@ std::pair<int, double> ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &
 	float distance = CamHeight / tan(angle * PI / 180);
 	//Calculating horizontal deviation
 	int HorizontalDev = center.x - point.x; //positive value, if left, negative if right compared to center axis
-
-	std::cout << distance << std::endl;
-
 
 	if (center.y == 0 && center.x == 0){ //If there is no object found
 		return std::make_pair(-1, -1);

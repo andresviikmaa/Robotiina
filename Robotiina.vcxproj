@@ -41,7 +41,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\personal\robotex\opencv\build\include\;D:\personal\robotex\boost_1_56_0\;$(IncludePath)</IncludePath>
+    <IncludePath>C:\boost_1_56_0;C:\opencv\build\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -58,7 +58,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\personal\robotex\opencv\build\x86\vc12\staticlib;D:\personal\robotex\boost_1_56_0\stage\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\opencv\build\x86\vc12\staticlib;C:\Boost\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_core249d.lib;opencv_highgui249d.lib;opencv_video249d.lib;opencv_imgproc249d.lib;zlibd.lib;libjpegd.lib;libpngd.lib;vfw32.lib;libjasperd.lib;libtiffd.lib;IlmImfd.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -90,8 +90,10 @@
     <ClInclude Include="dialog.h" />
     <ClInclude Include="objectfinder.h" />
     <ClInclude Include="robot.h" />
+    <ClInclude Include="simpleserial.h" />
     <ClInclude Include="stillcamera.h" />
     <ClInclude Include="types.h" />
+    <ClInclude Include="wheel.h" />
     <ClInclude Include="wheelcontroller.h" />
   </ItemGroup>
   <ItemGroup>
@@ -104,6 +106,7 @@
     <ClCompile Include="robot.cpp" />
     <ClCompile Include="Robotiina.cpp" />
     <ClCompile Include="stillcamera.cpp" />
+    <ClCompile Include="wheel.cpp" />
     <ClCompile Include="wheelcontroller.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

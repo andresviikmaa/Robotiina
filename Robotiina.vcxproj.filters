@@ -1,87 +1,33 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="tests">
-      <UniqueIdentifier>{b55aa4e2-0a6a-4c57-b8a7-3bbd470c495b}</UniqueIdentifier>
-    </Filter>
+    <ClCompile Include="camera.cpp" />
+    <ClCompile Include="colorcalibrator.cpp" />
+    <ClCompile Include="dialog.cpp" />
+    <ClCompile Include="objectfinder.cpp" />
+    <ClCompile Include="robot.cpp" />
+    <ClCompile Include="Robotiina.cpp" />
+    <ClCompile Include="stillcamera.cpp" />
+    <ClCompile Include="wheel.cpp" />
+    <ClCompile Include="wheelcontroller.cpp" />
+    <ClCompile Include="autocalibrator.cpp" />
+    <ClCompile Include="calibrationconfreader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="colorcalibrator.h" />
+    <ClInclude Include="dialog.h" />
+    <ClInclude Include="objectfinder.h" />
+    <ClInclude Include="robot.h" />
+    <ClInclude Include="simpleserial.h" />
+    <ClInclude Include="stillcamera.h" />
+    <ClInclude Include="types.h" />
+    <ClInclude Include="wheel.h" />
+    <ClInclude Include="wheelcontroller.h" />
+    <ClInclude Include="autocalibrator.h" />
+    <ClInclude Include="calibrationconfreader.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="colorcalibrator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="objectfinder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="robot.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="wheelcontroller.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="autocalibrator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dialog.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="stillcamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="calibrationconfreader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Robotiina.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="colorcalibrator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="objectfinder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="robot.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="wheelcontroller.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="autocalibrator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="dialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="stillcamera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="calibrationconfreader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>
