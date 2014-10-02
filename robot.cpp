@@ -64,11 +64,7 @@ bool Robot::Launch(int argc, char* argv[])
 void Robot::Run()
 {
     ObjectFinder finder;
-    WheelController wheels;
-	Wheel leftWheel("port1", 115200);
-	Wheel rightWheel("port2", 115200);
-	Wheel backWheel("port3", 115200);
-	WheelController wheels(leftWheel, rightWheel, backWheel);
+	WheelController wheels;
 
     while (state != STATE_END_OF_GAME)
     {

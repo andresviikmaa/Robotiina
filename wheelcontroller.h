@@ -9,13 +9,15 @@ private:
 	Wheel w_right;
 	Wheel w_back;
 public:
-	WheelController(Wheel left, Wheel right, Wheel back){
-		w_left = left;
-		w_back = back;
-		w_right = right;
+	WheelController():
+		w_left(io_service, "port1", 115200),
+		w_right(io_service, "port2", 115200),
+		w_back(io_service, "port3", 115200)
+	{
 	};
 	void Forward(int speed);
     void MoveTo(const CvPoint &);
     void Rotate(double degree);
     ~WheelController(){};
+	boost::asio::io_service io_service;
 };

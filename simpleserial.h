@@ -1,12 +1,12 @@
-#include "types.h"
-#include <boost/asio.hpp>
 #pragma  once
+#include "types.h"
+#define _WIN32_WINNT 0x0601 // win 7 
+#include <boost/asio.hpp>
 
 class SimpleSerial {
 public:
-	SimpleSerial();
 
-	SimpleSerial(std::string port , unsigned int baud_rate) : io(), serial(io, port) {
+	SimpleSerial(boost::asio::io_service &io_service, const std::string & port, unsigned int baud_rate) : io(io_service), serial(io, port) {
 		serial.set_option(boost::asio::serial_port_base::baud_rate(baud_rate));
 	}
 
@@ -37,6 +37,6 @@ public:
 	}
 
 private:
-	boost::asio::io_service io;
+	boost::asio::io_service &io;
 	boost::asio::serial_port serial;
 };
