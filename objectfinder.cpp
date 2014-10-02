@@ -15,7 +15,6 @@ std::pair<int, double> ObjectFinder::Locate(const HSVColorRange &r) {
 	cv::Mat dst(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));
 
 
-
 	//biggest area
 	std::vector<std::vector<cv::Point> > contours; // Vector for storing contour
 	std::vector<cv::Vec4i> hierarchy;
@@ -34,7 +33,6 @@ std::pair<int, double> ObjectFinder::Locate(const HSVColorRange &r) {
 	}
 	cv::Scalar color(255, 255, 255);
 
-
 	drawContours(dst, contours, largest_contour_index, color, CV_FILLED, 8, hierarchy); // Draw the largest contour using previously stored index.
 
 	//find center
@@ -52,20 +50,15 @@ std::pair<int, double> ObjectFinder::Locate(const HSVColorRange &r) {
 	cv::circle(dst, center, 10, colorCircle, 3);
 	cv::imshow("Thresholded Image", dst); //show the thresholded image
 
-	//Vars
-	float Vfov = 21.65; //half of cameras vertical field of view (degrees)
-	int CamHeight = 345; //cameras height from ground (mm)
+
 	int frameHeight = dst.rows/2; //half of frame height in pixels
 	int frameWidth = dst.cols / 2; //half of frame width in pixels
-	int CamAngleDev = 26; //deviation from 90* between ground
+	
 	//Calculating distance
 	float angle = (Vfov * (center.y - frameHeight) / frameHeight)+CamAngleDev;
 	float distance = CamHeight / tan(angle * PI / 180);
 	//Calculating horizontal deviation
 	int HorizontalDev = frameWidth - center.x; //positive value, if left, negative if right compared to center axis
-
-	std::cout << distance << std::endl;
-
 
 	if (center.y == 0 && center.x == 0){ //If there is no object found
 		return std::make_pair(-1, -1);
