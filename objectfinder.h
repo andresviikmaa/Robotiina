@@ -5,7 +5,7 @@
 class ObjectFinder {
 private:
 	cv::Point2f LocateOnScreen(const HSVColorRange &HSVRange, const cv::Mat &frame);
-	std::pair<int, double> ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size);
+	std::pair<int, double> ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size);
 
 	//Vars
 	float Vfov = 21.65; //half of cameras vertical field of view (degrees)
