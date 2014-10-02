@@ -55,7 +55,7 @@ bool Robot::Launch(int argc, char* argv[])
 	if (config.count("camera"))
 		camera = new StillCamera(config["camera"].as<std::string>());
 	else
-		new Camera(0);
+        camera = new Camera(0);
 
     Run();
 }
