@@ -6,6 +6,7 @@
 #include "wheelcontroller.h"
 #include "objectfinder.h"
 #include "dialog.h"
+#include "wheel.h"
 
 #include <opencv2/opencv.hpp>
 #undef LoadImage
@@ -63,7 +64,11 @@ bool Robot::Launch(int argc, char* argv[])
 void Robot::Run()
 {
     ObjectFinder finder(camera);
-    WheelController wheels;
+	Wheel leftWheel("port1", 115200);
+	Wheel rightWheel("port2", 115200);
+	Wheel backWheel("port3", 115200);
+	WheelController wheels(leftWheel, rightWheel, backWheel);
+
     while (state != STATE_END_OF_GAME)
     {
         if (STATE_NONE == state) {
@@ -113,7 +118,7 @@ void Robot::Run()
                 state = STATE_BALL_LOCATED;
             }
 
-            /*wheels.MoveTo(location);*/
+            wheels.Forward(100);
 
             //TODO: decide when to stop looking for balls
         }

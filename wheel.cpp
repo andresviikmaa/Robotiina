@@ -1,14 +1,10 @@
 #include "wheel.h"
 
 
-Wheel::Wheel(std::string port, unsigned int baud_rate){
+void Wheel::Stop(){
 	try {
-
-		SimpleSerial serial("/dev/ttyUSB0", 115200);
-
-		serial.writeString("100\n");
-
-		std::cout << serial.readLine() << std::endl;
+		writeString("sd0\n");
+		std::cout << readLine() << std::endl;
 
 	}
 	catch (boost::system::system_error& e)
@@ -18,10 +14,17 @@ Wheel::Wheel(std::string port, unsigned int baud_rate){
 	}
 }
 
-void Wheel::Stop(){
-	//Sending stop message to serial port
-}
-
 void Wheel::Run(int speed){
-	//Sending run speed to serial port
+	try {
+		std::ostringstream oss;
+		oss << "sd" << speed << "\n";
+		writeString(oss.str());
+		std::cout << readLine() << std::endl;
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cout << "Error: " << e.what() << std::endl;
+		return;
+	}
 }
