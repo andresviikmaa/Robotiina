@@ -11,7 +11,4 @@ public:
     void MoveTo(const CvPoint &){};
     void Rotate(double) {};
     ~WheelController(){};
-	Wheel right;
-	Wheel left;
-	Wheel back;
 };

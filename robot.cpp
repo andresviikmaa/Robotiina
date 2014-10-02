@@ -8,6 +8,7 @@
 #include "dialog.h"
 
 #include <opencv2/opencv.hpp>
+#undef LoadImage
 
 #define BUTTON(dialog, name, new_state) \
 dialog.createButton(name, [](int state, void* self){ ((Robot*)self)->state = new_state; }, this, CV_PUSH_BUTTON, 0);
