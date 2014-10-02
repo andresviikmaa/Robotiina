@@ -23,7 +23,7 @@ find_package(Boost 1.55.0 COMPONENTS propertytree program_options)
 include_directories(${Boost_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 
-set(SOURCE_FILES Robotiina.cpp camera.cpp stillcamera.cpp robot.cpp objectfinder.cpp colorcalibrator.cpp autocalibrator.cpp wheelcontroller.cpp dialog.cpp)
+set(SOURCE_FILES Robotiina.cpp camera.cpp stillcamera.cpp robot.cpp objectfinder.cpp colorcalibrator.cpp autocalibrator.cpp wheelcontroller.cpp calibrationconfreader.cpp dialog.cpp)
 
 add_executable(robotiina ${SOURCE_FILES})
 target_link_libraries( robotiina ${OpenCV_LIBS} ${Boost_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} )
