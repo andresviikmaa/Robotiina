@@ -2,6 +2,7 @@
 #include "objectfinder.h"
 
 #include <boost/program_options.hpp>
+#include <boost/asio.hpp>
 
 namespace po = boost::program_options;
 
@@ -16,6 +17,8 @@ private:
 	bool ParseOptions(int argc, char* argv[]);
 
 	void Run();
+protected:
+	boost::asio::io_service io;
 
 public:
     Robot();

@@ -95,6 +95,7 @@
     <ClInclude Include="types.h" />
     <ClInclude Include="wheel.h" />
     <ClInclude Include="wheelcontroller.h" />
+    <ClInclude Include="wheelemulator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="autocalibrator.cpp" />
@@ -108,6 +109,7 @@
     <ClCompile Include="stillcamera.cpp" />
     <ClCompile Include="wheel.cpp" />
     <ClCompile Include="wheelcontroller.cpp" />
+    <ClCompile Include="wheelemulator.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,5 +1,8 @@
 #pragma once
 #include <opencv2/opencv.hpp>
+#ifdef WIN32
+#define _WIN32_WINNT 0x0601 // win 7 
+#endif
 
 struct ColorRange
 {

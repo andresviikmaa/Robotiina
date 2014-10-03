@@ -1,8 +1,6 @@
 #pragma  once
 #include "types.h"
-#ifdef WIN32
-#define _WIN32_WINNT 0x0601 // win 7 
-#endif
+
 #include <boost/asio.hpp>
 
 class SimpleSerial {
@@ -38,7 +36,7 @@ public:
 		}
 	}
 
-private:
+protected:
 	boost::asio::io_service &io;
 	boost::asio::serial_port serial;
 };

@@ -9,7 +9,6 @@
 #include "wheel.h"
 
 #include <opencv2/opencv.hpp>
-#undef LoadImage
 
 #define BUTTON(dialog, name, new_state) \
 dialog.createButton(name, [](int state, void* self){ ((Robot*)self)->state = new_state; }, this, CV_PUSH_BUTTON, 0);
@@ -25,7 +24,7 @@ std::pair<OBJECT, std::string> objects[] = {
 
 std::map<OBJECT, std::string> OBJECT_LABELS(objects, objects + sizeof(objects) / sizeof(objects[0]));
 
-Robot::Robot()
+Robot::Robot() : io()
 {
 	camera = NULL;
 }
@@ -64,7 +63,7 @@ bool Robot::Launch(int argc, char* argv[])
 void Robot::Run()
 {
     ObjectFinder finder;
-	WheelController wheels;
+	WheelController wheels(io);
 
     while (state != STATE_END_OF_GAME)
     {

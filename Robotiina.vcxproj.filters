@@ -12,6 +12,7 @@
     <ClCompile Include="wheelcontroller.cpp" />
     <ClCompile Include="autocalibrator.cpp" />
     <ClCompile Include="calibrationconfreader.cpp" />
+    <ClCompile Include="wheelemulator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
@@ -26,6 +27,7 @@
     <ClInclude Include="wheelcontroller.h" />
     <ClInclude Include="autocalibrator.h" />
     <ClInclude Include="calibrationconfreader.h" />
+    <ClInclude Include="wheelemulator.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
