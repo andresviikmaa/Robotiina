@@ -2,10 +2,20 @@ cmake_minimum_required(VERSION 2.8.4)
 project(robotiina)
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-set(OpenCV_DIR "e:/programs/opencv/build/x86/mingw")
-set(BOOST_DIR "e:/programs/boost")
-ENDIF()
+    set(OpenCV_DIR "e:/programs/opencv/build/x86/mingw")
+    set(BOOST_ROOT "E:/programs/boost_1_56_0")
+    set(BOOST_INCLUDEDIR "E:/programs/boost_1_56_0")
+    set(BOOST_LIBRARYDIR "E:/programs/boost_1_56_0/stage/lib")
+    add_definitions( -DWIN32 )
+    set(Boost_USE_STATIC_LIBS ON)
 
+    find_library(WINSOCK_LIB libws2_32.a)
+    set(LIBS ${LIBS} ${WINSOCK_LIB})
+
+ELSE()
+    set(Boost_USE_STATIC_LIBS OFF)
+ENDIF()
+ set(Boost_DEBUG 1)
 # SET(CMAKE_PREFIX_PATH Libs)
 
 #boost
@@ -15,15 +25,15 @@ list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -g -ftest-coverage -
 
 find_package( OpenCV REQUIRED )
 
-set(Boost_USE_STATIC_LIBS OFF) 
-set(Boost_USE_MULTITHREADED ON)  
+set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost 1.55.0 COMPONENTS propertytree program_options)
+find_package(Boost 1.55.0 COMPONENTS program_options system thread)
 
+#if(Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
+#endif()
 
-set(SOURCE_FILES Robotiina.cpp camera.cpp stillcamera.cpp robot.cpp objectfinder.cpp colorcalibrator.cpp autocalibrator.cpp wheelcontroller.cpp calibrationconfreader.cpp dialog.cpp)
-
+set(SOURCE_FILES Robotiina.cpp camera.cpp stillcamera.cpp robot.cpp objectfinder.cpp colorcalibrator.cpp autocalibrator.cpp wheelcontroller.cpp calibrationconfreader.cpp dialog.cpp wheel.cpp wheelemulator.cpp)
 add_executable(robotiina ${SOURCE_FILES})
-target_link_libraries( robotiina ${OpenCV_LIBS} ${Boost_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} )
+target_link_libraries( robotiina  ${OpenCV_LIBS} ${Boost_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY})
