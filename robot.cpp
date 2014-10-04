@@ -107,14 +107,14 @@ void Robot::Run()
             //TODO: transform to real word coordinates
             if(location.second == -1) /* Ball not found */
             {
-                wheels.Rotate(0.5 /* radians or degrees ?*/);
+                //wheels.Rotate(0.5 /* radians or degrees ?*/);
             }
             if (location.second != -1 && location.first != -1)
             {
                 state = STATE_BALL_LOCATED;
             }
 
-            wheels.Forward(100);
+            wheels.DriveRotate(190,90, 50);
 
             //TODO: decide when to stop looking for balls
         }

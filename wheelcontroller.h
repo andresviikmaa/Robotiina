@@ -29,10 +29,6 @@ public:
 		w_right(io_service, "port2", 115200),
 		w_back(io_service, "port3", 115200)*/
 	{
-		w_left = new Wheel(io, "COM10", 115200);
-		w_right = new Wheel(io, "COM11", 115200);
-		w_back = new Wheel(io, "COM12", 115200);
-
 #ifdef EMUATE_WHEEL_RESPONSE
 		we_left = new WheelEmulator(io, "COM14", 115200);
 		we_right = new WheelEmulator(io, "COM15", 115200);
@@ -40,12 +36,16 @@ public:
 		threads.create_thread(boost::bind(&WheelEmulator::Run, we_left));
 		threads.create_thread(boost::bind(&WheelEmulator::Run, we_right));
 		threads.create_thread(boost::bind(&WheelEmulator::Run, we_back));
-
 #endif
+		w_left = new Wheel(io, "COM10", 115200);
+		w_right = new Wheel(io, "COM11", 115200);
+		w_back = new Wheel(io, "COM12", 115200);
 	};
 	void Forward(int speed);
     void MoveTo(const CvPoint &);
-    void Rotate(double degree);
+    void Rotate(bool direction);
+	void Drive(int velocity, double direction);
+	void DriveRotate(int velocity, double direction, int rotate);
     ~WheelController(){
 
 #ifdef EMUATE_WHEEL_RESPONSE
