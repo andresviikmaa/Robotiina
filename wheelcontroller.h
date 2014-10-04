@@ -2,9 +2,9 @@
 
 #include "wheel.h"
 #include "types.h"
-#define EMUATE_WHEEL_RESPONSE
+#define EMULATE_WHEEL_RESPONSE
 
-#ifdef EMUATE_WHEEL_RESPONSE
+#ifdef EMULATE_WHEEL_RESPONSE
 #include <boost/thread/thread.hpp>
 #include "wheelemulator.h"
 #endif
@@ -16,7 +16,7 @@ private:
 	Wheel * w_right;
 	Wheel * w_back;
 
-#ifdef EMUATE_WHEEL_RESPONSE
+#ifdef EMULATE_WHEEL_RESPONSE
 	boost::thread_group threads;
 	WheelEmulator * we_left;
 	WheelEmulator * we_right;
@@ -29,10 +29,10 @@ public:
 		w_right(io_service, "port2", 115200),
 		w_back(io_service, "port3", 115200)*/
 	{
-#ifdef EMUATE_WHEEL_RESPONSE
-		we_left = new WheelEmulator(io, "COM14", 115200);
-		we_right = new WheelEmulator(io, "COM15", 115200);
-		we_back = new WheelEmulator(io, "COM16", 115200);
+#ifdef EMULATE_WHEEL_RESPONSE
+		we_left = new WheelEmulator("left", io, "COM14", 115200);
+		we_right = new WheelEmulator("right", io, "COM15", 115200);
+		we_back = new WheelEmulator("back", io, "COM16", 115200);
 		threads.create_thread(boost::bind(&WheelEmulator::Run, we_left));
 		threads.create_thread(boost::bind(&WheelEmulator::Run, we_right));
 		threads.create_thread(boost::bind(&WheelEmulator::Run, we_back));
@@ -48,7 +48,7 @@ public:
 	void DriveRotate(int velocity, double direction, int rotate);
     ~WheelController(){
 
-#ifdef EMUATE_WHEEL_RESPONSE
+#ifdef EMULATE_WHEEL_RESPONSE
 		we_left->Stop();
 		we_right->Stop();
 		we_back->Stop();
