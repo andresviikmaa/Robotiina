@@ -24,9 +24,11 @@ std::pair<OBJECT, std::string> objects[] = {
 
 std::map<OBJECT, std::string> OBJECT_LABELS(objects, objects + sizeof(objects) / sizeof(objects[0]));
 
-Robot::Robot() : io()
+Robot::Robot(boost::asio::io_service &io) : io(io)
 {
 	camera = NULL;
+    state = STATE_NONE;
+    remote_command = ' ';
 }
 Robot::~Robot()
 {
@@ -150,7 +152,9 @@ void Robot::Run()
             //TODO: kick ball
             state = STATE_LOCATE_BALL;
         }
+        if(STATE_REMOTE_CONTROL == state) {
 
+        }
         if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
         {
           //  const cv::Mat frame = camera->Capture();

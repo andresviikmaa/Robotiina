@@ -1,6 +1,7 @@
 #include "types.h"
 #include "objectfinder.h"
 
+#include <boost/atomic.hpp>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 
@@ -12,16 +13,25 @@ private:
 
     ICamera *camera;
     std::map<OBJECT, HSVColorRange> objectThresholds;
-    STATE state = STATE_NONE;
+    //STATE state = STATE_NONE;
+    boost::atomic<STATE> state;
     void CalibrateObjects(bool autoCalibrate = false);
 	bool ParseOptions(int argc, char* argv[]);
 
 	void Run();
 protected:
-	boost::asio::io_service io;
+	boost::asio::io_service &io;
 
 public:
-    Robot();
+    Robot(boost::asio::io_service &io);
 	bool Launch(int argc, char* argv[]);
 	~Robot();
+
+    int GetState() {
+        return state;
+    }
+    void SetState(STATE state) {
+        this->state = state;
+    }
+    boost::atomic<char> remote_command;
 };
