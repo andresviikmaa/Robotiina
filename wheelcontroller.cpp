@@ -1,5 +1,12 @@
 #include "wheelcontroller.h"
 
+WheelController::WheelController(boost::asio::io_service &io)
+{
+w_left = new Wheel(io, "COM6", 115200);
+w_right = new Wheel(io, "COM8", 115200);
+w_back = new Wheel(io, "COM10", 115200);
+};
+
 void WheelController::Forward(int speed){
 
 	w_left->Run(speed);

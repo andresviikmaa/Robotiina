@@ -6,8 +6,11 @@
 
 
 /*
-	You can use Virtual Serial Port Driver from Eltima Software to bind two COM ports together
+	You can use Virtual Serial Port Driver from Eltima Software or Null-modem emulator to bind two COM ports together
 	and use this class instead of physical device
+    http://www.hhdsoftware.com/free-virtual-serial-ports
+    http://www.eltima.com/products/vspdxp/
+    http://sourceforge.net/projects/tty0tty/
 
 	Emulation code is from here:
 	https://bitbucket.org/ReikoR/w2012/src

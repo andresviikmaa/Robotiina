@@ -1,7 +1,9 @@
 
 #include "wheelemulator.h"
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/thread/thread.hpp>
 #include <sstream>
+#include <conio.h>
 
 
 WheelEmulator::WheelEmulator(const std::string &name, boost::asio::io_service &io_service, std::string port, unsigned int baud_rate)
@@ -12,18 +14,29 @@ WheelEmulator::WheelEmulator(const std::string &name, boost::asio::io_service &i
 }
 
 void WheelEmulator::Run() {
+    std::cout << name << " STARTED" << std::endl;
+
     std::stringstream filename;
-    filename << "conf/eeprom" << name << ".ini";
-    read_ini(filename.str(), eeprom);
+    filename << "conf/wheel_eeprom_" << name << ".ini";
+
+    try {
+        read_ini(filename.str(), eeprom);
+    }catch(...){}
+
     setup();
+
 	while (!stop) {
-        parse_and_execute_command(readLine().c_str());
+        std::string str = readLine();
+        std::cout << name << " OUT: " <<  str << std::endl;
+        parse_and_execute_command(str.c_str());
 	}
-    read_ini(filename.str(), eeprom);
+    write_ini(filename.str(), eeprom);
+    std::cout << name << " STOPED" << std::endl;
 
 }
 /**/
 void WheelEmulator::usb_write(const char *str) {
+    std::cout << name << " OUT: " <<  str << std::endl;
     writeString(str);
 }
 void WheelEmulator::eeprom_update_byte(uint8_t * __p, uint8_t __value){
@@ -235,10 +248,71 @@ void WheelEmulator::setup() {
 }
 
 void WheelEmulator::Stop() {
-	serial.cancel();
+    std::stringstream filename;
+    filename << "conf/wheel_eeprom_" << name << ".ini";
+    write_ini(filename.str(), eeprom);
+    serial.cancel();
 	stop = true;
 }
 
 WheelEmulator::~WheelEmulator()
 {
+}
+
+
+int main(int argc, char *argv[])
+{
+    if (argc < 4){
+        std::cout << "usage ./wheelemulator <port1> <port2> <port3>" << std::endl;
+        exit(-1);
+    }
+	boost::thread_group threads;
+    boost::asio::io_service io;
+
+    WheelEmulator * we_left;
+	WheelEmulator * we_right;
+	WheelEmulator * we_back;
+
+
+    try
+    {
+
+		we_left = new WheelEmulator("left", io, argv[1], 115200);
+		we_right = new WheelEmulator("right", io, argv[2], 115200);
+		we_back = new WheelEmulator("back", io, argv[3], 115200);
+
+		threads.create_thread(boost::bind(&WheelEmulator::Run, we_left));
+		threads.create_thread(boost::bind(&WheelEmulator::Run, we_right));
+		threads.create_thread(boost::bind(&WheelEmulator::Run, we_back));
+
+        uchar a;
+        while(getch()){
+            break;
+        }
+		we_left->Stop();
+		we_right->Stop();
+		we_back->Stop();
+
+		threads.join_all();
+
+		delete we_left;
+		delete we_right;
+		delete we_back;
+
+
+
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "ups, " << e.what() << std::endl;
+    }
+    catch (const std::string &e)
+    {
+        std::cout << "ups, " << e << std::endl;
+    }
+    catch (...)
+    {
+        std::cout << "ups, did not see that coming."<< std::endl;
+    }
+
 }
