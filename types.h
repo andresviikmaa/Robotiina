@@ -3,8 +3,8 @@
 #include <math.h> 
 #ifdef WIN32
 #define _WIN32_WINNT 0x0501 // win xp
-#define PI 3.14159265
 #endif
+#define PI 3.14159265
 
 struct ColorRange
 {
