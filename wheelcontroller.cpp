@@ -1,10 +1,24 @@
 #include "wheelcontroller.h"
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 WheelController::WheelController(boost::asio::io_service &io)
 {
-w_left = new Wheel(io, "COM6", 115200);
-w_right = new Wheel(io, "COM8", 115200);
-w_back = new Wheel(io, "COM10", 115200);
+    using boost::property_tree::ptree;
+    ptree pt;
+    try {
+        read_ini("conf/wheels.ini", pt);
+    } catch(...) {
+        pt.put("left.port", "COM6");
+        pt.put("right.port", "COM8");
+        pt.put("back.port", "COM10");
+        write_ini("conf/wheels.ini", pt);
+    }
+
+
+    w_left = new Wheel(io, pt.get<std::string>("left.port"), 115200);
+    w_right = new Wheel(io, pt.get<std::string>("right.port"), 115200);
+    w_back = new Wheel(io, pt.get<std::string>("back.port"), 115200);
 };
 
 void WheelController::Forward(int speed){

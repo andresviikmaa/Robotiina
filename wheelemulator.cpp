@@ -23,6 +23,7 @@ void WheelEmulator::Run() {
     }catch(...){}
 
     setup();
+    write_ini(filename.str(), eeprom);
 
 	while (!stop) {
         std::string str = readLine();
