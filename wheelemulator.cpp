@@ -3,8 +3,7 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/thread/thread.hpp>
 #include <sstream>
-#include <conio.h>
-
+#include <stdio.h>
 
 WheelEmulator::WheelEmulator(const std::string &name, boost::asio::io_service &io_service, std::string port, unsigned int baud_rate)
 	: SimpleSerial(io_service, port, baud_rate)
@@ -286,7 +285,7 @@ int main(int argc, char *argv[])
 		threads.create_thread(boost::bind(&WheelEmulator::Run, we_back));
 
         uchar a;
-        while(getch()){
+        while(getchar()){
             break;
         }
 		we_left->Stop();
