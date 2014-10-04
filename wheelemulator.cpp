@@ -11,7 +11,13 @@ WheelEmulator::WheelEmulator(boost::asio::io_service &io_service, std::string po
 void WheelEmulator::Run() {
 	while (!stop) {
 		std::string message = readLine();
-		writeString("stall:0\n");
+		if (message == "?"){
+			writeString("0");
+		}
+		else{
+			writeString("stall:0\n");
+		}
+		
 	}
 
 }
