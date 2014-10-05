@@ -4,14 +4,15 @@
 #include <boost/atomic.hpp>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
-
+#include <boost/thread/mutex.hpp>
 namespace po = boost::program_options;
-
+class WheelController;
 class Robot {
 private:
 	po::variables_map config;
 
     ICamera *camera;
+    WheelController * wheels;
     std::map<OBJECT, HSVColorRange> objectThresholds;
     //STATE state = STATE_NONE;
     boost::atomic<STATE> state;
@@ -19,6 +20,8 @@ private:
 	bool ParseOptions(int argc, char* argv[]);
 
 	void Run();
+    boost::mutex remote_mutex;
+
 protected:
 	boost::asio::io_service &io;
 
@@ -33,5 +36,5 @@ public:
     void SetState(STATE state) {
         this->state = state;
     }
-    boost::atomic<char> remote_command;
+    std::string ExecuteRemoteCommand(const std::string &command);
 };

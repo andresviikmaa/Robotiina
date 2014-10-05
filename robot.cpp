@@ -9,6 +9,7 @@
 #include "wheel.h"
 
 #include <opencv2/opencv.hpp>
+#include <boost/algorithm/string.hpp>
 
 #define BUTTON(dialog, name, new_state) \
 dialog.createButton(name, [](int state, void* self){ ((Robot*)self)->state = new_state; }, this, CV_PUSH_BUTTON, 0);
@@ -28,12 +29,14 @@ Robot::Robot(boost::asio::io_service &io) : io(io)
 {
 	camera = NULL;
     state = STATE_NONE;
-    remote_command = ' ';
+    wheels = new WheelController(io);
 }
 Robot::~Robot()
 {
 	if (camera)
 		delete camera;
+    if(wheels)
+        delete wheels;
 }
 void Robot::CalibrateObjects(bool autoCalibrate/* = false*/)
 {
@@ -65,7 +68,6 @@ bool Robot::Launch(int argc, char* argv[])
 void Robot::Run()
 {
     ObjectFinder finder;
-	WheelController wheels(io);
 
     while (state != STATE_END_OF_GAME)
     {
@@ -109,14 +111,14 @@ void Robot::Run()
             //TODO: transform to real word coordinates
             if(location.second == -1) /* Ball not found */
             {
-                //wheels.Rotate(0.5 /* radians or degrees ?*/);
+                //wheels->Rotate(0.5 /* radians or degrees ?*/);
             }
             if (location.second != -1 && location.first != -1)
             {
                 state = STATE_BALL_LOCATED;
             }
 
-            wheels.DriveRotate(190,90, 50);
+            wheels->DriveRotate(190,90, 50);
 
             //TODO: decide when to stop looking for balls
         }
@@ -132,7 +134,7 @@ void Robot::Run()
 			}
 			else if (distance < 100){
 				//TODO: turn depending on HorizontalDev
-				wheels.Rotate(HorizontalDev);
+				wheels->Rotate(HorizontalDev);
 			}
 			else{
 				//TODO: move closer to ball
@@ -144,7 +146,7 @@ void Robot::Run()
         {
             /*CvPoint location = finder.Locate(objectThresholds[GATE]);*/
             //TODO: how
-            wheels.Rotate(0);
+            wheels->Rotate(0);
             state = STATE_GATE_LOCATED;
         }
         if(STATE_GATE_LOCATED == state)
@@ -165,6 +167,27 @@ void Robot::Run()
 			break;
         }
     }
+}
+std::string Robot::ExecuteRemoteCommand(const std::string &command){
+    std::stringstream response;
+    boost::mutex::scoped_lock lock(remote_mutex); //allow one command at a time
+    std::vector<std::string> tokens;
+    boost::split(tokens, command, boost::is_any_of(";"));
+    std::string query = tokens[0];
+    STATE s = (STATE)GetState();
+    if(query == "status") response << s;
+    else if(query == "remote") SetState(STATE_REMOTE_CONTROL);
+    else if(query == "cont") SetState(STATE_LOCATE_BALL);
+    else if(query == "reset") SetState(STATE_NONE);
+    else if(query == "exit") SetState(STATE_END_OF_GAME);
+    else if (STATE_REMOTE_CONTROL == s) {
+        if (query == "drive" && tokens.size() == 3) {
+            int speed = atoi(tokens[1].c_str());
+            float direction = atof(tokens[2].c_str());
+            wheels->Drive(speed, direction);
+        }
+    }
+    return response.str();
 }
 
 bool Robot::ParseOptions(int argc, char* argv[])

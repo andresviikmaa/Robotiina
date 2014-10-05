@@ -23,15 +23,7 @@ void RemoteControl::Stop(){
 }
 
 std::string RemoteControl::respond(const std::string &query){
-    std::stringstream response;
-    STATE s = (STATE)robot->GetState();
-    if(query == "s") response << s;
-    else if(query == "r") robot->SetState(STATE_REMOTE_CONTROL);
-    else if(query == "c") robot->SetState(STATE_LOCATE_BALL);
-    else if(query == "b") robot->SetState(STATE_NONE);
-    else if(query == "z") robot->SetState(STATE_END_OF_GAME);
-    else if (STATE_REMOTE_CONTROL == s) robot->remote_command = query[0];
-    return response.str();
+    return robot->ExecuteRemoteCommand(query.substr(0, query.find('#')));
 }
 
 void RemoteControl::loop(){
@@ -40,7 +32,7 @@ void RemoteControl::loop(){
 
     while (!stop)
     {
-        boost::array<char, 1> recv_buf;
+        boost::array<char, 1024> recv_buf;
         udp::endpoint remote_endpoint;
         boost::system::error_code error;
         socket.receive_from(boost::asio::buffer(recv_buf),
