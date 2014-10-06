@@ -11,8 +11,10 @@
 #include <opencv2/opencv.hpp>
 #include <boost/algorithm/string.hpp>
 
-#define BUTTON(dialog, name, new_state) \
+#define STATE_BUTTON(dialog, name, new_state) \
 dialog.createButton(name, [](int state, void* self){ ((Robot*)self)->state = new_state; }, this, CV_PUSH_BUTTON, 0);
+#define BUTTON(dialog, name, function_body) \
+dialog.createButton(name, [](int state, void* self){ function_body }, this, CV_PUSH_BUTTON, 0);
 
 std::pair<OBJECT, std::string> objects[] = {
 	std::pair<OBJECT, std::string>(BALL, "Ball"),
@@ -74,11 +76,13 @@ void Robot::Run()
         if (STATE_NONE == state) {
 
             Dialog launchWindow("Launch Robotiina", CV_WINDOW_AUTOSIZE);
-            BUTTON(launchWindow, "Configure USB devices", STATE_CONFIGURE_USB)
-            BUTTON(launchWindow, "AutoCalibrate objects", STATE_AUTOCALIBRATE)
-            BUTTON(launchWindow, "ManualCalibrate objects", STATE_CALIBRATE)
-			BUTTON(launchWindow, "Start Robot", STATE_LAUNCH)
-            BUTTON(launchWindow, "Exit", STATE_END_OF_GAME)
+			STATE_BUTTON(launchWindow, "Configure USB devices", STATE_CONFIGURE_USB)
+			STATE_BUTTON(launchWindow, "AutoCalibrate objects", STATE_AUTOCALIBRATE)
+			STATE_BUTTON(launchWindow, "ManualCalibrate objects", STATE_CALIBRATE)
+			STATE_BUTTON(launchWindow, "Start Robot", STATE_LAUNCH)
+			STATE_BUTTON(launchWindow, "Remote Control", STATE_REMOTE_CONTROL)
+			STATE_BUTTON(launchWindow, "Manual Control", STATE_MANUAL_CONTROL)
+			STATE_BUTTON(launchWindow, "Exit", STATE_END_OF_GAME)
             launchWindow.show();
 
         }
@@ -160,9 +164,23 @@ void Robot::Run()
             state = STATE_LOCATE_BALL;
         }
         if(STATE_REMOTE_CONTROL == state) {
+			Dialog launchWindow("Remote Control Mode Enabed", CV_WINDOW_AUTOSIZE);
+			STATE_BUTTON(launchWindow, "Back", STATE_NONE)
+			launchWindow.show();
 
         }
-        if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
+		if (STATE_MANUAL_CONTROL == state) {
+			Dialog manualWindow("Manual Control Mode Enabed", CV_WINDOW_AUTOSIZE);
+			BUTTON(manualWindow, "Move Left", ((Robot*)self)->wheels->Drive(20, -PI / 2);)
+				BUTTON(manualWindow, "Move Right", ((Robot*)self)->wheels->Drive(20, PI / 2);)
+				BUTTON(manualWindow, "Move Forward", ((Robot*)self)->wheels->Drive(20, 0);)
+				BUTTON(manualWindow, "Move Back", ((Robot*)self)->wheels->Drive(20, PI);)
+				BUTTON(manualWindow, "Rotate", ((Robot*)self)->wheels->Rotate(PI); )
+				STATE_BUTTON(manualWindow, "Back", STATE_NONE)
+				manualWindow.show();
+
+		}
+		if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
         {
           //  const cv::Mat frame = camera->Capture();
 
