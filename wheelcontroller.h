@@ -9,17 +9,20 @@ private:
 	Wheel * w_left;
 	Wheel * w_right;
 	Wheel * w_back;
-
+	
 
 public:
+	
 	WheelController(boost::asio::io_service &io);
+	std::string is_stall[3];
 	void Forward(int speed);
     void MoveTo(const CvPoint &);
     void Rotate(bool direction);
 	void Drive(int velocity, double direction);
 	void DriveRotate(int velocity, double direction, int rotate);
+	void Stop();
+	bool CheckStall();
     ~WheelController(){
-
 
 		delete w_left;
 		delete w_right;

@@ -22,7 +22,7 @@ public:
 		}	
 		*/
 	};
-	void Run(int given_speed);
+	std::string Run(int given_speed);
 	void Stop();
 	int Speed();
 	

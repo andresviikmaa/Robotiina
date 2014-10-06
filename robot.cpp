@@ -103,6 +103,9 @@ void Robot::Run()
 				state = STATE_NONE; // no conf
 			}
 		}
+		if (STATE_CRASH == state){
+			wheels->Stop();
+		}
         if (STATE_LOCATE_BALL == state) {
 			std::pair<int, double> location = finder.Locate(objectThresholds[BALL], camera->Capture());
 			int HorizontalDev = location.first;
@@ -118,8 +121,10 @@ void Robot::Run()
                 state = STATE_BALL_LOCATED;
             }
 
-            wheels->DriveRotate(190,90, 50);
-
+            wheels->DriveRotate(190,70, 50);
+			if (wheels->CheckStall()){
+				state = STATE_CRASH;
+			}
             //TODO: decide when to stop looking for balls
         }
         if(STATE_BALL_LOCATED == state) {

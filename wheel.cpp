@@ -14,20 +14,22 @@ void Wheel::Stop(){
 	}
 }
 
-void Wheel::Run(int given_speed){
+std::string Wheel::Run(int given_speed){
 	try {
 		speed = given_speed;
 		std::ostringstream oss;
 		oss << "sd" << speed << "\n";
 		writeString(oss.str());
-		/*std::cout << readLine() << std::endl;*/
-		std::cout << "WheelSpeed " << id << " " << speed << std::endl;
+		//std::cout << readLine() << std::endl;
+		return "stall:0";
+		
+		/*std::cout << "WheelSpeed " << id << " " << speed << std::endl; */
 
 	}
 	catch (boost::system::system_error& e)
 	{
 		std::cout << "Error: " << e.what() << std::endl;
-		return;
+		return "er";
 	}
 }
 
