@@ -1,5 +1,11 @@
 #pragma  once
-#include "types.h"
+//#include "types.h"
+#ifdef WIN32
+#define _WIN32_WINNT 0x0501 // win xp
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "simpleserial.h"
 #include <boost/atomic.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -89,7 +95,7 @@ private:
 
     void usb_write(const char *str);
     void parse_and_execute_command(const char *buf);
-    void eeprom_update_byte(uint8_t * __p, uint8_t __value);
+    void eeprom_update_byte(uint8_t * __p, uint8_t _value);
     uint8_t eeprom_read_byte(const uint8_t * __p);
     void pid();
     void reset_pid() ;

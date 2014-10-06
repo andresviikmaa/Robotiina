@@ -39,9 +39,9 @@ void WheelEmulator::usb_write(const char *str) {
     std::cout << name << " OUT: " <<  str << std::endl;
     writeString(str);
 }
-void WheelEmulator::eeprom_update_byte(uint8_t * __p, uint8_t __value){
+void WheelEmulator::eeprom_update_byte(uint8_t * __p, uint8_t _value){
     std::stringstream key; key << "byte" << *__p;
-    eeprom.put(key.str(), __value);
+    eeprom.put(key.str(), _value);
 }
 uint8_t WheelEmulator::eeprom_read_byte(const uint8_t * __p) {
     std::stringstream key; key << "byte" << *__p;
@@ -285,7 +285,7 @@ int main(int argc, char *argv[])
 		threads.create_thread(boost::bind(&WheelEmulator::Run, we_right));
 		threads.create_thread(boost::bind(&WheelEmulator::Run, we_back));
 
-        uchar a;
+        unsigned char a;
         while(getchar()){
             break;
         }

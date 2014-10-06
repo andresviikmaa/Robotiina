@@ -15,12 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\wheelemulator.cpp">
+    <ClCompile Include="wheelemulator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\wheelemulator.h">
+    <ClInclude Include="wheelemulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
