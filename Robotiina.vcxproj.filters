@@ -28,6 +28,7 @@
     <ClInclude Include="autocalibrator.h" />
     <ClInclude Include="calibrationconfreader.h" />
     <ClInclude Include="remotecontrol.h" />
+    <ClInclude Include="blockingreader.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

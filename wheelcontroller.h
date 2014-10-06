@@ -14,7 +14,6 @@ private:
 public:
 	
 	WheelController(boost::asio::io_service &io);
-	std::string is_stall[3];
 	void Forward(int speed);
     void MoveTo(const CvPoint &);
     void Rotate(bool direction);

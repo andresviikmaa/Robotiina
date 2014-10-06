@@ -20,7 +20,9 @@ std::string Wheel::Run(int given_speed){
 		std::ostringstream oss;
 		oss << "sd" << speed << "\n";
 		writeString(oss.str());
-		//std::cout << readLine() << std::endl;
+		//readLine();
+
+			
 		return "stall:0";
 		
 		/*std::cout << "WheelSpeed " << id << " " << speed << std::endl; */
@@ -45,4 +47,15 @@ int Wheel::Speed(){
 		return 0;
 	}
 	
+}
+
+void Wheel::StallCheck(){
+	
+	while (!stop_thread){
+
+		if (readLine() == "stall:1"){
+			stall = true;
+		}
+
+	}
 }

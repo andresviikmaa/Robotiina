@@ -37,6 +37,7 @@ Robot::~Robot()
 		delete camera;
     if(wheels)
         delete wheels;
+
 }
 void Robot::CalibrateObjects(bool autoCalibrate/* = false*/)
 {
@@ -71,6 +72,7 @@ void Robot::Run()
 
     while (state != STATE_END_OF_GAME)
     {
+		
         if (STATE_NONE == state) {
 
             Dialog launchWindow("Launch Robotiina", CV_WINDOW_AUTOSIZE);
@@ -120,11 +122,8 @@ void Robot::Run()
             {
                 state = STATE_BALL_LOCATED;
             }
-
             wheels->DriveRotate(190,70, 50);
-			if (wheels->CheckStall()){
-				state = STATE_CRASH;
-			}
+
             //TODO: decide when to stop looking for balls
         }
         if(STATE_BALL_LOCATED == state) {
@@ -162,6 +161,9 @@ void Robot::Run()
         if(STATE_REMOTE_CONTROL == state) {
 
         }
+		if (wheels->CheckStall()){
+			state = STATE_CRASH;
+		}
         if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
         {
           //  const cv::Mat frame = camera->Capture();

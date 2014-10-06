@@ -23,30 +23,30 @@ WheelController::WheelController(boost::asio::io_service &io)
 
 void WheelController::Forward(int speed){
 
-	is_stall[0] = w_left->Run(speed);
-	is_stall[1] = w_right->Run(-speed);
-	is_stall[2] = w_back->Run(0);
+	w_left->Run(speed);
+	w_right->Run(-speed);
+	w_back->Run(0);
 
 }
 void WheelController::Rotate(bool direction){
 	if (direction){
-		is_stall[0] = w_left->Run(50);
-		is_stall[1] = w_right->Run(50);
-		is_stall[2] = w_back->Run(50);
+		w_left->Run(50);
+		w_right->Run(50);
+		w_back->Run(50);
 	}
 	else {
-		is_stall[0] = w_left->Run(-50);
-		is_stall[1] = w_right->Run(-50);
-		is_stall[2] = w_back->Run(-50);
+		w_left->Run(-50);
+		w_right->Run(-50);
+		w_back->Run(-50);
 	}
 
 
 }
 void WheelController::Drive(int velocity, double direction){
 	
-	is_stall[0] = w_left->Run(velocity*cos((150 - direction) * PI / 180.0));
-	is_stall[1] = w_right->Run(velocity*cos((30 - direction)  * PI / 180.0));
-	is_stall[2] = w_back->Run(velocity*cos((270 - direction)  * PI / 180.0));
+	w_left->Run(velocity*cos((150 - direction) * PI / 180.0));
+	w_right->Run(velocity*cos((30 - direction)  * PI / 180.0));
+	w_back->Run(velocity*cos((270 - direction)  * PI / 180.0));
 
 }
 
@@ -62,9 +62,9 @@ void WheelController::DriveRotate(int velocity, double direction, int rotate){
 		velocity = -190 - rotate;
 	}
 	
-	is_stall[0] = w_left->Run((velocity*cos((150 - direction) * PI / 180.0)) + rotate);
-	is_stall[1] = w_right->Run((velocity*cos((30 - direction)  * PI / 180.0)) + rotate);
-	is_stall[2] = w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)) + rotate);
+	w_left->Run((velocity*cos((150 - direction) * PI / 180.0)) + rotate);
+	w_right->Run((velocity*cos((30 - direction)  * PI / 180.0)) + rotate);
+	w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)) + rotate);
 
 	
 	
@@ -77,7 +77,7 @@ void WheelController::Stop(){
 }
 
 bool WheelController::CheckStall(){
-	if (is_stall[0] != "stall:0" & is_stall[1] != "stall:0" & is_stall[2] != "stall:0"){
+	if (w_left->stall || w_right->stall || w_back->stall){
 		return true;
 	}
 	else{

@@ -1,1 +1,1 @@
-Debug\wheelemulator.exe COM14 COM15 COM16
+wheelemulator.exe COM14 COM15 COM16

@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="autocalibrator.h" />
+    <ClInclude Include="blockingreader.h" />
     <ClInclude Include="calibrationconfreader.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="colorcalibrator.h" />
