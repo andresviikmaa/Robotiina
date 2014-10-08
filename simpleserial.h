@@ -31,7 +31,7 @@ public:
 				result += c;
 			}
 			if (c != '\n'){
-				std::cout << "Serial time out \n";
+				return result;
 			}
 			return result;
 			

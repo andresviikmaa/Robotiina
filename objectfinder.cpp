@@ -25,9 +25,8 @@ ObjectFinder::ObjectFinder()
 		write_ini("conf/camera.ini", pt);
 	};
 }
-std::pair<int, double> ObjectFinder::Locate(const HSVColorRange &r, const cv::Mat &frame) {
+	cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, const cv::Mat &frame) {
 	cv::Point2f point = LocateOnScreen(r, frame);
-
 	return ConvertPixelToRealWorld(point, cv::Point2i(frame.cols, frame.rows));
 }
 
@@ -90,22 +89,26 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 	return center;
 }
 
-std::pair<int, double> ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size)
+cv::Point3d ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size)
 {
-	const cv::Point2d center; (frame_size.x / 2.0, frame_size.y / 2.0);
+	if (point.y == 0 && point.x == 0){ //If there is no object found
+		return cv::Point3d(-1, -1, -1);
+	}
 
+	const cv::Point2d center (frame_size.x / 2.0, frame_size.y / 2.0);
 	//Calculating distance
-	float angle = (Vfov * (point.y - center.y) / center.y) + CamAngleDev;
-	float distance = CamHeight / tan(angle * PI / 180);
+	double angle = (Vfov * (point.y - center.y) / center.y) + CamAngleDev;
+	double distance = CamHeight / tan(angle * PI / 180);
 	//Calculating horizontal deviation
-	int HorizontalDev = center.x - point.x; //positive value, if left, negative if right compared to center axis
 
-	if (center.y == 0 && center.x == 0){ //If there is no object found
-		return std::make_pair(-1, -1);
+	double Hor_angle = (Hfov * (point.x - center.x) / center.x);
+	if (Hor_angle < 0){
+		Hor_angle = 360 + Hor_angle;
 	}
-	else{
-		return std::make_pair(HorizontalDev, distance);
-	}
+	double HorizontalDev = tan(Hor_angle * PI / 180)*distance;
+
+	return cv::Point3d(distance, HorizontalDev, Hor_angle);
+
 
 	
 }

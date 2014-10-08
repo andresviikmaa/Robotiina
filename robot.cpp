@@ -109,42 +109,57 @@ void Robot::Run()
 			wheels->Stop();
 		}
         if (STATE_LOCATE_BALL == state) {
-			std::pair<int, double> location = finder.Locate(objectThresholds[BALL], camera->Capture());
-			int HorizontalDev = location.first;
-			float distance = location.second;
-
-            //TODO: transform to real word coordinates
-            if(location.second == -1) /* Ball not found */
+			cv::Point3d location = finder.Locate(objectThresholds[BALL], camera->Capture());
+			double distance = location.x;
+			double HorizontalDev = location.y;
+			double HorizontalAngle = location.z;
+          
+			if (location.x == -1 && location.y == -1 && location.z == -1) /* Ball not found */
             {
-                //wheels->Rotate(0.5 /* radians or degrees ?*/);
+                wheels->Rotate(1);
             }
-            if (location.second != -1 && location.first != -1)
+			if (location.x != -1 && location.y != -1) /*Ball found*/
             {
+				wheels->Stop();
                 state = STATE_BALL_LOCATED;
             }
-            wheels->DriveRotate(190,70, 50);
-
-            //TODO: decide when to stop looking for balls
+            
         }
         if(STATE_BALL_LOCATED == state) {
-            //TODO: start tribbler
+			cv::Point3d location = finder.Locate(objectThresholds[BALL], camera->Capture());
+			double distance = location.x;
+			double HorizontalDev = location.y;
+			double HorizontalAngle = location.z;
 
-			std::pair<int, double> location = finder.Locate(objectThresholds[BALL], camera->Capture());
-			int HorizontalDev = location.first;
-			float distance = location.second;
-
-			if (distance < 100 && (HorizontalDev > -10 || HorizontalDev < 10)){
+			//If ball is lost
+			if (distance == -1 && HorizontalDev == -1 && HorizontalAngle == -1){ 
+				state = STATE_LOCATE_BALL;
+			}			
+			else if (distance < 300 && (HorizontalDev > -50 && HorizontalDev < 50)){
 				//TODO: start catching the ball with tribbler
+				wheels->Stop();
 			}
-			else if (distance < 100){
+			else if (distance < 300){
+				//TODO: start tribbler
 				//TODO: turn depending on HorizontalDev
-				wheels->Rotate(HorizontalDev);
+				wheels->Stop();
 			}
 			else{
-				//TODO: move closer to ball
+				int speed = distance * 0.05 - 5;
+				if (HorizontalDev > -50 && HorizontalDev < 50){
+					wheels->Drive(speed, HorizontalAngle);
+				}
+				else if (HorizontalDev >= 50){
+					wheels->DriveRotate(speed, HorizontalAngle, 15);
+				}
+				else{
+					wheels->DriveRotate(speed, HorizontalAngle, -15);
+				}			
+				
 			}
-
-            state = STATE_LOCATE_GATE;
+			std::cout << "distance2 " << HorizontalDev << '\n';
+			
+            //state = STATE_LOCATE_GATE;
         }
         if (STATE_LOCATE_GATE == state)
         {
@@ -164,6 +179,7 @@ void Robot::Run()
 		if (wheels->CheckStall()){
 			state = STATE_CRASH;
 		}
+
         if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
         {
           //  const cv::Mat frame = camera->Capture();
