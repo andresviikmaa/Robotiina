@@ -16,7 +16,7 @@ private:
     std::map<OBJECT, HSVColorRange> objectThresholds;
     //STATE state = STATE_NONE;
     boost::atomic<STATE> state;
-    void CalibrateObjects(bool autoCalibrate = false);
+	void CalibrateObjects(const cv::Mat &image, bool autoCalibrate = false);
 	bool ParseOptions(int argc, char* argv[]);
 
 	void Run();

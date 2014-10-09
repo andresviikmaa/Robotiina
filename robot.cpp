@@ -41,9 +41,8 @@ Robot::~Robot()
         delete wheels;
 
 }
-void Robot::CalibrateObjects(bool autoCalibrate/* = false*/)
+void Robot::CalibrateObjects(const cv::Mat &image, bool autoCalibrate/* = false*/)
 {
-    cv::Mat image = camera->Capture();
     ColorCalibrator* calibrator = autoCalibrate ? new AutoCalibrator() : new ColorCalibrator();
     calibrator->LoadImage(image);
 
@@ -74,6 +73,8 @@ void Robot::Run()
 
     while (state != STATE_END_OF_GAME)
     {
+		cv::Mat image = camera->Capture();
+
         if (STATE_NONE == state) {
 
             Dialog launchWindow("Launch Robotiina", CV_WINDOW_AUTOSIZE);
@@ -88,11 +89,11 @@ void Robot::Run()
 
         }
         if (STATE_CALIBRATE == state) {
-            CalibrateObjects();
+            CalibrateObjects(image);
             state = STATE_NONE;
         }
         if (STATE_AUTOCALIBRATE == state) {
-            CalibrateObjects(true);
+            CalibrateObjects(image, true);
             state = STATE_NONE;
         }
 		if (STATE_LAUNCH == state) {
@@ -224,7 +225,14 @@ std::string Robot::ExecuteRemoteCommand(const std::string &command){
             int speed = atoi(tokens[1].c_str());
             float direction = atof(tokens[2].c_str());
             wheels->Drive(speed, direction);
-        }
+		}
+		else if (query == "rdrive" && tokens.size() == 4) {
+			int speed = atoi(tokens[1].c_str());
+			float direction = atof(tokens[2].c_str());
+			int rotate = atoi(tokens[3].c_str());
+			wheels->DriveRotate(speed, direction, rotate);
+		}
+
     }
     return response.str();
 }

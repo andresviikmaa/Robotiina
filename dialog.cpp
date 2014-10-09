@@ -26,6 +26,8 @@ int Dialog::show() {
 
     }
     cv::namedWindow(m_title, CV_WINDOW_FULLSCREEN);
+	cvSetWindowProperty(m_title.c_str(), CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+	cv::moveWindow(m_title, 0, 0);
     cv::imshow( m_title, image );
 
     cv::setMouseCallback(m_title, [](int event, int x, int y, int flags, void* self) {
@@ -44,7 +46,7 @@ int Dialog::show() {
 };
 
 void Dialog::mouseClicked(int x, int y) {
-    int index = (y / m_buttonHeight );
+	int index = round((float)y / m_buttonHeight) - 1;
     if (index < m_buttons.size()){
         auto button = m_buttons[index];
         std::get<1>(button)(1, std::get<2>(button));

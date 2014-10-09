@@ -86,6 +86,7 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 	//Draw circle
 	cv::circle(imgOriginal, center, 10, colorCircle, 3);
 	cv::imshow("Original", imgOriginal);
+	cv::moveWindow("Original", 0, 0);
 	return center;
 }
 

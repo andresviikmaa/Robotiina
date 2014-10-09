@@ -2,8 +2,10 @@
 #include <opencv2/opencv.hpp>
 #include <math.h> 
 #ifdef WIN32
-#define _WIN32_WINNT 0x0600 // vista for socket.cancel()
-#define _WIN32_WINNT_WS08 // GetTickCount64 is missing in mingw, so emulate Windows Server 2008
+	#define _WIN32_WINNT 0x0600 // vista for socket.cancel()
+	#ifndef _WIN32_WINNT_WS08
+		#define _WIN32_WINNT_WS08 // GetTickCount64 is missing in mingw, so emulate Windows Server 2008
+	#endif
 #endif
 #define PI 3.14159265
 
