@@ -4,12 +4,42 @@
 #include <boost/thread/thread.hpp>
 #include <sstream>
 #include <stdio.h>
+#include <algorithm>    // std::min
 
 WheelEmulator::WheelEmulator(const std::string &name, boost::asio::io_service &io_service, std::string port, unsigned int baud_rate)
 	: SimpleSerial(io_service, port, baud_rate)
 {
 	stop = false;
     this->name = name;
+}
+char  WheelEmulator::usb_serial_getchar()
+{
+	return '\0';
+}
+uint8_t WheelEmulator::recv_str(char *buf, uint8_t size) 
+{
+	std::string str = readLine();
+	std::cout << name << " IN: " << str << std::endl;
+	strncpy(buf, str.c_str(), size);
+	return std::min(str.size(), (size_t)size);
+	/*
+	char data;
+	uint8_t count = 0;
+
+	while (count < size) {
+		data = usb_serial_getchar();
+		//usb_serial_putchar(data);
+		if (data == '\r' || data == '\n') {
+			*buf = '\0';
+			return size;
+		}
+		if (data >= ' ' && data <= '~') {
+			*buf++ = data;
+			count++;
+		}
+	}
+	return count;
+	*/
 }
 
 void WheelEmulator::Run() {
@@ -25,11 +55,128 @@ void WheelEmulator::Run() {
     setup();
     write_ini(filename.str(), eeprom);
 
+//	CLKPR = 0x80;
+//	CLKPR = 0x00;
+//	usb_init();
+
+	dir = eeprom_read_byte((uint8_t*)0);
+	motor_polarity = eeprom_read_byte((uint8_t*)1);
+	pgain = eeprom_read_byte((uint8_t*)3);
+	igain = eeprom_read_byte((uint8_t*)4);
+	dgain = eeprom_read_byte((uint8_t*)5);
+
+	if (pgain == 255) {
+		pgain = 6;
+		eeprom_update_byte((uint8_t*)3, pgain);
+	}
+	if (igain == 255) {
+		igain = 8;
+		eeprom_update_byte((uint8_t*)4, igain);
+	}
+	/*
+	bit_set(DDRC, BIT(LED1));
+	bit_set(DDRC, BIT(LED2));
+	bit_set(PORTC, BIT(LED1));
+	bit_set(PORTC, BIT(LED2));
+
+	//Wait for USB to be configured
+	while (!usb_configured());
+	_delay_ms(500);
+
+	//PID
+	pid_multi = 32;
+	imax = 255 * pid_multi;
+	err_max = 4000;
+	pwm_min = 25;
+	//igain = 8;	//divider
+	//pgain = 2;
+	//dgain = 0;
+	intgrl = 0;
+	count = 0;
+	speed = 0;
+	err = 0;
+
+	//timer0
+	TCCR0A = 0b00000010;
+	TCCR0B = 0b00000101; //prescale 1024
+	OCR0A = 250;
+	TIMSK0 = 0b00000010;
+	TCNT0 = 0;
+
+	//init PCINT0
+	DDRB &= 0b11111110;
+	PCICR = 1; //enable pin change interrupt
+	PCMSK0 = 0b00000001;
+
+	//quadrature decoder, INT0, INT1 interrupt
+	bit_clear(DDRD, BIT(0));
+	bit_clear(DDRD, BIT(1));
+	EICRA = 0b00000101; //both edges
+	EIMSK = 0b00000011; //enable mask
+
+	//Mootorite PWM
+	bit_set(DDRC, BIT(PWM));
+
+	//TCCR1A = 0b10000001; //phase correct
+	//TCCR1B = 0b00000011; //prescale 64, freq 490
+	TCCR1A = 0b10000001; //fast pwm
+	TCCR1B = 0b00001100; //prescale 64, freq 980		
+
+	OCR1AL = 0;
+	//OCR1BL = 0;
+
+	bit_set(DDRB, BIT(DIR1));
+	bit_set(DDRB, BIT(DIR2));
+
+	sei();
+	*/
+	uint8_t n;
+	char buf[16];
+
+	while (1) {
+		if (update_pid) {
+			if (pid_on) {
+				pid();
+				update_pid = 0;
+			}
+			if (send_speed) {
+				sprintf(response, "<s:%d>\n", speed);
+				usb_write(response);
+			}
+			if ((speed < 10) && (pwm > 250)) {
+				stall_counter++;
+			}
+			else {
+				stall_counter = 0;
+			}
+			fail_counter++;
+		}
+
+		if ((fail_counter == 100) && failsafe) {
+			sp_pid = 0;
+			reset_pid();
+			forward(0);
+		}
+		if (stallChanged) {
+			sprintf(response, "<stall:%d>\n", stallLevel);
+			usb_write(response);
+			stallChanged = 0;
+		}
+		if (true) {
+			n = recv_str(buf, sizeof(buf));
+			if (n == sizeof(buf)) {
+				parse_and_execute_command(buf);
+			}
+		}
+	}
+
+	/*
 	while (!stop) {
         std::string str = readLine();
         std::cout << name << " IN: " <<  str << std::endl;
         parse_and_execute_command(str.c_str());
 	}
+	*/
     write_ini(filename.str(), eeprom);
     std::cout << name << " STOPED" << std::endl;
 

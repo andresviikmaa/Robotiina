@@ -92,7 +92,8 @@ private:
     int8_t OCR1AL;
     int8_t PORTB;
     int8_t PORTC;
-
+	char  usb_serial_getchar();
+	uint8_t recv_str(char *buf, uint8_t size);
     void usb_write(const char *str);
     void parse_and_execute_command(const char *buf);
     void eeprom_update_byte(uint8_t * __p, uint8_t _value);
