@@ -39,22 +39,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-<<<<<<< HEAD
-    <ClInclude Include="camera.h" />
-    <ClInclude Include="colorcalibrator.h" />
-    <ClInclude Include="dialog.h" />
-    <ClInclude Include="objectfinder.h" />
-    <ClInclude Include="robot.h" />
-    <ClInclude Include="simpleserial.h" />
-    <ClInclude Include="stillcamera.h" />
-    <ClInclude Include="types.h" />
-    <ClInclude Include="wheel.h" />
-    <ClInclude Include="wheelcontroller.h" />
-    <ClInclude Include="autocalibrator.h" />
-    <ClInclude Include="calibrationconfreader.h" />
-    <ClInclude Include="remotecontrol.h" />
     <ClInclude Include="blockingreader.h" />
-=======
     <ClInclude Include="autocalibrator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -94,7 +79,6 @@
     <ClInclude Include="remotecontrol.h">
       <Filter>Header Files</Filter>
     </ClInclude>
->>>>>>> 72d70cc2895a064c49a4d17f48517eeeb9165670
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
