@@ -44,7 +44,11 @@ Robot::~Robot()
 void Robot::CalibrateObjects(const cv::Mat &image, bool autoCalibrate/* = false*/)
 {
     ColorCalibrator* calibrator = autoCalibrate ? new AutoCalibrator() : new ColorCalibrator();
-    calibrator->LoadImage(image);
+ cv::Mat image2 = camera->Capture();
+cv::namedWindow("z");
+cv::imshow("z", image2);
+//return;
+    calibrator->LoadImage(image2);
 
     for(int i = 0; i < NUMBER_OF_OBJECTS; i++) {
         objectThresholds[(OBJECT) i] = calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT) i]);
@@ -73,7 +77,8 @@ void Robot::Run()
 
     while (state != STATE_END_OF_GAME)
     {
-		cv::Mat image = camera->Capture();
+std::cout << "state: " << state << std::endl;
+//		cv::Mat image = camera->Capture();
 
         if (STATE_NONE == state) {
 
@@ -89,10 +94,14 @@ void Robot::Run()
 
         }
         if (STATE_CALIBRATE == state) {
-            CalibrateObjects(image);
+ cv::Mat image;// = camera->Capture();
+  
+          CalibrateObjects(image);
             state = STATE_NONE;
         }
         if (STATE_AUTOCALIBRATE == state) {
+ cv::Mat image = camera->Capture();
+
             CalibrateObjects(image, true);
             state = STATE_NONE;
         }
@@ -111,6 +120,8 @@ void Robot::Run()
 		}
 		if (STATE_CRASH == state){
 			wheels->Stop();
+                        //TODO: handle crash
+                        state = STATE_LOCATE_BALL;
 		}
         if (STATE_LOCATE_BALL == state) {
 			cv::Point3d location = finder.Locate(objectThresholds[BALL], camera->Capture());
@@ -150,6 +161,7 @@ void Robot::Run()
 			}
 			else{
 				int speed = distance * 0.05 - 5;
+std::cout << "!!!distance:" << distance << std::endl;
 				if (HorizontalDev > -50 && HorizontalDev < 50){
 					wheels->Drive(speed, HorizontalAngle);
 				}
@@ -183,6 +195,7 @@ void Robot::Run()
 			launchWindow.show();
 
         }
+
 		if (STATE_MANUAL_CONTROL == state) {
 			Dialog manualWindow("Manual Control Mode Enabed", CV_WINDOW_AUTOSIZE);
 			BUTTON(manualWindow, "Move Left", ((Robot*)self)->wheels->Drive(20, 90);)
@@ -193,9 +206,9 @@ void Robot::Run()
 				STATE_BUTTON(manualWindow, "Back", STATE_NONE)
 				manualWindow.show();
 		}
-		if (wheels->CheckStall()){
-			state = STATE_CRASH;
-		}
+		//if (wheels->CheckStall()){
+		//	state = STATE_CRASH;
+		//}
 
         if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
         {
@@ -204,7 +217,7 @@ void Robot::Run()
             std::cout << "esc key is pressed by user" << std::endl;
             //state = STATE_END_OF_GAME;
             state = STATE_NONE;
-			break;
+	break;
         }
     }
 }

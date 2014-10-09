@@ -40,3 +40,4 @@ ipch/
 # conf
 conf/*.ini
 *.TMP
+CMakeFiles/*

@@ -26,7 +26,7 @@ int Dialog::show() {
 
     }
     cv::namedWindow(m_title, CV_WINDOW_FULLSCREEN);
-	cvSetWindowProperty(m_title.c_str(), CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+//	cvSetWindowProperty(m_title.c_str(), CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
 	cv::moveWindow(m_title, 0, 0);
     cv::imshow( m_title, image );
 
