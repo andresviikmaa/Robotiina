@@ -2,7 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <math.h> 
 #ifdef WIN32
-#define _WIN32_WINNT 0x0501 // win xp
+#define _WIN32_WINNT 0x0600 // vista
 #endif
 #define PI 3.14159265
 

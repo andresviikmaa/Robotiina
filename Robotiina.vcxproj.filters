@@ -39,7 +39,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="blockingreader.h" />
     <ClInclude Include="autocalibrator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -77,6 +76,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="remotecontrol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="blockingreader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

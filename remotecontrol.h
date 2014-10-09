@@ -18,6 +18,7 @@ protected:
     std::string respond(const std::string &query);
 
 private:
+	boost::asio::ip::udp::socket socket;
     boost::atomic<bool> stop;
     Robot *robot;
     boost::asio::io_service &io;
