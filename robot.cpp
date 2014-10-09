@@ -184,11 +184,11 @@ void Robot::Run()
         }
 		if (STATE_MANUAL_CONTROL == state) {
 			Dialog manualWindow("Manual Control Mode Enabed", CV_WINDOW_AUTOSIZE);
-			BUTTON(manualWindow, "Move Left", ((Robot*)self)->wheels->Drive(20, -PI / 2);)
-				BUTTON(manualWindow, "Move Right", ((Robot*)self)->wheels->Drive(20, PI / 2);)
+			BUTTON(manualWindow, "Move Left", ((Robot*)self)->wheels->Drive(20, 90);)
+				BUTTON(manualWindow, "Move Right", ((Robot*)self)->wheels->Drive(20, 270);)
 				BUTTON(manualWindow, "Move Forward", ((Robot*)self)->wheels->Drive(20, 0);)
-				BUTTON(manualWindow, "Move Back", ((Robot*)self)->wheels->Drive(20, PI);)
-				BUTTON(manualWindow, "Rotate", ((Robot*)self)->wheels->Rotate(PI);)
+				BUTTON(manualWindow, "Move Back", ((Robot*)self)->wheels->Drive(-20, 0);)
+				BUTTON(manualWindow, "Rotate", ((Robot*)self)->wheels->Rotate(1);)
 				STATE_BUTTON(manualWindow, "Back", STATE_NONE)
 				manualWindow.show();
 		}
