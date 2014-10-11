@@ -13,6 +13,7 @@ private:
 
     ICamera *camera;
     WheelController * wheels;
+	int speed;
     std::map<OBJECT, HSVColorRange> objectThresholds;
     //STATE state = STATE_NONE;
     boost::atomic<STATE> state;
@@ -21,7 +22,6 @@ private:
 
 	void Run();
     boost::mutex remote_mutex;
-
 protected:
 	boost::asio::io_service &io;
 

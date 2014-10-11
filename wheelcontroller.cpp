@@ -28,22 +28,30 @@ void WheelController::Forward(int speed){
 	w_back->Run(0);
 
 }
-void WheelController::Rotate(bool direction){
+void WheelController::Rotate(bool direction, int speed){
 	if (direction){
-		w_left->Run(10);
-		w_right->Run(10);
-		w_back->Run(10);
+		w_left->Run(speed);
+		w_right->Run(speed);
+		w_back->Run(speed);
 	}
 	else {
-		w_left->Run(-10);
-		w_right->Run(-10);
-		w_back->Run(-10);
+		w_left->Run(-speed);
+		w_right->Run(-speed);
+		w_back->Run(-speed);
 	}
 
 
 }
 void WheelController::Drive(int velocity, double direction){
-	
+	if (abs(velocity) > 190){
+		if (velocity < 0){
+			velocity = -190;
+		}
+		else{
+			velocity = 190;
+		}
+	}
+
 	w_left->Run(-(velocity*cos((30 - direction) * PI / 180.0)));
 	w_right->Run(-(velocity*cos((150 - direction)  * PI / 180.0)));
 	w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)));
@@ -51,10 +59,15 @@ void WheelController::Drive(int velocity, double direction){
 }
 
 void WheelController::DriveRotate(int velocity, double direction, int rotate){
-	if (abs(velocity) > 190 || abs(direction) > 190){
-		std::cout << "Invalid arguments: too big";
-		return;
+	if (abs(velocity) > 190){
+		if (velocity < 0){
+			velocity = -190;
+		}
+		else{
+			velocity = 190;
+		}
 	}
+
 	else if ((velocity + rotate) > 190){
 		velocity = 190 - rotate;
 	}

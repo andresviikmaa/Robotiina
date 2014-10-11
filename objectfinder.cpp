@@ -83,8 +83,6 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 		center = cv::Point2f(M.m10 / M.m00, M.m01 / M.m00);
 	}
 
-
-
 	//Draw circle
 	cv::circle(imgOriginal, center, 10, colorCircle, 3);
 	cv::imshow("Original", imgOriginal);
@@ -94,9 +92,10 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 
 cv::Point3d ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size)
 {
-	if (point.y == 0 && point.x == 0){ //If there is no object found
+	if (point.y < 1 && point.x < 1 || (point.y != point.y) || (point.x != point.x)){ //If there is no object found
 		return cv::Point3d(-1, -1, -1);
 	}
+
 
 	const cv::Point2d center (frame_size.x / 2.0, frame_size.y / 2.0);
 	//Calculating distance

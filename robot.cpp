@@ -125,10 +125,9 @@ void Robot::Run()
 			double distance = location.x;
 			double HorizontalDev = location.y;
 			double HorizontalAngle = location.z;
-          
 			if (location.x == -1 && location.y == -1 && location.z == -1) /* Ball not found */
             {
-                wheels->Rotate(1);
+                wheels->Rotate(1, 10);
             }
 			if (location.x != -1 && location.y != -1) /*Ball found*/
             {
@@ -147,17 +146,23 @@ void Robot::Run()
 			if (distance == -1 && HorizontalDev == -1 && HorizontalAngle == -1){ 
 				state = STATE_LOCATE_BALL;
 			}			
-			else if (distance < 300 && (HorizontalDev > -50 && HorizontalDev < 50)){
+			else if (distance < 200 && (HorizontalDev > -50 && HorizontalDev < 50)){
 				//TODO: start catching the ball with tribbler
 				wheels->Stop();
 			}
-			else if (distance < 300){
+			else if (distance < 200){
 				//TODO: start tribbler
 				//TODO: turn depending on HorizontalDev
 				wheels->Stop();
 			}
 			else{
-				int speed = distance * 0.05 - 5;
+				if (distance > 700){
+					speed = 150;
+				}
+				else{
+					speed = distance * 0.35 - 91;
+				}
+					
 				if (HorizontalDev > -50 && HorizontalDev < 50){
 					wheels->Drive(speed, HorizontalAngle);
 				}
@@ -175,7 +180,7 @@ void Robot::Run()
         {
             /*CvPoint location = finder.Locate(objectThresholds[GATE]);*/
             //TODO: how
-            wheels->Rotate(0);
+            wheels->Rotate(1,10);
             state = STATE_GATE_LOCATED;
         }
         if(STATE_GATE_LOCATED == state)
@@ -196,7 +201,7 @@ void Robot::Run()
 				BUTTON(manualWindow, "Move Right", ((Robot*)self)->wheels->Drive(20, 270);)
 				BUTTON(manualWindow, "Move Forward", ((Robot*)self)->wheels->Drive(20, 0);)
 				BUTTON(manualWindow, "Move Back", ((Robot*)self)->wheels->Drive(-20, 0);)
-				BUTTON(manualWindow, "Rotate", ((Robot*)self)->wheels->Rotate(1);)
+				BUTTON(manualWindow, "Rotate", ((Robot*)self)->wheels->Rotate(1,10);)
 				STATE_BUTTON(manualWindow, "Back", STATE_NONE)
 				manualWindow.show();
 		}
@@ -249,8 +254,7 @@ bool Robot::ParseOptions(int argc, char* argv[])
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help", "produce help message")
-		("camera", po::value<std::string>(), "set camera index or path")
-		;
+		("camera", po::value<std::string>(), "set camera index or path");
 
 	po::store(po::parse_command_line(argc, argv, desc), config);
 	po::notify(config);

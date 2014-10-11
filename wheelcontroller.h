@@ -16,7 +16,7 @@ public:
 	WheelController(boost::asio::io_service &io);
 	void Forward(int speed);
     void MoveTo(const CvPoint &);
-    void Rotate(bool direction);
+    void Rotate(bool direction, int speed);
 	void Drive(int velocity, double direction);
 	void DriveRotate(int velocity, double direction, int rotate);
 	void Stop();
