@@ -25,9 +25,11 @@ ObjectFinder::ObjectFinder()
 		write_ini("conf/camera.ini", pt);
 	};
 }
-	cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, const cv::Mat &frame) {
+cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, const cv::Mat &frame) {
 	cv::Point2f point = LocateOnScreen(r, frame);
-	return ConvertPixelToRealWorld(point, cv::Point2i(frame.cols, frame.rows));
+	cv::Point3d info = ConvertPixelToRealWorld(point, cv::Point2i(frame.cols, frame.rows));
+	WriteInfoOnScreen(info);
+	return info;
 }
 
 cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &frame) {
@@ -110,6 +112,19 @@ cv::Point3d ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, cons
 
 	return cv::Point3d(distance, HorizontalDev, Hor_angle);
 
-
-	
+}
+void ObjectFinder::WriteInfoOnScreen(const cv::Point3d &info){
+	cv::Mat infoWindow(100, 250, CV_8UC3, cv::Scalar::all(0));
+	std::ostringstream oss;
+	oss << "Distance :" << info.x;
+	cv::putText(infoWindow, oss.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	oss.str("");
+	oss << "Horizontal Dev :" << info.y;
+	cv::putText(infoWindow, oss.str(), cv::Point(20, 50), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	oss.str("");
+	oss << "Horizontal angle :" << info.z;
+	cv::putText(infoWindow, oss.str(), cv::Point(20, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	cv::namedWindow("Info Window");
+	cv::imshow("Info Window", infoWindow);
+	return;
 }

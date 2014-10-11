@@ -44,9 +44,7 @@ Robot::~Robot()
 void Robot::CalibrateObjects(const cv::Mat &image, bool autoCalibrate/* = false*/)
 {
     ColorCalibrator* calibrator = autoCalibrate ? new AutoCalibrator() : new ColorCalibrator();
- cv::Mat image2 = camera->Capture();
-cv::namedWindow("z");
-cv::imshow("z", image2);
+	cv::Mat image2 = camera->Capture();
 //return;
     calibrator->LoadImage(image2);
 
@@ -77,7 +75,6 @@ void Robot::Run()
 
     while (state != STATE_END_OF_GAME)
     {
-std::cout << "state: " << state << std::endl;
 //		cv::Mat image = camera->Capture();
 
         if (STATE_NONE == state) {
@@ -161,7 +158,6 @@ std::cout << "state: " << state << std::endl;
 			}
 			else{
 				int speed = distance * 0.05 - 5;
-std::cout << "!!!distance:" << distance << std::endl;
 				if (HorizontalDev > -50 && HorizontalDev < 50){
 					wheels->Drive(speed, HorizontalAngle);
 				}
@@ -173,8 +169,6 @@ std::cout << "!!!distance:" << distance << std::endl;
 				}			
 				
 			}
-			std::cout << "distance2 " << HorizontalDev << '\n';
-			
             //state = STATE_LOCATE_GATE;
         }
         if (STATE_LOCATE_GATE == state)
