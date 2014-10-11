@@ -60,21 +60,29 @@ void WheelController::Drive(int velocity, double direction){
 
 void WheelController::DriveRotate(int velocity, double direction, int rotate){
 	if (abs(velocity) > 190){
-		if (velocity < 0){
-			velocity = -190;
+		if (velocity > 0){
+			velocity = 190;
 		}
 		else{
-			velocity = 190;
+			velocity = -190;
 		}
 	}
 
-	else if ((velocity + rotate) > 190){
-		velocity = 190 - rotate;
+	if (rotate < 0 && velocity > 0){
+		velocity = velocity + abs(rotate);
 	}
-	else if ((velocity + rotate) < -190){
-		velocity = -190 - rotate;
+	else if (rotate > 0 && velocity < 0){
+		velocity = velocity - abs(rotate);
 	}
-	
+	else{
+		if ((rotate + velocity) > 190){
+			velocity = velocity - rotate;
+		}
+		else if ((rotate + velocity) < -190){
+			velocity = velocity - rotate;
+		}
+	}
+
 	w_left->Run(-(velocity*cos((30 - direction) * PI / 180.0)) + rotate);
 	w_right->Run(-(velocity*cos((150 - direction)  * PI / 180.0)) + rotate);
 	w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)) + rotate);

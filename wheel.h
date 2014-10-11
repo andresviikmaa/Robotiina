@@ -19,7 +19,7 @@ public:
 		stop_thread = true;
 		threads.join_all();
 	}
-	std::string Run(int given_speed);
+	void Run(int given_speed);
 	void Stop();
 	int Speed();
 	bool stall;

@@ -10,6 +10,8 @@
 
 #include <opencv2/opencv.hpp>
 #include <boost/algorithm/string.hpp>
+#include <chrono>
+#include <thread>
 
 #define STATE_BUTTON(dialog, name, new_state) \
 dialog.createButton(name, [](int state, void* self){ ((Robot*)self)->state = new_state; }, this, CV_PUSH_BUTTON, 0);
@@ -91,14 +93,12 @@ void Robot::Run()
 
         }
         if (STATE_CALIBRATE == state) {
- cv::Mat image;// = camera->Capture();
-  
-          CalibrateObjects(image);
+			cv::Mat image;// = camera->Capture();
+			CalibrateObjects(image);
             state = STATE_NONE;
         }
         if (STATE_AUTOCALIBRATE == state) {
- cv::Mat image = camera->Capture();
-
+			cv::Mat image = camera->Capture();
             CalibrateObjects(image, true);
             state = STATE_NONE;
         }
@@ -116,9 +116,19 @@ void Robot::Run()
 			}
 		}
 		if (STATE_CRASH == state){
+			//Backwards
+			wheels->Drive(50, 180);
+			std::chrono::milliseconds dura(1000);
+			std::this_thread::sleep_for(dura);
 			wheels->Stop();
-                        //TODO: handle crash
-                        state = STATE_LOCATE_BALL;
+			//Turn a littlebit
+			wheels->Rotate(1, 100);
+			std::this_thread::sleep_for(dura);
+			wheels->Stop();
+			//Check again
+			if (!wheels->CheckStall()){
+				state = STATE_LOCATE_BALL;
+			}            
 		}
         if (STATE_LOCATE_BALL == state) {
 			cv::Point3d location = finder.Locate(objectThresholds[BALL], camera->Capture());
@@ -171,8 +181,7 @@ void Robot::Run()
 				}
 				else{
 					wheels->DriveRotate(speed, HorizontalAngle, -15);
-				}			
-				
+				}
 			}
             //state = STATE_LOCATE_GATE;
         }
@@ -205,9 +214,14 @@ void Robot::Run()
 				STATE_BUTTON(manualWindow, "Back", STATE_NONE)
 				manualWindow.show();
 		}
-		//if (wheels->CheckStall()){
-		//	state = STATE_CRASH;
-		//}
+		if (wheels->CheckStall() &&
+			(state == STATE_LOCATE_BALL ||
+			state == STATE_BALL_LOCATED || 
+			state == STATE_LOCATE_GATE || 
+			state == STATE_GATE_LOCATED)
+		){
+			state = STATE_CRASH;
+		}
 
         if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
         {
