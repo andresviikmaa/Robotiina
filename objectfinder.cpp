@@ -102,15 +102,13 @@ cv::Point3d ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, cons
 	double angle = (Vfov * (point.y - center.y) / center.y) + CamAngleDev;
 	double distance = CamHeight / tan(angle * PI / 180);
 	//Calculating horizontal deviation
-
-	double Hor_angle = (Hfov * (point.x - center.x) / center.x);
+	double hor_space = tan(Vfov)*distance;
+	double HorizontalDev = (hor_space * (point.x - center.x) / center.x);
+	double Hor_angle = atan(HorizontalDev / distance)* 180/PI;
 	if (Hor_angle < 0){
 		Hor_angle = 360 + Hor_angle;
 	}
-	double HorizontalDev = tan(Hor_angle * PI / 180)*distance;
-
 	return cv::Point3d(distance, HorizontalDev, Hor_angle);
-
 }
 void ObjectFinder::WriteInfoOnScreen(const cv::Point3d &info){
 	cv::Mat infoWindow(100, 250, CV_8UC3, cv::Scalar::all(0));
