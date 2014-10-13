@@ -26,6 +26,7 @@
 *.exe
 *.out
 *.app
+robotiina
 
 # CLion
 .idea/
@@ -41,3 +42,6 @@ ipch/
 conf/*.ini
 *.TMP
 CMakeFiles/*
+CMakeCache.txt
+*.cmake
+Makefile
