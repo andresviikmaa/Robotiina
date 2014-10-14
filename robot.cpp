@@ -156,11 +156,11 @@ void Robot::Run()
 			if (distance == -1 && HorizontalDev == -1 && HorizontalAngle == -1){ 
 				state = STATE_LOCATE_BALL;
 			}			
-			else if (distance < 200 && (HorizontalDev > -50 && HorizontalDev < 50)){
+			else if (distance < 250 && (HorizontalDev > -50 && HorizontalDev < 50)){
 				//TODO: start catching the ball with tribbler
 				wheels->Stop();
 			}
-			else if (distance < 200){
+			else if (distance < 250){
 				//TODO: start tribbler
 				//TODO: turn depending on HorizontalDev
 				wheels->Stop();
@@ -172,15 +172,16 @@ void Robot::Run()
 				else{
 					speed = distance * 0.35 - 91;
 				}
+                                speed = 50;
 					
 				if (HorizontalDev > -50 && HorizontalDev < 50){
 					wheels->Drive(speed, HorizontalAngle);
 				}
 				else if (HorizontalDev >= 50){
-					wheels->DriveRotate(speed, HorizontalAngle, 15);
+					wheels->DriveRotate(speed, HorizontalAngle, 0);
 				}
 				else{
-					wheels->DriveRotate(speed, HorizontalAngle, -15);
+					wheels->DriveRotate(speed, HorizontalAngle, 0);
 				}
 			}
             //state = STATE_LOCATE_GATE;
@@ -214,7 +215,7 @@ void Robot::Run()
 				STATE_BUTTON(manualWindow, "Back", STATE_NONE)
 				manualWindow.show();
 		}
-		if (wheels->CheckStall() &&
+		if (false && wheels->CheckStall() &&
 			(state == STATE_LOCATE_BALL ||
 			state == STATE_BALL_LOCATED || 
 			state == STATE_LOCATE_GATE || 

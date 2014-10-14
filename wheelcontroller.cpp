@@ -52,8 +52,8 @@ void WheelController::Drive(int velocity, double direction){
 		}
 	}
 
-	w_left->Run(-(velocity*cos((30 - direction) * PI / 180.0)));
-	w_right->Run(-(velocity*cos((150 - direction)  * PI / 180.0)));
+	w_left->Run((velocity*cos((30 - direction) * PI / 180.0)));
+	w_right->Run((velocity*cos((150 - direction)  * PI / 180.0)));
 	w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)));
 
 }
@@ -83,8 +83,8 @@ void WheelController::DriveRotate(int velocity, double direction, int rotate){
 		}
 	}
 
-	w_left->Run(-(velocity*cos((30 - direction) * PI / 180.0)) + rotate);
-	w_right->Run(-(velocity*cos((150 - direction)  * PI / 180.0)) + rotate);
+	w_left->Run((velocity*cos((30 - direction) * PI / 180.0)) + rotate);
+	w_right->Run((velocity*cos((150 - direction)  * PI / 180.0)) + rotate);
 	w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)) + rotate);
 
 	
