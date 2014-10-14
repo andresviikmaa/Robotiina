@@ -48,8 +48,11 @@ int Wheel::Speed(){
 void Wheel::StallCheck(){
 	
 	while (!stop_thread){
-		if (readLine() == "stall:1"){
+		if (readLine() == "stall:1" || readLine() == "stall:2"){
 			stall = true;
+		}
+		else{
+			stall = false;
 		}
 	}
 }
