@@ -5,6 +5,7 @@
 #include "stillcamera.h"
 #include "wheelcontroller.h"
 #include "objectfinder.h"
+#include "mousefinder.h"
 #include "dialog.h"
 #include "wheel.h"
 
@@ -41,6 +42,8 @@ Robot::~Robot()
 		delete camera;
     if(wheels)
         delete wheels;
+	if (finder)
+		delete finder;
 
 }
 void Robot::CalibrateObjects(const cv::Mat &image, bool autoCalibrate/* = false*/)
@@ -68,13 +71,18 @@ bool Robot::Launch(int argc, char* argv[])
 	else
         camera = new Camera(0);
 
+	if (config.count("locate_cursor"))
+		finder = new MouseFinder();
+	else
+		finder = new ObjectFinder();
+
+
     Run();
 }
 
 void Robot::Run()
 {
-    ObjectFinder finder;
-
+ 
     while (state != STATE_END_OF_GAME)
     {
 //		cv::Mat image = camera->Capture();
@@ -131,7 +139,7 @@ void Robot::Run()
 			}            
 		}
         if (STATE_LOCATE_BALL == state) {
-			cv::Point3d location = finder.Locate(objectThresholds[BALL], camera->Capture());
+			cv::Point3d location = finder->Locate(objectThresholds[BALL], camera->Capture());
 			double distance = location.x;
 			double HorizontalDev = location.y;
 			double HorizontalAngle = location.z;
@@ -147,7 +155,7 @@ void Robot::Run()
             
         }
         if(STATE_BALL_LOCATED == state) {
-			cv::Point3d location = finder.Locate(objectThresholds[BALL], camera->Capture());
+			cv::Point3d location = finder->Locate(objectThresholds[BALL], camera->Capture());
 			double distance = location.x;
 			double HorizontalDev = location.y;
 			double HorizontalAngle = location.z;
@@ -269,7 +277,8 @@ bool Robot::ParseOptions(int argc, char* argv[])
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help", "produce help message")
-		("camera", po::value<std::string>(), "set camera index or path");
+		("camera", po::value<std::string>(), "set camera index or path")
+		("locate_cursor", po::value<std::string>(), "find cursor instead of ball");
 
 	po::store(po::parse_command_line(argc, argv, desc), config);
 	po::notify(config);

@@ -1,1 +1,1 @@
-Debug\robotiina.exe --camera test_images\720p.jpg
+Debug\robotiina.exe --camera test_images\720p.jpg --locate_cursor x

@@ -12,6 +12,7 @@ public:
     const cv::Mat & Capture();
     const cv::Mat & CaptureHSV();
     virtual ~Camera(){ 
+		cap->release();
 		delete cap;
 	}
 
