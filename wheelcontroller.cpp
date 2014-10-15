@@ -6,19 +6,12 @@ WheelController::WheelController(boost::asio::io_service &io)
 {
     using boost::property_tree::ptree;
     ptree pt;
-    try {
-        read_ini("conf/wheels.ini", pt);
-    } catch(...) {
-        pt.put("left.port", "COM6");
-        pt.put("right.port", "COM8");
-        pt.put("back.port", "COM10");
-        write_ini("conf/wheels.ini", pt);
-    }
+    read_ini("conf/ports.ini", pt);
 
 
-    w_left = new Wheel(io, pt.get<std::string>("left.port"), 115200);
-    w_right = new Wheel(io, pt.get<std::string>("right.port"), 115200);
-    w_back = new Wheel(io, pt.get<std::string>("back.port"), 115200);
+	w_left = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200);
+	w_right = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200);
+	w_back = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_BACK)), 115200);
 };
 
 void WheelController::Forward(int speed){
