@@ -7,7 +7,7 @@ Camera::Camera(const std::string &device)
 	cap = new cv::VideoCapture(device.c_str());
 	if (!cap->isOpened())  // if not success, exit program
     {
-       throw std::string("Camera not found");
+		throw std::exception("Camera not found");
     }
 
 }
@@ -17,7 +17,7 @@ Camera::Camera(int device)
 	cap = new cv::VideoCapture(device);
 	if (!cap->isOpened())  // if not success, exit program
 	{
-		throw std::string("Camera is missing");
+		throw std::exception("Camera is missing");
 	}
 
 }

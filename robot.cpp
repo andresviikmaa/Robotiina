@@ -8,6 +8,7 @@
 #include "mousefinder.h"
 #include "dialog.h"
 #include "wheel.h"
+#include "ComPortScanner.h"
 
 #include <opencv2/opencv.hpp>
 #include <boost/algorithm/string.hpp>
@@ -34,7 +35,7 @@ Robot::Robot(boost::asio::io_service &io) : io(io)
 {
 	camera = NULL;
     state = STATE_NONE;
-    wheels = new WheelController(io);
+    //wheels = new WheelController(io);
 }
 Robot::~Robot()
 {
@@ -65,18 +66,29 @@ bool Robot::Launch(int argc, char* argv[])
 {
 	if (!ParseOptions(argc, argv)) return false;
 
-	
+	std::cout << "Initializing camera... " << std::endl;
 	if (config.count("camera"))
 		camera = new StillCamera(config["camera"].as<std::string>());
 	else
-        camera = new Camera(0);
+		camera = new Camera(0);
+	std::cout << "Done" << std::endl;
 
 	if (config.count("locate_cursor"))
 		finder = new MouseFinder();
 	else
 		finder = new ObjectFinder();
 
+	std::cout << "Checking COM ports... " << std::endl;
+	{ // new scope for scanner variable
+		ComPortScanner scanner;
+		if (!scanner.Verify(io)){
+			std::cout << "Chek failed, rescanning all ports" << std::endl;
+			scanner.Scan(io);
+		}
+	}
+	std::cout << "Done" << std::endl;
 
+	std::cout << "Starting Robot" << std::endl;
     Run();
 }
 
@@ -90,7 +102,6 @@ void Robot::Run()
         if (STATE_NONE == state) {
 
             Dialog launchWindow("Launch Robotiina", CV_WINDOW_AUTOSIZE);
-			STATE_BUTTON(launchWindow, "Configure USB devices", STATE_CONFIGURE_USB)
 			STATE_BUTTON(launchWindow, "AutoCalibrate objects", STATE_AUTOCALIBRATE)
 			STATE_BUTTON(launchWindow, "ManualCalibrate objects", STATE_CALIBRATE)
 			STATE_BUTTON(launchWindow, "Start Robot", STATE_LAUNCH)
@@ -232,6 +243,7 @@ void Robot::Run()
 			state = STATE_CRASH;
 		}
 
+		// This slows system down to 33.3 FPS
         if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
         {
           //  const cv::Mat frame = camera->Capture();

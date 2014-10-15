@@ -5,6 +5,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <algorithm>    // std::min
+#include <opencv2/opencv.hpp>
 
 WheelEmulator::WheelEmulator(const std::string &name, boost::asio::io_service &io_service, std::string port, unsigned int baud_rate)
 	: SimpleSerial(io_service, port, baud_rate)
@@ -21,7 +22,7 @@ uint8_t WheelEmulator::recv_str(char *buf, uint8_t size)
 	std::string str = readLine();
 	std::cout << name << " IN: " << str << std::endl;
 	strncpy(buf, str.c_str(), size);
-	return std::min(str.size(), (size_t)size);
+	return (size_t)size;
 	/*
 	char data;
 	uint8_t count = 0;
@@ -50,29 +51,33 @@ void WheelEmulator::Run() {
 
     try {
         read_ini(filename.str(), eeprom);
-    }catch(...){}
+    }catch(...){
+		write_ini(filename.str(), eeprom);
+	}
 
     setup();
-    write_ini(filename.str(), eeprom);
 
 //	CLKPR = 0x80;
 //	CLKPR = 0x00;
 //	usb_init();
 
-	dir = eeprom_read_byte((uint8_t*)0);
-	motor_polarity = eeprom_read_byte((uint8_t*)1);
-	pgain = eeprom_read_byte((uint8_t*)3);
-	igain = eeprom_read_byte((uint8_t*)4);
-	dgain = eeprom_read_byte((uint8_t*)5);
+	dir = eeprom_read_byte((uint8_t)0);
+	motor_polarity = eeprom_read_byte((uint8_t)1);
+	pgain = eeprom_read_byte((uint8_t)3);
+	igain = eeprom_read_byte((uint8_t)4);
+	dgain = eeprom_read_byte((uint8_t)5);
 
 	if (pgain == 255) {
 		pgain = 6;
-		eeprom_update_byte((uint8_t*)3, pgain);
+		eeprom_update_byte((uint8_t)3, pgain);
 	}
 	if (igain == 255) {
 		igain = 8;
-		eeprom_update_byte((uint8_t*)4, igain);
+		eeprom_update_byte((uint8_t)4, igain);
 	}
+
+	write_ini(filename.str(), eeprom);
+
 	/*
 	bit_set(DDRC, BIT(LED1));
 	bit_set(DDRC, BIT(LED2));
@@ -186,13 +191,22 @@ void WheelEmulator::usb_write(const char *str) {
     std::cout << name << " OUT: " <<  str << std::endl;
     writeString(str);
 }
-void WheelEmulator::eeprom_update_byte(uint8_t * __p, uint8_t _value){
-    std::stringstream key; key << "byte" << *__p;
+void WheelEmulator::eeprom_update_byte(uint8_t __p, uint8_t _value){
+    std::stringstream key; key << "byte" << (int)__p;
+	std::string x(key.str());
     eeprom.put(key.str(), _value);
 }
-uint8_t WheelEmulator::eeprom_read_byte(const uint8_t * __p) {
-    std::stringstream key; key << "byte" << *__p;
-    return  eeprom.get<uint8_t>(key.str());
+uint8_t WheelEmulator::eeprom_read_byte(const uint8_t __p) {
+    std::stringstream key; key << "byte" << (int)__p;
+	std::string x(key.str());
+	std::cout << name << " eeprom read: " << key.str() << std::endl;
+	try {
+		return eeprom.get<uint8_t>(key.str());
+	}
+	catch (...) {
+		eeprom.put(key.str(), 0);
+		return 0;
+	}
 }
 
 void WheelEmulator::pid() {
@@ -286,6 +300,10 @@ void  WheelEmulator::backward(uint8_t pwm) {
 }
 
 void WheelEmulator::parse_and_execute_command(const char *buf) {
+	{
+		boost::mutex::scoped_lock lock(mutex); //allow one command at a time
+		last_command = buf;
+	}
     const char *command;
     int16_t par1;
     command = buf;
@@ -317,8 +335,8 @@ void WheelEmulator::parse_and_execute_command(const char *buf) {
         par1 = atoi(command+2);
         if (dir ^ par1) motor_polarity ^= 1;
         dir = par1;
-        eeprom_update_byte((uint8_t*)0, dir);
-        eeprom_update_byte((uint8_t*)1, motor_polarity);
+        eeprom_update_byte((uint8_t)0, dir);
+        eeprom_update_byte((uint8_t)1, motor_polarity);
     } else if ((command[0] == 's') && (command[1] == 't')) {
         //perform setup
         setup();
@@ -326,7 +344,7 @@ void WheelEmulator::parse_and_execute_command(const char *buf) {
         //toggle motor polarity
         par1 = atoi(command+2);
         motor_polarity = par1;
-        eeprom_update_byte((uint8_t*)1, motor_polarity);
+        eeprom_update_byte((uint8_t)1, motor_polarity);
     } else if ((command[0] == 'p') && (command[1] == 'd')) {
         //toggle pid
         par1 = atoi(command+2);
@@ -347,26 +365,26 @@ void WheelEmulator::parse_and_execute_command(const char *buf) {
     } else if ((command[0] == 'i') && (command[1] == 'd')) {
         //set id
         par1 = atoi(command+2);
-        eeprom_update_byte((uint8_t*)2, par1);
+        eeprom_update_byte((uint8_t)2, par1);
     } else if (command[0] == '?') {
         //get info: id
-        par1 = eeprom_read_byte((uint8_t*)2);
+        par1 = eeprom_read_byte((uint8_t)2);
         sprintf(response, "<id:%d>\n", par1);
         usb_write(response);
     } else if ((command[0] == 'p') && (command[1] == 'g')) {
         //set pgain
         par1 = atoi(command+2);
-        eeprom_update_byte((uint8_t*)3, par1);
+        eeprom_update_byte((uint8_t)3, par1);
         pgain = par1;
     } else if ((command[0] == 'i') && (command[1] == 'g')) {
         //set igain
         par1 = atoi(command+2);
-        eeprom_update_byte((uint8_t*)4, par1);
+        eeprom_update_byte((uint8_t)4, par1);
         igain = par1;
     } else if ((command[0] == 'd') && (command[1] == 'g')) {
         //set dgain
         par1 = atoi(command+2);
-        eeprom_update_byte((uint8_t*)5, par1);
+        eeprom_update_byte((uint8_t)5, par1);
         dgain = par1;
     } else if ((command[0] == 'g') && (command[1] == 'g')) {
         //get pid gains
@@ -406,6 +424,7 @@ WheelEmulator::~WheelEmulator()
 {
 }
 
+void WriteInfoOnScreen(WheelEmulator * we_left, WheelEmulator * we_right, WheelEmulator * we_back);
 
 int main(int argc, char *argv[])
 {
@@ -433,8 +452,8 @@ int main(int argc, char *argv[])
 		threads.create_thread(boost::bind(&WheelEmulator::Run, we_back));
 
         unsigned char a;
-        while(getchar()){
-            break;
+		while (cv::waitKey(30) != 27){
+			WriteInfoOnScreen(we_left, we_right, we_back);
         }
 		we_left->Stop();
 		we_right->Stop();
@@ -462,4 +481,33 @@ int main(int argc, char *argv[])
         std::cout << "ups, did not see that coming."<< std::endl;
     }
 
+}
+
+void WriteInfoOnScreen(WheelEmulator * we_left, WheelEmulator * we_right, WheelEmulator * we_back){
+	cv::Mat infoWindow(100, 250, CV_8UC3, cv::Scalar::all(0));
+	std::ostringstream oss;
+	std::string cmd;
+	{ 
+		boost::mutex::scoped_lock lock(we_left->mutex); //allow one command at a time
+		cmd = we_left->last_command;
+	}
+	oss << "left :" << cmd;
+	cv::putText(infoWindow, oss.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	oss.str("");
+	{
+		boost::mutex::scoped_lock lock(we_right->mutex); //allow one command at a time
+		cmd = we_left->last_command;
+	}
+	oss << "right :" << cmd;
+	cv::putText(infoWindow, oss.str(), cv::Point(20, 50), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	oss.str("");
+	{
+		boost::mutex::scoped_lock lock(we_back->mutex); //allow one command at a time
+		cmd = we_left->last_command;
+	}
+	oss << "back :" << cmd;
+	cv::putText(infoWindow, oss.str(), cv::Point(20, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	cv::namedWindow("Info Window");
+	cv::imshow("Info Window", infoWindow);
+	return;
 }
