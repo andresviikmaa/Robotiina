@@ -6,11 +6,11 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(BOOST_ROOT "E:/programs/boost_1_55_0")
     set(BOOST_INCLUDEDIR "E:/programs/boost_1_5_0")
     set(BOOST_LIBRARYDIR "E:/programs/boost_1_55_0/stage/lib")
-    add_definitions( -DWIN32 -DBOOST_USE_WINDOWS_H )
+    add_definitions( -DWIN32 )
     set(Boost_USE_STATIC_LIBS ON)
 
-    find_library(WINSOCK_LIB libws2_32.a HINTS "E:/programs/mingw/lib")
-    find_library(WINSOCK2_LIB libwsock32.a HINTS "E:/programs/mingw/lib")
+    find_library(WINSOCK_LIB libws2_32.a HINTS "E:/programs/mingw-w64/i686-w64-mingw32/lib")
+    find_library(WINSOCK2_LIB libwsock32.a HINTS "E:/programs/mingw-w64/i686-w64-mingw32/lib")
 ##    set(LIBS ${LIBS} ${WINSOCK_LIB})
 
 ELSE()
@@ -25,7 +25,7 @@ ENDIF()
 SET(Boost_ADDITIONAL_VERSIONS "1.56" "1.56.0" "1.55" "1.55.0")
 
 #list( APPEND CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -g -ftest-coverage -fprofile-arcs")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 find_package( OpenCV REQUIRED )
 
 set(Boost_USE_MULTITHREADED ON)
