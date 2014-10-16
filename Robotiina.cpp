@@ -9,15 +9,14 @@
 int main(int argc, char *argv[])
 {
     boost::asio::io_service io;
+    Robot robotiina(io);
+    RemoteControl sr(io, &robotiina);
+
 	try
 	{
-		Robot robotiina(io);
-        RemoteControl sr(io, &robotiina);
         sr.Start();
 
 		robotiina.Launch(argc, argv);
-        sr.Stop();
-        return 0;
     }
 	catch (std::exception &e)
 	{
@@ -31,5 +30,7 @@ int main(int argc, char *argv[])
 	{
 		std::cout << "ups, did not see that coming."<< std::endl;
 	}
+    sr.Stop();
+    return 0;
 
 }
