@@ -65,7 +65,7 @@ void ComPortScanner::Scan(boost::asio::io_service &io_service)
 	boost::property_tree::ptree ports;
 
 
-
+	bool ok = true;
 	for (int i = 0; i < 20; i++) {
 		std::stringstream portNum;
 		portNum << prefix << i;
@@ -84,10 +84,13 @@ void ComPortScanner::Scan(boost::asio::io_service &io_service)
 		}
 		catch (std::runtime_error const&e){
 			std::cout << "Port not accessible: " << portNum.str() << ", error: " << e.what() << std::endl;
+			ok = false;
 		}
 	}
-
-	write_ini("conf/ports.ini", ports);
+	if (ok){
+		write_ini("conf/ports.ini", ports);
+	}
+	
 
 
 
