@@ -496,14 +496,14 @@ void WriteInfoOnScreen(WheelEmulator * we_left, WheelEmulator * we_right, WheelE
 	oss.str("");
 	{
 		boost::mutex::scoped_lock lock(we_right->mutex); //allow one command at a time
-		cmd = we_left->last_command;
+		cmd = we_right->last_command;
 	}
 	oss << "right :" << cmd;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 50), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 	oss.str("");
 	{
 		boost::mutex::scoped_lock lock(we_back->mutex); //allow one command at a time
-		cmd = we_left->last_command;
+		cmd = we_back->last_command;
 	}
 	oss << "back :" << cmd;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
