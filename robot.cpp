@@ -5,7 +5,7 @@
 #include "stillcamera.h"
 #include "wheelcontroller.h"
 #include "objectfinder.h"
-#include "mousefinder.h"
+#include "MouseFinder.h"
 #include "dialog.h"
 #include "wheel.h"
 #include "ComPortScanner.h"
