@@ -35,7 +35,7 @@ int Wheel::Speed(){
 	try {
 		writeString("s\n");
 		/*std::cout << readLine() << std::endl;*/
-		return atoi(readLine().c_str());
+		return atoi(readLineAsync().c_str());
 	}
 	catch (boost::system::system_error& e)
 	{
@@ -48,8 +48,11 @@ int Wheel::Speed(){
 void Wheel::StallCheck(){
 	
 	while (!stop_thread){
-		if (readLine() == "stall:1"){
+		if (readLineAsync() == "stall:1" || readLineAsync() == "stall:2"){
 			stall = true;
+		}
+		else{
+			stall = false;
 		}
 	}
 }

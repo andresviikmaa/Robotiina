@@ -6,19 +6,12 @@ WheelController::WheelController(boost::asio::io_service &io)
 {
     using boost::property_tree::ptree;
     ptree pt;
-    try {
-        read_ini("conf/wheels.ini", pt);
-    } catch(...) {
-        pt.put("left.port", "COM6");
-        pt.put("right.port", "COM8");
-        pt.put("back.port", "COM10");
-        write_ini("conf/wheels.ini", pt);
-    }
+    read_ini("conf/ports.ini", pt);
 
 
-    w_left = new Wheel(io, pt.get<std::string>("left.port"), 115200);
-    w_right = new Wheel(io, pt.get<std::string>("right.port"), 115200);
-    w_back = new Wheel(io, pt.get<std::string>("back.port"), 115200);
+	w_left = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200);
+	w_right = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200);
+	w_back = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_BACK)), 115200);
 };
 
 void WheelController::Forward(int speed){
@@ -52,8 +45,8 @@ void WheelController::Drive(int velocity, double direction){
 		}
 	}
 
-	w_left->Run(-(velocity*cos((30 - direction) * PI / 180.0)));
-	w_right->Run(-(velocity*cos((150 - direction)  * PI / 180.0)));
+	w_left->Run((velocity*cos((30 - direction) * PI / 180.0)));
+	w_right->Run((velocity*cos((150 - direction)  * PI / 180.0)));
 	w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)));
 
 }
@@ -83,8 +76,8 @@ void WheelController::DriveRotate(int velocity, double direction, int rotate){
 		}
 	}
 
-	w_left->Run(-(velocity*cos((30 - direction) * PI / 180.0)) + rotate);
-	w_right->Run(-(velocity*cos((150 - direction)  * PI / 180.0)) + rotate);
+	w_left->Run((velocity*cos((30 - direction) * PI / 180.0)) + rotate);
+	w_right->Run((velocity*cos((150 - direction)  * PI / 180.0)) + rotate);
 	w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)) + rotate);
 
 	

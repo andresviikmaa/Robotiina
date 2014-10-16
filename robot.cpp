@@ -5,8 +5,10 @@
 #include "stillcamera.h"
 #include "wheelcontroller.h"
 #include "objectfinder.h"
+#include "mousefinder.h"
 #include "dialog.h"
 #include "wheel.h"
+#include "ComPortScanner.h"
 
 #include <opencv2/opencv.hpp>
 #include <boost/algorithm/string.hpp>
@@ -33,7 +35,7 @@ Robot::Robot(boost::asio::io_service &io) : io(io)
 {
 	camera = NULL;
     state = STATE_NONE;
-    wheels = new WheelController(io);
+    //wheels = new WheelController(io);
 }
 Robot::~Robot()
 {
@@ -41,6 +43,8 @@ Robot::~Robot()
 		delete camera;
     if(wheels)
         delete wheels;
+	if (finder)
+		delete finder;
 
 }
 void Robot::CalibrateObjects(const cv::Mat &image, bool autoCalibrate/* = false*/)
@@ -62,19 +66,39 @@ bool Robot::Launch(int argc, char* argv[])
 {
 	if (!ParseOptions(argc, argv)) return false;
 
-	
+	std::cout << "Initializing camera... " << std::endl;
 	if (config.count("camera"))
 		camera = new StillCamera(config["camera"].as<std::string>());
 	else
-        camera = new Camera(0);
+		camera = new Camera(0);
+	std::cout << "Done" << std::endl;
 
+	if (config.count("locate_cursor"))
+		finder = new MouseFinder();
+	else
+		finder = new ObjectFinder();
+
+	std::cout << "Checking COM ports... " << std::endl;
+	{ // new scope for scanner variable
+		ComPortScanner scanner;
+		if (!scanner.Verify(io)){
+			std::cout << "Chek failed, rescanning all ports" << std::endl;
+			scanner.Scan(io);
+		}
+	}
+	std::cout << "Done" << std::endl;
+
+	std::cout << "Initializing Wheels ports... " << std::endl;
+	wheels = new WheelController(io);
+	std::cout << "Done" << std::endl;
+
+	std::cout << "Starting Robot" << std::endl;
     Run();
 }
 
 void Robot::Run()
 {
-    ObjectFinder finder;
-
+ 
     while (state != STATE_END_OF_GAME)
     {
 //		cv::Mat image = camera->Capture();
@@ -82,7 +106,6 @@ void Robot::Run()
         if (STATE_NONE == state) {
 
             Dialog launchWindow("Launch Robotiina", CV_WINDOW_AUTOSIZE);
-			STATE_BUTTON(launchWindow, "Configure USB devices", STATE_CONFIGURE_USB)
 			STATE_BUTTON(launchWindow, "AutoCalibrate objects", STATE_AUTOCALIBRATE)
 			STATE_BUTTON(launchWindow, "ManualCalibrate objects", STATE_CALIBRATE)
 			STATE_BUTTON(launchWindow, "Start Robot", STATE_LAUNCH)
@@ -131,7 +154,7 @@ void Robot::Run()
 			}            
 		}
         if (STATE_LOCATE_BALL == state) {
-			cv::Point3d location = finder.Locate(objectThresholds[BALL], camera->Capture());
+			cv::Point3d location = finder->Locate(objectThresholds[BALL], camera->Capture());
 			double distance = location.x;
 			double HorizontalDev = location.y;
 			double HorizontalAngle = location.z;
@@ -147,7 +170,7 @@ void Robot::Run()
             
         }
         if(STATE_BALL_LOCATED == state) {
-			cv::Point3d location = finder.Locate(objectThresholds[BALL], camera->Capture());
+			cv::Point3d location = finder->Locate(objectThresholds[BALL], camera->Capture());
 			double distance = location.x;
 			double HorizontalDev = location.y;
 			double HorizontalAngle = location.z;
@@ -156,11 +179,11 @@ void Robot::Run()
 			if (distance == -1 && HorizontalDev == -1 && HorizontalAngle == -1){ 
 				state = STATE_LOCATE_BALL;
 			}			
-			else if (distance < 200 && (HorizontalDev > -50 && HorizontalDev < 50)){
+			else if (distance < 250 && (HorizontalDev > -50 && HorizontalDev < 50)){
 				//TODO: start catching the ball with tribbler
 				wheels->Stop();
 			}
-			else if (distance < 200){
+			else if (distance < 250){
 				//TODO: start tribbler
 				//TODO: turn depending on HorizontalDev
 				wheels->Stop();
@@ -172,15 +195,16 @@ void Robot::Run()
 				else{
 					speed = distance * 0.35 - 91;
 				}
+                                speed = 50;
 					
 				if (HorizontalDev > -50 && HorizontalDev < 50){
 					wheels->Drive(speed, HorizontalAngle);
 				}
 				else if (HorizontalDev >= 50){
-					wheels->DriveRotate(speed, HorizontalAngle, 15);
+					wheels->DriveRotate(speed, HorizontalAngle, 0);
 				}
 				else{
-					wheels->DriveRotate(speed, HorizontalAngle, -15);
+					wheels->DriveRotate(speed, HorizontalAngle, 0);
 				}
 			}
             //state = STATE_LOCATE_GATE;
@@ -214,7 +238,7 @@ void Robot::Run()
 				STATE_BUTTON(manualWindow, "Back", STATE_NONE)
 				manualWindow.show();
 		}
-		if (wheels->CheckStall() &&
+		if (false && wheels->CheckStall() &&
 			(state == STATE_LOCATE_BALL ||
 			state == STATE_BALL_LOCATED || 
 			state == STATE_LOCATE_GATE || 
@@ -223,6 +247,7 @@ void Robot::Run()
 			state = STATE_CRASH;
 		}
 
+		// This slows system down to 33.3 FPS
         if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
         {
           //  const cv::Mat frame = camera->Capture();
@@ -268,7 +293,8 @@ bool Robot::ParseOptions(int argc, char* argv[])
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help", "produce help message")
-		("camera", po::value<std::string>(), "set camera index or path");
+		("camera", po::value<std::string>(), "set camera index or path")
+		("locate_cursor", po::value<std::string>(), "find cursor instead of ball");
 
 	po::store(po::parse_command_line(argc, argv, desc), config);
 	po::notify(config);

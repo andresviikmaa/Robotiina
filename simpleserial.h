@@ -25,6 +25,28 @@ public:
 		for (;;)
 		{
 			
+			asio::read(serial, asio::buffer(&c, 1));
+			switch (c)
+			{
+				case '\r':
+					break;
+				case '\n':
+					return result;
+				default:
+					result += c;
+			}
+			
+		}
+	}
+	std::string readLineAsync() {
+		//Reading data char by char, code is optimized for simplicity, not speed
+		using namespace boost;
+		char c;
+		int len;
+		std::string result;
+		for (;;)
+		{
+
 			blockingreader reader(serial, 50);
 
 			while (reader.read_char(c) && c != '\n'){
@@ -34,7 +56,7 @@ public:
 				return result;
 			}
 			return result;
-			
+
 		}
 	}
 

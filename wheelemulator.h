@@ -9,7 +9,7 @@
 #include "simpleserial.h"
 #include <boost/atomic.hpp>
 #include <boost/property_tree/ptree.hpp>
-
+#include <boost/thread/mutex.hpp>
 
 /*
 	You can use Virtual Serial Port Driver from Eltima Software or Null-modem emulator to bind two COM ports together
@@ -52,6 +52,8 @@ public:
 	void Run();
 	void Stop();
 	~WheelEmulator();
+	std::string last_command;
+	boost::mutex mutex;
 private:
     boost::property_tree::ptree eeprom;
     std::string name;
@@ -96,8 +98,8 @@ private:
 	uint8_t recv_str(char *buf, uint8_t size);
     void usb_write(const char *str);
     void parse_and_execute_command(const char *buf);
-    void eeprom_update_byte(uint8_t * __p, uint8_t _value);
-    uint8_t eeprom_read_byte(const uint8_t * __p);
+    void eeprom_update_byte(uint8_t __p, uint8_t _value);
+    uint8_t eeprom_read_byte(const uint8_t __p);
     void pid();
     void reset_pid() ;
     void forward(uint8_t pwm);

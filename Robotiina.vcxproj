@@ -88,7 +88,9 @@
     <ClInclude Include="calibrationconfreader.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="colorcalibrator.h" />
+    <ClInclude Include="ComPortScanner.h" />
     <ClInclude Include="dialog.h" />
+    <ClInclude Include="MouseFinder.h" />
     <ClInclude Include="objectfinder.h" />
     <ClInclude Include="remotecontrol.h" />
     <ClInclude Include="robot.h" />
@@ -103,7 +105,9 @@
     <ClCompile Include="calibrationconfreader.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="colorcalibrator.cpp" />
+    <ClCompile Include="ComPortScanner.cpp" />
     <ClCompile Include="dialog.cpp" />
+    <ClCompile Include="MouseFinder.cpp" />
     <ClCompile Include="objectfinder.cpp" />
     <ClCompile Include="remotecontrol.cpp" />
     <ClCompile Include="robot.cpp" />

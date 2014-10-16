@@ -13,6 +13,8 @@ private:
 
     ICamera *camera;
     WheelController * wheels;
+	ObjectFinder *finder;
+
 	int speed;
     std::map<OBJECT, HSVColorRange> objectThresholds;
     //STATE state = STATE_NONE;

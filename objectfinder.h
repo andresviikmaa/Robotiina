@@ -2,10 +2,12 @@
 #include "types.h"
 #include <opencv2/opencv.hpp>
 
+
 class ObjectFinder {
-private:
-	cv::Point2f LocateOnScreen(const HSVColorRange &HSVRange, const cv::Mat &frame);
+protected:
+	virtual cv::Point2f LocateOnScreen(const HSVColorRange &HSVRange, const cv::Mat &frame);
 	cv::Point3d ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size);
+private:
 	void WriteInfoOnScreen(const cv::Point3d &info);
 	//Vars
 	float Hfov = 35.21;
@@ -15,7 +17,7 @@ private:
 
 public:
     ObjectFinder();
-	cv::Point3d Locate(const HSVColorRange &HSVRange, const cv::Mat &frame);
-    ~ObjectFinder(){ }
+	virtual cv::Point3d Locate(const HSVColorRange &HSVRange, const cv::Mat &frame);
+    virtual ~ObjectFinder(){ }
 
 };
