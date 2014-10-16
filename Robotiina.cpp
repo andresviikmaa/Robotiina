@@ -10,11 +10,11 @@ int main(int argc, char *argv[])
 {
     boost::asio::io_service io;
     Robot robotiina(io);
-    RemoteControl sr(io, &robotiina);
+//    RemoteControl sr(io, &robotiina);
 
 	try
 	{
-           sr.Start();
+//           sr.Start();
 
 		robotiina.Launch(argc, argv);
         }
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 	{
 		std::cout << "ups, did not see that coming."<< std::endl;
 	}
-    sr.Stop();
+//    sr.Stop();
     return 0;
 
 }
