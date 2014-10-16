@@ -190,7 +190,7 @@ void Robot::Run()
 			else if (distance < 300){
 				//TODO: start tribbler
 				//TODO: turn depending on HorizontalDev
-				if (HorizontalDev > -50){
+				if (HorizontalDev < -50){
 					wheels->Rotate(1, 20);
 				}
 				else{
