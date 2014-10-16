@@ -89,7 +89,12 @@ bool Robot::Launch(int argc, char* argv[])
 	std::cout << "Done" << std::endl;
 
 	std::cout << "Initializing Wheels ports... " << std::endl;
-	wheels = new WheelController(io);
+	try {
+		wheels = new WheelController(io);
+	}
+	catch (...) {
+		throw std::runtime_error("unable to open wheel port(s)");
+	}
 	std::cout << "Done" << std::endl;
 
 	std::cout << "Starting Robot" << std::endl;

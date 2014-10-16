@@ -13,14 +13,29 @@ bool ComPortScanner::Verify(boost::asio::io_service &io_service)
 {
 	bool ok = true;
 	boost::property_tree::ptree ports;
-	read_ini("conf/ports.ini", ports);
-	BOOST_FOREACH(const boost::property_tree::ptree::value_type &v, ports) {
+	try {
+		read_ini("conf/ports.ini", ports);
+	}
+	catch (...) {
+		std::cout << "Error reading old port configuration: " << std::endl;
+		return false;
+	}
+	//BOOST_FOREACH(const boost::property_tree::ptree::value_type &v, ports) {
+	for (int i = ID_WHEEL_LEFT; i < ID_OBJECT_COUNT; i++) {
 		// v.first is the name of the child.
 		// v.second is the child tree.
 		std::stringstream portNum;
 		//portNum << prefix << 
-		portNum << (v.second).data();
-		std::string _id = v.first;
+		std::string _id = std::to_string(i); // v.first;
+		try {
+			portNum << ports.get<std::string>(std::to_string(i));//(v.second).data();
+		}
+		catch (...)
+		{
+			std::cout << "ID: " << _id << " not found in conf file" << std::endl;
+			ok = false;
+			continue;
+		}
 		try {
 			SimpleSerial port = SimpleSerial(io_service, portNum.str(), 115200);
 			port.writeString("?\n");
@@ -35,7 +50,7 @@ bool ComPortScanner::Verify(boost::asio::io_service &io_service)
 			//portMap[atoi(id.c_str())] = portNum.str();
 			ports.put(id, portNum.str());
 		}
-		catch (const std::exception &e){
+		catch (std::runtime_error const&e){
 			std::cout << "Port not accessible: " << portNum.str() << ", error: " << e.what() << std::endl;
 			ok = false;
 		}
@@ -67,7 +82,7 @@ void ComPortScanner::Scan(boost::asio::io_service &io_service)
 			//portMap[atoi(id.c_str())] = portNum.str();
 			ports.put(id, portNum.str());
 		}
-		catch (const std::exception &e){
+		catch (std::runtime_error const&e){
 			std::cout << "Port not accessible: " << portNum.str() << ", error: " << e.what() << std::endl;
 		}
 	}
