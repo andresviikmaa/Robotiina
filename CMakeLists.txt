@@ -25,7 +25,7 @@ ENDIF()
 SET(Boost_ADDITIONAL_VERSIONS "1.56" "1.56.0" "1.55" "1.55.0")
 
 #list( APPEND CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -g -ftest-coverage -fprofile-arcs")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 find_package( OpenCV REQUIRED )
 
 set(Boost_USE_MULTITHREADED ON)
@@ -37,11 +37,11 @@ include_directories(${Boost_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 #endif()
 
-set(SOURCE_FILES Robotiina.cpp camera.cpp stillcamera.cpp robot.cpp objectfinder.cpp colorcalibrator.cpp autocalibrator.cpp wheelcontroller.cpp calibrationconfreader.cpp dialog.cpp wheel.cpp remotecontrol.cpp)
+set(SOURCE_FILES Robotiina.cpp camera.cpp stillcamera.cpp robot.cpp objectfinder.cpp colorcalibrator.cpp autocalibrator.cpp wheelcontroller.cpp calibrationconfreader.cpp dialog.cpp wheel.cpp remotecontrol.cpp MouseFinder.cpp ComPortScanner.cpp)
 add_executable(robotiina ${SOURCE_FILES})
 target_link_libraries( robotiina  ${OpenCV_LIBS} ${Boost_LIBRARIES} ${WINSOCK_LIB} ${WINSOCK2_LIB})
 
 set(WHEELEMULATOR_FILES wheelemulator.cpp)
 add_executable(wheelemulator ${WHEELEMULATOR_FILES})
-target_link_libraries( wheelemulator ${Boost_LIBRARIES} ${WINSOCK_LIB})
+target_link_libraries( wheelemulator ${OpenCV_LIBS} ${Boost_LIBRARIES} ${WINSOCK_LIB})
 
