@@ -22,7 +22,6 @@ public:
 	void Stop();
 	bool CheckStall();
     ~WheelController(){
-
 		if (w_left)
 			delete w_left;
 		if (w_right)

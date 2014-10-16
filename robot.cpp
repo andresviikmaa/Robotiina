@@ -259,7 +259,6 @@ void Robot::Run()
             std::cout << "esc key is pressed by user" << std::endl;
             //state = STATE_END_OF_GAME;
             state = STATE_NONE;
-	break;
         }
     }
 }
