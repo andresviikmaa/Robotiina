@@ -39,7 +39,7 @@ bool ComPortScanner::Verify(boost::asio::io_service &io_service)
 		try {
 			SimpleSerial port = SimpleSerial(io_service, portNum.str(), 115200);
 			port.writeString("?\n");
-			std::string id = port.readLineAsync();
+			std::string id = port.readLine();
 			if (id.empty()) throw std::runtime_error(("No ID received from port " + portNum.str()).c_str());
 			if (id == "<id:0>") throw std::runtime_error(("ID not set in port " + portNum.str()).c_str());
 			if (id.substr(0, 4) != "<id:") throw std::runtime_error(("Invalid ID " + id + " received from port " + portNum.str()).c_str());
@@ -72,7 +72,7 @@ void ComPortScanner::Scan(boost::asio::io_service &io_service)
 		try {
 			SimpleSerial port = SimpleSerial(io_service, portNum.str(), 115200);
 			port.writeString("?\n");
-			std::string id = port.readLineAsync();
+			std::string id = port.readLine();
 			if (id.empty()) throw std::runtime_error(("No ID received from port " + portNum.str()).c_str());
 			if (id == "<id:0>") throw std::runtime_error(("ID not set in port " + portNum.str()).c_str());
 			if (id.substr(0, 4) != "<id:") throw std::runtime_error(("Invalid ID " + id + " received from port " + portNum.str()).c_str());
