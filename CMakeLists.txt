@@ -24,13 +24,13 @@ ENDIF()
 #boost
 SET(Boost_ADDITIONAL_VERSIONS "1.56" "1.56.0" "1.55" "1.55.0")
 
-list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -g -ftest-coverage -fprofile-arcs")
-
+#list( APPEND CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -g -ftest-coverage -fprofile-arcs")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 find_package( OpenCV REQUIRED )
 
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost 1.54.0 COMPONENTS program_options system thread)
+find_package(Boost 1.54.0 COMPONENTS program_options system thread chrono)
 
 #if(Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})

@@ -118,12 +118,12 @@ void Robot::Run()
 		if (STATE_CRASH == state){
 			//Backwards
 			wheels->Drive(50, 180);
-			std::chrono::milliseconds dura(1000);
-			std::this_thread::sleep_for(dura);
+            boost::chrono::milliseconds dura(1000);
+			boost::this_thread::sleep_for(dura);
 			wheels->Stop();
 			//Turn a littlebit
 			wheels->Rotate(1, 100);
-			std::this_thread::sleep_for(dura);
+            boost::this_thread::sleep_for(dura);
 			wheels->Stop();
 			//Check again
 			if (!wheels->CheckStall()){
