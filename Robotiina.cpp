@@ -14,10 +14,10 @@ int main(int argc, char *argv[])
 
 	try
 	{
-        sr.Start();
+           sr.Start();
 
 		robotiina.Launch(argc, argv);
-    }
+        }
 	catch (std::exception &e)
 	{
 		std::cout << "ups, " << e.what() << std::endl;

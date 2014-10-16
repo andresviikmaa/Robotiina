@@ -23,9 +23,11 @@ public:
 	bool CheckStall();
     ~WheelController(){
 
-		delete w_left;
-		delete w_right;
-		delete w_back;
-
+		if (w_left)
+			delete w_left;
+		if (w_right)
+			delete w_right;
+		if (w_back)
+			delete w_back;
 	};
 };

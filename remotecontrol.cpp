@@ -21,9 +21,11 @@ void RemoteControl::Start()
 
 void RemoteControl::Stop()
 {
+    std::cout << "Stoping Remote control " << std::endl;
     stop = true;
-	socket.cancel();
+    socket.close();
     threads.join_all();
+    std::cout << "Remote control stoped" << std::endl;
 }
 
 std::string RemoteControl::respond(const std::string &query)
@@ -34,7 +36,7 @@ std::string RemoteControl::respond(const std::string &query)
 void RemoteControl::loop()
 {
 
-
+try {
     while (!stop)
     {
         boost::array<char, 1024> recv_buf;
@@ -55,7 +57,9 @@ void RemoteControl::loop()
         socket.send_to(boost::asio::buffer(message),
                 remote_endpoint, 0, ignored_error);
     }
-
+} catch(...){
+     std::cout << "Remote control is terminating" << std::endl;
+}
 }
 
 

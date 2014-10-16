@@ -31,9 +31,8 @@ std::pair<OBJECT, std::string> objects[] = {
 
 std::map<OBJECT, std::string> OBJECT_LABELS(objects, objects + sizeof(objects) / sizeof(objects[0]));
 
-Robot::Robot(boost::asio::io_service &io) : io(io)
+Robot::Robot(boost::asio::io_service &io) : io(io), camera(0), wheels(0), finder(0)
 {
-	camera = NULL;
     state = STATE_NONE;
     //wheels = new WheelController(io);
 }
@@ -43,7 +42,7 @@ Robot::~Robot()
 		delete camera;
     if(wheels)
         delete wheels;
-	if (finder)
+    if (finder)
 		delete finder;
 
 }
