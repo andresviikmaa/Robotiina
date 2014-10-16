@@ -17,7 +17,7 @@ cv::Point2f MouseFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &f
 	cv::circle(frame2, cv::Point2i(mouseLocation), 10, colorCircle, 3);
 	cv::imshow("Original", frame2);
 	cv::moveWindow("Original", 0, 0);
-	return cv::Point2f(mouseLocation.x, mouseLocation.x);
+	return cv::Point2f(mouseLocation.x, mouseLocation.y);
 
 }
 MouseFinder::~MouseFinder()

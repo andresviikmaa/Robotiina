@@ -198,9 +198,7 @@ void Robot::Run()
 				}
 				else{
 					speed = distance * 0.35 - 91;
-				}
-                                speed = 50;
-					
+				}					
 				if (HorizontalDev > -50 && HorizontalDev < 50){
 					wheels->Drive(speed, HorizontalAngle);
 				}
