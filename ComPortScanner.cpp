@@ -87,7 +87,7 @@ void ComPortScanner::Scan(boost::asio::io_service &io_service)
 			ok = false;
 		}
 	}
-	if (ok){
+	if (true){
 		write_ini("conf/ports.ini", ports);
 	}
 	

@@ -92,7 +92,8 @@ bool Robot::Launch(int argc, char* argv[])
 		wheels = new WheelController(io);
 	}
 	catch (...) {
-		throw std::runtime_error("unable to open wheel port(s)");
+throw;	
+	throw std::runtime_error("unable to open wheel port(s)");
 	}
 	std::cout << "Done" << std::endl;
 
@@ -183,20 +184,22 @@ void Robot::Run()
 			if (distance == -1 && HorizontalDev == -1 && HorizontalAngle == -1){ 
 				state = STATE_LOCATE_BALL;
 			}			
-			else if (distance < 300 && (HorizontalDev > -50 && HorizontalDev < 50)){
+			else if (distance < 300 && (HorizontalDev > -10 && HorizontalDev < 10)){
 				//TODO: start catching the ball with tribbler
 				wheels->Stop();
 			}
 			else if (distance < 300){
 				//TODO: start tribbler
 				//TODO: turn depending on HorizontalDev
-				if (HorizontalDev < -50){
-					wheels->Rotate(1, 20);
+				if (HorizontalDev < -10){
+					wheels->Rotate(0, 15);
+				}
+				else if (HorizontalDev > 10){
+					wheels->Rotate(1, 15);
 				}
 				else{
-					wheels->Rotate(0, 20);
+					wheels->Stop();
 				}
-				wheels->Stop();
 			}
 			else{
 				if (distance > 700){
@@ -204,15 +207,16 @@ void Robot::Run()
 				}
 				else{
 					speed = distance * 0.35 - 91;
-				}					
-				if (HorizontalDev > -50 && HorizontalDev < 50){
+				}
+									
+				if (HorizontalDev > -20 && HorizontalDev < 20){
 					wheels->Drive(speed, HorizontalAngle);
 				}
-				else if (HorizontalDev >= 50){
-					wheels->DriveRotate(speed, HorizontalAngle, 0);
+				else if (HorizontalDev >= 20){
+					wheels->DriveRotate(speed, HorizontalAngle, 10);
 				}
 				else{
-					wheels->DriveRotate(speed, HorizontalAngle, 0);
+					wheels->DriveRotate(speed, HorizontalAngle, -10);
 				}
 			}
             //state = STATE_LOCATE_GATE;
@@ -256,7 +260,7 @@ void Robot::Run()
 		}
 
 		// This slows system down to 33.3 FPS
-        if (cv::waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
+        if (cv::waitKey(1) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
         {
           //  const cv::Mat frame = camera->Capture();
 

@@ -12,7 +12,7 @@ void AutoCalibrator::LoadImage(const cv::Mat &image)
     ColorCalibrator::LoadImage(image);
     //float data[6][3] = {{1, 0, 0/*blue*/}, {0, 0, 1 /* orange*/}, {1 ,1, 0 /* yellow*/}, {0,1, 0}/*green*/, {1,1,1}, {0,0,0}};
 	//bestLabels = cv::Mat(6, 3, CV_32F, &data); //BGR
-    DetectThresholds(6);
+    DetectThresholds(16);
 };
 
 HSVColorRange AutoCalibrator::GetObjectThresholds (int index, const std::string &name)
@@ -61,8 +61,8 @@ void AutoCalibrator::mouseClicked(int x, int y) {
 	std::sort(sat.begin(), sat.end());
 	std::sort(val.begin(), val.end());
 
-	int min = hue.size() * 0.05;
-	int max = hue.size() * 0.95;
+	int min = hue.size() * 0.02;
+	int max = hue.size() * 0.98;
 
 	range.hue.low = hue[min];
 	range.hue.high = hue[max];
@@ -91,7 +91,7 @@ void AutoCalibrator::DetectThresholds(int number_of_objects){
     int origRows = img.rows;
     cv::Mat colVec = img.reshape(1, img.rows*img.cols); // change to a Nx3 column vector
     cv::Mat colVecD;
-    int attempts = 5;
+    int attempts = 10;
 
     double eps = 0.1;
     colVec.convertTo(colVecD, CV_32FC3, 1.0/255.0); // convert to floating point
