@@ -57,9 +57,10 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 	int largest_contour_index = 0;
 	cv::Rect bounding_rect;
 
-	findContours(imgThresholded, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE); // Find the contours in the image
+	findContours(imgThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); // Find the contours in the image
 	
 	cv::Scalar color(255, 255, 255);
+	cv::Scalar color2(0, 0, 255);
 
 	for (int i = 0; i < contours.size(); i++) // iterate through each contour.
 	{
@@ -69,6 +70,8 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 			largest_contour_index = i;                //Store the index of largest contour
 			bounding_rect = cv::boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
 		}
+		bounding_rect = cv::boundingRect(contours[i]);
+		cv::rectangle(imgOriginal, bounding_rect, color2);
 		drawContours(imgOriginal, contours, i, color, 1, 8, hierarchy); // Draw the largest contour using previously stored index.
 	}
 
