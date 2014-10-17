@@ -14,5 +14,7 @@ protected:
 	void mouseClicked(int x, int y, int flags);
 private:
     bool done;
+	std::string name;
+
 
 };

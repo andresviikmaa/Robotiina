@@ -17,7 +17,9 @@ void AutoCalibrator::LoadImage(const cv::Mat &image)
 
 HSVColorRange AutoCalibrator::GetObjectThresholds (int index, const std::string &name)
 {
-    cv::imshow(name.c_str(), clustered); //show the thresholded image
+	this->name = name;
+    cv::imshow(name.c_str(), image); //show the thresholded image
+	cv::moveWindow(name.c_str(), 0, 0);
     cv::setMouseCallback(name.c_str(), [](int event, int x, int y, int flags, void* self) {
         if (event==cv::EVENT_LBUTTONUP) {
 			((AutoCalibrator*)self)->mouseClicked(x, y, flags);
@@ -87,10 +89,16 @@ void AutoCalibrator::mouseClicked(int x, int y, int flags) {
 	cv::Mat imgThresholded;
 	cv::inRange(image, cv::Scalar(range.hue.low, range.sat.low, range.val.low), cv::Scalar(range.hue.high, range.sat.high, range.val.high), imgThresholded); //Threshold the image
 	std::cout << cv::Scalar(range.hue.low, range.sat.low, range.val.low) << cv::Scalar(range.hue.high, range.sat.high, range.val.high) << std::endl;
+	
+	cv::Mat selected(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));
 
-	cv::imshow("auto thresholded", imgThresholded); //show the thresholded image
+	image.copyTo(selected, 255 - imgThresholded);
+
+//	cv::imshow("auto thresholded", image); //show the thresholded image
+//	cv::imshow("auto thresholded 2", imgThresholded); //show the thresholded image
 
 	//cv::imshow("original", image); //show the thresholded image
+	cv::imshow(this->name.c_str(), selected); //show the thresholded image
 	if ((flags & cv::EVENT_FLAG_RBUTTON))
 		done = true;
 
