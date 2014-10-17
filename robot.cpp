@@ -116,7 +116,7 @@ void Robot::Run()
  
     while (state != STATE_END_OF_GAME)
     {
-//		cv::Mat image = camera->Capture();
+		cv::Mat frame = camera->Capture();
 
         if (STATE_NONE == state) {
 
@@ -131,13 +131,11 @@ void Robot::Run()
 
         }
         if (STATE_CALIBRATE == state) {
-			cv::Mat image;// = camera->Capture();
-			CalibrateObjects(image);
+			CalibrateObjects(frame);
             state = STATE_NONE;
         }
         if (STATE_AUTOCALIBRATE == state) {
-			cv::Mat image = camera->Capture();
-            CalibrateObjects(image, true);
+			CalibrateObjects(frame, true);
             state = STATE_NONE;
         }
 		if (STATE_LAUNCH == state) {
@@ -169,7 +167,7 @@ void Robot::Run()
 			}            
 		}
         if (STATE_LOCATE_BALL == state) {
-			cv::Point3d location = finder->Locate(objectThresholds[BALL], camera->Capture());
+			cv::Point3d location = finder->Locate(objectThresholds[BALL], frame);
 			double distance = location.x;
 			double HorizontalDev = location.y;
 			double HorizontalAngle = location.z;
@@ -185,7 +183,7 @@ void Robot::Run()
             
         }
         if(STATE_BALL_LOCATED == state) {
-			cv::Point3d location = finder->Locate(objectThresholds[BALL], camera->Capture());
+			cv::Point3d location = finder->Locate(objectThresholds[BALL], frame);
 			double distance = location.x;
 			double HorizontalDev = location.y;
 			double HorizontalAngle = location.z;

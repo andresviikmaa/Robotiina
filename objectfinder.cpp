@@ -34,19 +34,18 @@ cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, const cv::Mat &frame) {
 
 cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &frame) {
 
+	cv::Point2f center;
 	cv::Mat	imgOriginal = frame;
 	cv::Mat imgHSV;
 	//	cv::imshow("Thresholded Image 2", imgOriginal); //show the thresholded image
 	
 	cvtColor(imgOriginal, imgHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
-	
+
+
 	//	cv::imshow("Thresholded Image 3", imgHSV); //show the thresholded image
 	cv::Mat imgThresholded;
 	
 	inRange(imgHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), imgThresholded); //Threshold the image
-
-	
-
 
 	cv::Mat dst(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));
 	
@@ -60,6 +59,7 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 
 	findContours(imgThresholded, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE); // Find the contours in the image
 	
+	cv::Scalar color(255, 255, 255);
 
 	for (int i = 0; i < contours.size(); i++) // iterate through each contour.
 	{
@@ -69,15 +69,13 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 			largest_contour_index = i;                //Store the index of largest contour
 			bounding_rect = cv::boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
 		}
+		drawContours(imgOriginal, contours, i, color, 1, 8, hierarchy); // Draw the largest contour using previously stored index.
 	}
-	cv::Scalar color(255, 255, 255);
 
-	//drawContours(dst, contours, largest_contour_index, color, CV_FILLED, 8, hierarchy); // Draw the largest contour using previously stored index.
-	
 
 	//find center
 	cv::Scalar colorCircle(133, 33, 55);
-	cv::Point2f center;
+
 	if (contours.size() > largest_contour_index){
 		cv::Moments M = cv::moments(contours[largest_contour_index]);
 		center = cv::Point2f(M.m10 / M.m00, M.m01 / M.m00);

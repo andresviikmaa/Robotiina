@@ -44,8 +44,8 @@ HSVColorRange AutoCalibrator::GetObjectThresholds (int index, const std::string 
 };
 
 void AutoCalibrator::mouseClicked(int x, int y, int flags) {
-    cv::Mat imgHSV;
-	cvtColor(image, imgHSV, CV_BGR2HSV);
+    //cv::Mat imgHSV;
+	//cvtColor(image, imgHSV, CV_BGR2HSV);
 
     int label = bestLabels.at<int>(y*image.cols + x);
     //range =  {{179,0},{255,0},{255,0}} /* reverse initial values for min/max to work*/;
@@ -53,9 +53,9 @@ void AutoCalibrator::mouseClicked(int x, int y, int flags) {
 
     for(int i=0; i<image.cols*image.rows; i++) {
         if(bestLabels.at<int>(i) == label){
-            hue.push_back(imgHSV.at<cv::Vec3b>(i).val[0]);
-			sat.push_back(imgHSV.at<cv::Vec3b>(i).val[1]);
-			val.push_back(imgHSV.at<cv::Vec3b>(i).val[2]);
+			hue.push_back(image.at<cv::Vec3b>(i).val[0]);
+			sat.push_back(image.at<cv::Vec3b>(i).val[1]);
+			val.push_back(image.at<cv::Vec3b>(i).val[2]);
 
         }
     }
@@ -64,28 +64,29 @@ void AutoCalibrator::mouseClicked(int x, int y, int flags) {
 	std::sort(sat.begin(), sat.end());
 	std::sort(val.begin(), val.end());
 
-	int min = hue.size() * 0.02;
-	int max = hue.size() * 0.98;
+	int min_index = hue.size() * 0.05;
+	int max_index = hue.size() * 0.95;
 
 	if ((flags & cv::EVENT_FLAG_CTRLKEY)) {
-		range.hue.low = std::min(range.hue.low, hue[min]);
-		range.hue.high = std::max(range.hue.high, hue[max]);
-		range.sat.low = std::min(range.sat.low, sat[min]);
-		range.sat.high = std::max(range.sat.high, sat[max]);
-		range.val.low = std::min(range.val.low, val[min]);
-		range.val.high = std::max(range.val.high, val[max]);
+		range.hue.low = std::min(range.hue.low, hue[min_index]);
+		range.hue.high = std::max(range.hue.high, hue[max_index]);
+		range.sat.low = std::min(range.sat.low, sat[min_index]);
+		range.sat.high = std::max(range.sat.high, sat[max_index]);
+		range.val.low = std::min(range.val.low, val[min_index]);
+		range.val.high = std::max(range.val.high, val[max_index]);
 	}
 	else {
-		range.hue.low = hue[min];
-		range.hue.high = hue[max];
-		range.sat.low = sat[min];
-		range.sat.high = sat[max];
-		range.val.low = val[min];
-		range.val.high = val[max];
+		range.hue.low = hue[min_index];
+		range.hue.high = hue[max_index];
+		range.sat.low = sat[min_index];
+		range.sat.high = sat[max_index];
+		range.val.low = val[min_index];
+		range.val.high = val[max_index];
 	}
 
 	cv::Mat imgThresholded;
-	cv::inRange(imgHSV, cv::Scalar(range.hue.low, range.sat.low, range.val.low), cv::Scalar(range.hue.high, range.sat.high, range.val.high), imgThresholded); //Threshold the image
+	cv::inRange(image, cv::Scalar(range.hue.low, range.sat.low, range.val.low), cv::Scalar(range.hue.high, range.sat.high, range.val.high), imgThresholded); //Threshold the image
+	std::cout << cv::Scalar(range.hue.low, range.sat.low, range.val.low) << cv::Scalar(range.hue.high, range.sat.high, range.val.high) << std::endl;
 
 	cv::imshow("auto thresholded", imgThresholded); //show the thresholded image
 

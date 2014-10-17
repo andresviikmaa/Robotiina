@@ -6,6 +6,7 @@ Because Camera is not working on windows with single image (next frame is invali
 class StillCamera : public ICamera, protected cv::VideoCapture
 {
 private:
+	cv::Mat _frame;
 	cv::Mat frame;
 public:
 	StillCamera(const std::string &fileName);
