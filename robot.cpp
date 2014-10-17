@@ -77,25 +77,35 @@ bool Robot::Launch(int argc, char* argv[])
 	else
 		finder = new ObjectFinder();
 
-	std::cout << "Checking COM ports... " << std::endl;
-	{ // new scope for scanner variable
-		ComPortScanner scanner;
-		if (!scanner.Verify(io)){
-			std::cout << "Chek failed, rescanning all ports" << std::endl;
-			scanner.Scan(io);
+	bool portsOk = false;
+	if (config.count("skip-ports")) {
+		std::cout << "Skiping COM port check" << std::endl;
+		portsOk = true;
+	}
+	else {
+		std::cout << "Checking COM ports... " << std::endl;
+		{ // new scope for scanner variable
+			ComPortScanner scanner;
+			if ((portsOk = scanner.Verify(io)) == false){
+				std::cout << "Chek failed, rescanning all ports" << std::endl;
+				portsOk = scanner.Scan(io);
+			}
 		}
+		std::cout << "Done" << std::endl;
 	}
-	std::cout << "Done" << std::endl;
-
-	std::cout << "Initializing Wheels ports... " << std::endl;
-	try {
-		wheels = new WheelController(io);
+	if (portsOk) {
+		std::cout << "Initializing Wheels... " << std::endl;
+		try {
+			wheels = new WheelController(io);
+		}
+		catch (...) {
+			throw std::runtime_error("error to open wheel port(s)");
+		}
+		std::cout << "Done" << std::endl;
 	}
-	catch (...) {
-throw;	
-	throw std::runtime_error("unable to open wheel port(s)");
+	else {
+		throw std::runtime_error("unable find wheels use \"--skip-ports\" parameter to launch without wheels ");
 	}
-	std::cout << "Done" << std::endl;
 
 	std::cout << "Starting Robot" << std::endl;
     Run();
@@ -305,7 +315,8 @@ bool Robot::ParseOptions(int argc, char* argv[])
 	desc.add_options()
 		("help", "produce help message")
 		("camera", po::value<std::string>(), "set camera index or path")
-		("locate_cursor", po::value<std::string>(), "find cursor instead of ball");
+		("locate_cursor", po::value<std::string>(), "find cursor instead of ball")
+		("skip-ports", po::value<std::string>(), "skip COM port checks");
 
 	po::store(po::parse_command_line(argc, argv, desc), config);
 	po::notify(config);

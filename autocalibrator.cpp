@@ -19,9 +19,12 @@ HSVColorRange AutoCalibrator::GetObjectThresholds (int index, const std::string 
 {
     cv::imshow(name.c_str(), clustered); //show the thresholded image
     cv::setMouseCallback(name.c_str(), [](int event, int x, int y, int flags, void* self) {
-        if (event==cv::EVENT_LBUTTONUP){
-            ((AutoCalibrator*)self)->mouseClicked(x, y);
+        if (event==cv::EVENT_LBUTTONUP) {
+			((AutoCalibrator*)self)->mouseClicked(x, y, flags);
         }
+		if (event == cv::EVENT_RBUTTONUP) {
+			((AutoCalibrator*)self)->done = true;
+		}
     }, this);
 
 
@@ -40,12 +43,12 @@ HSVColorRange AutoCalibrator::GetObjectThresholds (int index, const std::string 
 
 };
 
-void AutoCalibrator::mouseClicked(int x, int y) {
+void AutoCalibrator::mouseClicked(int x, int y, int flags) {
     cv::Mat imgHSV;
 	cvtColor(image, imgHSV, CV_BGR2HSV);
 
     int label = bestLabels.at<int>(y*image.cols + x);
-    range =  {{179,0},{255,0},{255,0}} /* reverse initial values for min/max to work*/;
+    //range =  {{179,0},{255,0},{255,0}} /* reverse initial values for min/max to work*/;
 	std::vector<int> hue, sat, val;
 
     for(int i=0; i<image.cols*image.rows; i++) {
@@ -64,21 +67,31 @@ void AutoCalibrator::mouseClicked(int x, int y) {
 	int min = hue.size() * 0.02;
 	int max = hue.size() * 0.98;
 
-	range.hue.low = hue[min];
-	range.hue.high = hue[max];
-	range.sat.low = sat[min];
-	range.sat.high = sat[max];
-	range.val.low = val[min];
-	range.val.high = val[max];
+	if ((flags & cv::EVENT_FLAG_CTRLKEY)) {
+		range.hue.low = std::min(range.hue.low, hue[min]);
+		range.hue.high = std::max(range.hue.high, hue[max]);
+		range.sat.low = std::min(range.sat.low, sat[min]);
+		range.sat.high = std::max(range.sat.high, sat[max]);
+		range.val.low = std::min(range.val.low, val[min]);
+		range.val.high = std::max(range.val.high, val[max]);
+	}
+	else {
+		range.hue.low = hue[min];
+		range.hue.high = hue[max];
+		range.sat.low = sat[min];
+		range.sat.high = sat[max];
+		range.val.low = val[min];
+		range.val.high = val[max];
+	}
 
 	cv::Mat imgThresholded;
 	cv::inRange(imgHSV, cv::Scalar(range.hue.low, range.sat.low, range.val.low), cv::Scalar(range.hue.high, range.sat.high, range.val.high), imgThresholded); //Threshold the image
 
-	//cv::imshow("auto thresholded", imgThresholded); //show the thresholded image
+	cv::imshow("auto thresholded", imgThresholded); //show the thresholded image
 
 	//cv::imshow("original", image); //show the thresholded image
-
-	done = true;
+	if ((flags & cv::EVENT_FLAG_RBUTTON))
+		done = true;
 
 }
 AutoCalibrator::~AutoCalibrator(){
@@ -87,11 +100,11 @@ AutoCalibrator::~AutoCalibrator(){
 
 void AutoCalibrator::DetectThresholds(int number_of_objects){
     cv::Mat img(image);
-    //cvtColor(img,image,CV_BGR2HSV);
+    cvtColor(img,image,CV_BGR2HSV);
     int origRows = img.rows;
     cv::Mat colVec = img.reshape(1, img.rows*img.cols); // change to a Nx3 column vector
     cv::Mat colVecD;
-    int attempts = 10;
+    int attempts = 1;
 
     double eps = 0.1;
     colVec.convertTo(colVecD, CV_32FC3, 1.0/255.0); // convert to floating point

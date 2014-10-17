@@ -6,9 +6,9 @@
 class WheelController {
 private:
     CvPoint curLocation;
-	Wheel * w_left;
-	Wheel * w_right;
-	Wheel * w_back;
+	DummyWheel * w_left;
+	DummyWheel * w_right;
+	DummyWheel * w_back;
 	
 
 public:

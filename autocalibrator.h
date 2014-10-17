@@ -11,7 +11,7 @@ public:
 protected:
     cv::Mat bestLabels, clustered, centers;
     void DetectThresholds(int number_of_objects);
-    void mouseClicked(int x, int y);
+	void mouseClicked(int x, int y, int flags);
 private:
     bool done;
 

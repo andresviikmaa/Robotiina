@@ -38,7 +38,7 @@ public:
 			
 		}
 	}
-	std::string readLineAsync() {
+	std::string readLineAsync(size_t timeout = 50) {
 		//Reading data char by char, code is optimized for simplicity, not speed
 		using namespace boost;
 		char c;
@@ -47,7 +47,7 @@ public:
 		for (;;)
 		{
 
-			blockingreader reader(serial, 50);
+			blockingreader reader(serial, timeout);
 
 			while (reader.read_char(c) && c != '\n'){
 				result += c;

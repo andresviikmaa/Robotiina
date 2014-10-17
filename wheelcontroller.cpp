@@ -8,10 +8,24 @@ WheelController::WheelController(boost::asio::io_service &io)
     ptree pt;
     read_ini("conf/ports.ini", pt);
 
-
-	w_left = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200);
-	w_right = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200);
-	w_back = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_BACK)), 115200);
+	try {
+		w_left = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200);
+	}
+	catch (...) {
+		w_left = new DummyWheel();
+	}
+	try {
+		w_right = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200);
+	}
+	catch (...) {
+		w_right = new DummyWheel();
+	}
+	try {
+		w_back = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_BACK)), 115200);
+	}
+	catch (...) {
+		w_back = new DummyWheel();
+	}
 };
 
 void WheelController::Forward(int speed){

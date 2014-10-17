@@ -4,7 +4,20 @@
 #include <boost/thread/thread.hpp>
 #include <boost/atomic.hpp>
 
-class Wheel: public SimpleSerial
+//TODO: rename
+class DummyWheel
+{
+public:
+	DummyWheel(){};
+	virtual ~DummyWheel(){};
+	virtual void Run(int given_speed){};
+	virtual void Stop(){};
+	virtual int Speed(){ return 0; };
+	bool stall;
+
+};
+
+class Wheel : public DummyWheel, SimpleSerial
 {
 private:
 	int speed = 0;
@@ -24,8 +37,5 @@ public:
 	void Run(int given_speed);
 	void Stop();
 	int Speed();
-	bool stall;
-
-	
 	
 };

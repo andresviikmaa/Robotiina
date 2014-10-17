@@ -9,12 +9,12 @@ ComPortScanner::ComPortScanner()
 {
 }
 
-bool ComPortScanner::Verify(boost::asio::io_service &io_service) 
+bool ComPortScanner::Verify(boost::asio::io_service &io_service, const std::string &conf_file) 
 {
 	bool ok = true;
 	boost::property_tree::ptree ports;
 	try {
-		read_ini("conf/ports.ini", ports);
+		read_ini(conf_file, ports);
 	}
 	catch (...) {
 		std::cout << "Error reading old port configuration: " << std::endl;
@@ -39,7 +39,7 @@ bool ComPortScanner::Verify(boost::asio::io_service &io_service)
 		try {
 			SimpleSerial port = SimpleSerial(io_service, portNum.str(), 115200);
 			port.writeString("?\n");
-			std::string id = port.readLine();
+			std::string id = port.readLineAsync(500);
 			if (id.empty()) throw std::runtime_error(("No ID received from port " + portNum.str()).c_str());
 			if (id == "<id:0>") throw std::runtime_error(("ID not set in port " + portNum.str()).c_str());
 			if (id.substr(0, 4) != "<id:") throw std::runtime_error(("Invalid ID " + id + " received from port " + portNum.str()).c_str());
@@ -59,7 +59,7 @@ bool ComPortScanner::Verify(boost::asio::io_service &io_service)
 	return ok;
 }
 
-void ComPortScanner::Scan(boost::asio::io_service &io_service)
+bool ComPortScanner::Scan(boost::asio::io_service &io_service)
 {
 //	std::map<short, std::string> portMap;
 	boost::property_tree::ptree ports;
@@ -72,7 +72,7 @@ void ComPortScanner::Scan(boost::asio::io_service &io_service)
 		try {
 			SimpleSerial port = SimpleSerial(io_service, portNum.str(), 115200);
 			port.writeString("?\n");
-			std::string id = port.readLine();
+			std::string id = port.readLineAsync(500);
 			if (id.empty()) throw std::runtime_error(("No ID received from port " + portNum.str()).c_str());
 			if (id == "<id:0>") throw std::runtime_error(("ID not set in port " + portNum.str()).c_str());
 			if (id.substr(0, 4) != "<id:") throw std::runtime_error(("Invalid ID " + id + " received from port " + portNum.str()).c_str());
@@ -88,9 +88,13 @@ void ComPortScanner::Scan(boost::asio::io_service &io_service)
 		}
 	}
 	if (true){
-		write_ini("conf/ports.ini", ports);
+		write_ini("conf/ports_new.ini", ports);
 	}
-	
+	if (Verify(io_service, "conf/ports_new.ini")) {
+		rename("conf / ports_new.ini", "conf/ports.ini");
+		return true;
+	}
+	return false;
 
 
 

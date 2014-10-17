@@ -13,8 +13,8 @@ private:
 
 public:
 	ComPortScanner();
-	bool Verify(boost::asio::io_service &io_service);
-	void Scan(boost::asio::io_service &io_service);
+	bool Verify(boost::asio::io_service &io_service, const std::string &conf_file = "conf/ports.ini");
+	bool Scan(boost::asio::io_service &io_service);
 	~ComPortScanner();
 };
 
