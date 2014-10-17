@@ -484,12 +484,17 @@ int main(int argc, char *argv[])
 }
 
 void WriteInfoOnScreen(WheelEmulator * we_left, WheelEmulator * we_right, WheelEmulator * we_back){
-	cv::Mat infoWindow(100, 250, CV_8UC3, cv::Scalar::all(0));
+	float speed_left = 0;
+	float speed_right = 0;
+	float speed_back = 0;
+
+	cv::Mat infoWindow(150, 450, CV_8UC3, cv::Scalar::all(0));
 	std::ostringstream oss;
 	std::string cmd;
 	{ 
 		boost::mutex::scoped_lock lock(we_left->mutex); //allow one command at a time
 		cmd = we_left->last_command;
+		if (cmd.substr(0, 2) == "sd") speed_left = atof(cmd.substr(2).c_str());
 	}
 	oss << "left :" << cmd;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
@@ -497,6 +502,7 @@ void WriteInfoOnScreen(WheelEmulator * we_left, WheelEmulator * we_right, WheelE
 	{
 		boost::mutex::scoped_lock lock(we_right->mutex); //allow one command at a time
 		cmd = we_right->last_command;
+		if (cmd.substr(0, 2) == "sd") speed_right = atof(cmd.substr(2).c_str());
 	}
 	oss << "right :" << cmd;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 50), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
@@ -504,9 +510,21 @@ void WriteInfoOnScreen(WheelEmulator * we_left, WheelEmulator * we_right, WheelE
 	{
 		boost::mutex::scoped_lock lock(we_back->mutex); //allow one command at a time
 		cmd = we_back->last_command;
+		if (cmd.substr(0, 2) == "sd") speed_back = atof(cmd.substr(2).c_str());
 	}
 	oss << "back :" << cmd;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	oss.str("click to trigger stall");
+	cv::putText(infoWindow, oss.str(), cv::Point(20, 110), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+
+	cv::Scalar colorCircle(133, 33, 55);
+	cv::Point2i center(340, 75);
+	
+
+	//Draw circle
+	cv::circle(infoWindow, center, 60, colorCircle, 2);
+
+	//float heading = 
 	cv::namedWindow("Info Window");
 	cv::imshow("Info Window", infoWindow);
 	return;
