@@ -192,9 +192,6 @@ void Robot::Run()
 			
 			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], frameHSV, frameBGR);
 			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false);
-			double distance = location.x;
-			double HorizontalDev = location.y;
-			double HorizontalAngle = location.z;
 			if (location.x == -1 && location.y == -1 && location.z == -1) /* Ball not found */
             {
                 wheels->Rotate(1, 10);
@@ -204,67 +201,38 @@ void Robot::Run()
 				wheels->Stop();
                 state = STATE_BALL_LOCATED;
             }
-			
-            
+
         }
         if(STATE_BALL_LOCATED == state) {
 			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], frameHSV, frameBGR);
 			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false);
-			double distance = location.x;
-			double HorizontalDev = location.y;
-			double HorizontalAngle = location.z;
 
 			//If ball is lost
-			if (distance == -1 && HorizontalDev == -1 && HorizontalAngle == -1){ 
+			if (location.x == -1 && location.y == -1 && location.z == -1){
 				state = STATE_LOCATE_BALL;
-			}			
-			else if (distance < 300 && (HorizontalDev > -10 && HorizontalDev < 10)){
-				//TODO: start catching the ball with tribbler
-				wheels->Stop();
-			}
-			else if (distance < 300){
-				//TODO: start tribbler
-				//TODO: turn depending on HorizontalDev
-				if (HorizontalDev < -10){
-					wheels->Rotate(0, 15);
-				}
-				else if (HorizontalDev > 10){
-					wheels->Rotate(1, 15);
-				}
-				else{
-					wheels->Stop();
-				}
 			}
 			else{
-				if (distance > 700){
-					speed = 150;
-				}
-				else{
-					speed = distance * 0.35 - 91;
-				}
-									
-				if (HorizontalDev > -20 && HorizontalDev < 20){
-					wheels->Drive(speed, HorizontalAngle);
-				}
-				else if (HorizontalDev >= 20){
-					wheels->DriveRotate(speed, HorizontalAngle, 10);
-				}
-				else{
-					wheels->DriveRotate(speed, HorizontalAngle, -10);
+				bool ballInTribbler = wheels->DriveToBall(location.x, //distance
+														location.y,	//horizontal dev
+														location.z, //angle
+														300); //desired distance
+				if (ballInTribbler){
+					state = STATE_LOCATE_GATE;
 				}
 			}
-            state = STATE_LOCATE_GATE;
+            
         }
         if (STATE_LOCATE_GATE == state)
         {
 			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], frameHSV, frameBGR);
 			cv::Point3d location = finder->Locate(objectThresholds[GATE1], frameHSV, frameBGR, true);
-			double distance = location.x;
-			double HorizontalDev = location.y;
-			double HorizontalAngle = location.z;
-            //TODO: how
-            wheels->Rotate(1,10);
-            //state = STATE_GATE_LOCATED;
+            //If not found
+			if (location.x == -1 && location.y == -1 && location.z == -1){
+				wheels->Rotate(1, 10);
+			}
+			else{
+				state = STATE_GATE_LOCATED;
+			}
         }
         if(STATE_GATE_LOCATED == state)
         {

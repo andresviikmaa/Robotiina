@@ -102,6 +102,54 @@ void WheelController::DriveRotate(int velocity, double direction, int rotate){
 	
 }
 
+bool WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance){
+	int speed;
+
+	//if ball is close and center
+	if (distance < desiredDistance && (horizontalDev > -10 && horizontalDev < 10)){
+		//TODO: start catching the ball with tribbler
+		Stop();
+		return true;
+	}
+	//if ball is close but not center
+	else if (distance < desiredDistance){
+		//TODO: start tribbler
+		if (horizontalDev < -10){
+			Rotate(0, abs(horizontalDev)*0.1125 + 5);
+		}
+		else if (horizontalDev > 10){
+			Rotate(1, horizontalDev*0.1125 + 5);
+		}
+		else{
+			Stop();
+		}
+		return false;
+		
+	}
+	//if ball is not close 
+	else{
+		//speed calculation
+		if (distance > 700){
+			speed = 150;
+		}
+		else{
+			speed = distance * 0.35 - 91;
+		}
+		//driving commands
+		if (horizontalDev > -20 && horizontalDev < 20){
+			Drive(speed, horizontalAngle);
+		}
+		else if (horizontalDev >= 20){
+			DriveRotate(speed, horizontalAngle, horizontalDev*0.1125+5);
+		}
+		else{
+			DriveRotate(speed, horizontalAngle, -(abs(horizontalDev)*0.1125 + 5));
+		}
+		return false;
+	}
+
+}
+
 void WheelController::Stop(){
 	w_left->Stop();
 	w_right->Stop();
