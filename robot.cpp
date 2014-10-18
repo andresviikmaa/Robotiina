@@ -191,8 +191,7 @@ void Robot::Run()
         if (STATE_LOCATE_BALL == state) {
 			
 			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], frameHSV, frameBGR);
-			
-			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR);
+			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false);
 			double distance = location.x;
 			double HorizontalDev = location.y;
 			double HorizontalAngle = location.z;
@@ -210,7 +209,7 @@ void Robot::Run()
         }
         if(STATE_BALL_LOCATED == state) {
 			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], frameHSV, frameBGR);
-			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR);
+			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false);
 			double distance = location.x;
 			double HorizontalDev = location.y;
 			double HorizontalAngle = location.z;
@@ -254,14 +253,18 @@ void Robot::Run()
 					wheels->DriveRotate(speed, HorizontalAngle, -10);
 				}
 			}
-            //state = STATE_LOCATE_GATE;
+            state = STATE_LOCATE_GATE;
         }
         if (STATE_LOCATE_GATE == state)
         {
-            /*CvPoint location = finder.Locate(objectThresholds[GATE]);*/
+			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], frameHSV, frameBGR);
+			cv::Point3d location = finder->Locate(objectThresholds[GATE1], frameHSV, frameBGR, true);
+			double distance = location.x;
+			double HorizontalDev = location.y;
+			double HorizontalAngle = location.z;
             //TODO: how
             wheels->Rotate(1,10);
-            state = STATE_GATE_LOCATED;
+            //state = STATE_GATE_LOCATED;
         }
         if(STATE_GATE_LOCATED == state)
         {
