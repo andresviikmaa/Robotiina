@@ -19,6 +19,7 @@ public:
     void Rotate(bool direction, int speed);
 	void Drive(int velocity, double direction);
 	void DriveRotate(int velocity, double direction, int rotate);
+	bool DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance);
 	void Stop();
 	bool CheckStall();
     ~WheelController(){

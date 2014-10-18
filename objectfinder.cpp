@@ -25,27 +25,22 @@ ObjectFinder::ObjectFinder()
 		write_ini("conf/camera.ini", pt);
 	};
 }
-cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR) {
-	cv::Point2f point = LocateOnScreen(r, frameHSV, frameBGR);
+cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate) {
+	cv::Point2f point = LocateOnScreen(r, frameHSV, frameBGR, gate);
 	cv::Point3d info = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
 	WriteInfoOnScreen(info);
 	return info;
 }
 
-
-cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR) {
+cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate) {
 
 	cv::Point2f center;
-	//	cv::imshow("Thresholded Image 2", frameHSV); //show the thresholded image
-
-	//	cv::imshow("Thresholded Image 3", imgHSV); //show the thresholded image
 	cv::Mat imgThresholded;
-	
+
 	inRange(frameHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), imgThresholded); //Threshold the image
 
 	cv::Mat dst(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));
-	
-	
+
 	//biggest area
 	std::vector<std::vector<cv::Point> > contours; // Vector for storing contour
 	std::vector<cv::Vec4i> hierarchy;
@@ -77,13 +72,19 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameH
 
 	if (contours.size() > largest_contour_index){
 		cv::Moments M = cv::moments(contours[largest_contour_index]);
-		center = cv::Point2f(M.m10 / M.m00, M.m01 / M.m00);
+		if (gate){
+			bounding_rect = cv::boundingRect(contours[largest_contour_index]);
+			double y = bounding_rect.y + bounding_rect.height;
+			center = cv::Point2f(M.m10 / M.m00, y);
+		}
+		else{
+			center = cv::Point2f(M.m10 / M.m00, M.m01 / M.m00);
+		}
+		
 	}
 
 	//Draw circle
 	cv::circle(frameBGR, center, 10, colorCircle, 3);
-//	cv::imshow("Original", imgOriginal);
-//	cv::moveWindow("Original", 0, 0);
 	return center;
 }
 

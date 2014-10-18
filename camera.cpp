@@ -1,5 +1,4 @@
-#include "camera.h"
-#include <opencv2/opencv.hpp>
+#include "camera.h"#include <opencv2/opencv.hpp>
 
 Camera::Camera(const std::string &device)
 {
@@ -9,7 +8,15 @@ Camera::Camera(const std::string &device)
     {
 		throw std::runtime_error("Camera not found");
     }
-	//cap->set(CV_CAP_PROP_EXPOSURE, 0);
+	/*
+	cap->set(CV_CAP_PROP_EXPOSURE, -5);
+	cap->set(CV_CAP_PROP_BRIGHTNESS, 0);
+	cap->set(CV_CAP_PROP_HUE, 0);
+	cap->set(CV_CAP_PROP_SATURATION, 80);
+	cap->set(CV_CAP_PROP_CONTRAST, 5);
+	cap->set(CV_CAP_PROP_RECTIFICATION, 1);*/
+	
+
 
 }
 Camera::Camera(int device)
@@ -20,7 +27,13 @@ Camera::Camera(int device)
 	{
 		throw std::runtime_error("Camera is missing");
 	}
-	//cap->set(CV_CAP_PROP_EXPOSURE,0);
+	/*
+	cap->set(CV_CAP_PROP_EXPOSURE, -5);
+	cap->set(CV_CAP_PROP_BRIGHTNESS, 0);
+	cap->set(CV_CAP_PROP_HUE, 0);
+	cap->set(CV_CAP_PROP_SATURATION, 80);
+	cap->set(CV_CAP_PROP_CONTRAST, 5);
+	cap->set(CV_CAP_PROP_RECTIFICATION, 1);*/
 
 }
 
