@@ -90,27 +90,42 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameH
 
 void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickness, CvScalar color)
 {
+	std::cout << "drawLine: " << dir << std::endl;
 	double theMult = std::max(img.cols, img.rows);
 	// calculate start point
 	cv::Point startPoint;
-	startPoint.y = line[2] - theMult*line[0];// x0
-	startPoint.x = line[3] - theMult*line[1];// y0
+	startPoint.x = line[2] - theMult*line[0];// x0
+	startPoint.y = line[3] - theMult*line[1];// y0
 	// calculate end point
 	cv::Point endPoint;
-	endPoint.y = line[2] + theMult*line[0];//x[1]
-	endPoint.x = line[3] + theMult*line[1];//y[1]
+	endPoint.x = line[2] + theMult*line[0];//x[1]
+	endPoint.y = line[3] + theMult*line[1];//y[1]
 
 	// draw overlay of bottom lines on image
 	cv::clipLine(cv::Size(img.cols, img.rows), startPoint, endPoint);
 	std::vector <cv::Point2i> points;
-	points.push_back(dir ? cv::Point2i(img.cols - 1, img.rows-1) : cv::Point2i(0, 0));
-	points.push_back(cv::Point2i(img.cols - 1, 0));
 
-	points.push_back(startPoint);
-	points.push_back(endPoint);
-	//cv::fillConvexPoly(img, points, cv::Scalar(0, 255, 0));
-	cv::fillConvexPoly(img2, points, cv::Scalar(0, 255, 0));
+	if (dir == 0) {
+		if (endPoint.x == img.cols-1) return; // invalid, cuts out bottom half
 
+		points.push_back(cv::Point2i(img.cols - 1, 0));
+		points.push_back(cv::Point2i(0, 0));
+		points.push_back(cv::Point2i(0, img.rows - 1));
+		points.push_back(startPoint);
+		points.push_back(endPoint);
+		//cv::fillConvexPoly(img, points, cv::Scalar(0, 255, 0));
+		cv::fillConvexPoly(img2, points, cv::Scalar(0, 255, 0));
+	}
+	else if (dir == 1) {
+		points.push_back(cv::Point2i(0, 0));
+		points.push_back(cv::Point2i(img.cols - 1, 0));
+		points.push_back(cv::Point2i(img.cols - 1, img.rows - 1));
+		points.push_back(endPoint);
+		points.push_back(startPoint);
+		//cv::fillConvexPoly(img, points, cv::Scalar(0, 255, 0));
+		cv::fillConvexPoly(img2, points, cv::Scalar(0, 255, 0));
+
+	}
 	cv::line(img, startPoint, endPoint, color, thickness, 8, 0);
 
 }
@@ -197,17 +212,17 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 		cv::imshow("o", outerThresholded);
 #else
 
-	outerThresholded = outerThresholded + gate1Thresholded + gate2Thresholded;
+	cv::Mat gateThresholded = gate1Thresholded + gate2Thresholded;
 //	cv::Mat image;
 //	frameBGR.copyTo(image);
 //	image.copyTo(frameBGR, imgThresholded);
 	//dir: left -> right, right -> left, top -> down
-	for (int dir = 0; dir < 4; dir++) {
+	for (int dir = 0; dir < 2; dir++) {
 		std::vector<cv::Point2i> points;
 		int end = dir ? frameHSV.cols - 1 : 0;
 		//int last_y = -1;
-		cv::Point2i last_point(-1, -1);
-		cv::Point2i last_point2(-1, -1);
+		cv::Point2i last_canditate(-1, -1);
+		cv::Point2i last_selected(-1, -1);
 		for (int y = 0; y < frameHSV.rows; y += 5) {
 			int outer_start = -1;
 			int outer_end = -1;
@@ -216,32 +231,54 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 			bool break2 = false;
 			for (int x = 0; x < frameHSV.cols; x++) {
 				if (inner_end > 0 && inner_end - inner_start > 1) {
-					cv::Point2i new_point = cv::Point2i(y, dir ? end - inner_start : inner_start);
-					// chekck the monotonicity
-					if (last_point2.x != -1 &&  !(((last_point.x - new_point.x) >= 0) ^ ((last_point2.x - last_point.x) < 0))) { // direction change, not straight line
-						break2 = true;
-						break;
-					}
-					if (last_point.x != -1 && (new_point.x - last_point.x) > 30){ // to big gap, break
-						break2 = true;
-						break;
-					}
+					// we have detected new point on the border
+					if (last_canditate.x != -1) {
+						// check the distance form last candidate
+						if (abs(y - last_canditate.y) < 40 && abs(x - last_canditate.x) < 40) { // close enough
+							cv::Point2i new_point = cv::Point2i(dir ? end - last_selected.x : last_selected.x, last_selected.y);
+							cv::circle(frameBGR, new_point, 4, dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
+							points.push_back(new_point);
+						}
+						else {
+							// to big gap, either restart or stop
+							if (points.size() < 3) {
+								points.clear();
+								cv::Point2i last_canditate(-1, -1);
+								cv::Point2i last_selected(-1, -1);
+								//break;
+							}
+							else {
+								break2 = true;
+								break;
+							}
+						}
 
-					if (last_point.y != -1 && new_point.y - last_point.y < 20) {
-						points.push_back(last_point);
-						cv::circle(frameBGR, cv::Point2i(last_point.y, last_point.x), 4, dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
-						for (int z = inner_end; z >= 0; z--) {
-							outerThresholded.ptr<uchar>(y)[dir ? end - z : z] = (unsigned char)255;
-							frameBGR.at<cv::Vec3b>(y, dir ? end - z : z) = cv::Vec3b(0, 255*dir, 0);
-							frameHSV.at<cv::Vec3b>(y, dir ? end - z : z) = cv::Vec3b(0, 255, 255);
-						}
-						for (int z = outer_end; z > outer_start; z--) {
-							//outerThresholded.ptr<uchar>(y)[z] = (unsigned char)255;
-							frameBGR.at<cv::Vec3b>(y, dir ? end - z : z) = cv::Vec3b(0, 255 * dir, 255);
-						}
 					}
-					last_point2 = last_point;
-					last_point = new_point;
+					{
+						last_canditate = cv::Point2i(x, y);
+						last_selected = cv::Point2i(inner_start, y);
+						cv::Point2i new_point = cv::Point2i(dir ? end - last_selected.x : last_selected.x, last_selected.y);
+						cv::circle(frameBGR, new_point, 1, !dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
+					}
+					/*
+					// chekck the monotonicity
+					if (last_selected.x != -1 &&  !(((last_canditate.x - new_point.x) >= 0) ^ ((last_selected.x - last_canditate.x) < 0))) { // direction change, not straight line
+						break2 = true;
+						break;
+					}
+					
+					if (last_canditate.x != -1 && abs(new_point.x - last_canditate.x) > 30){ // to big gap, break
+						break2 = true;
+						break;
+					}
+					
+					if (last_canditate.y != -1 && new_point.y - last_canditate.y < 40 && new_point.x - last_canditate.x < 40) {
+						points.push_back(last_canditate);
+						cv::circle(frameBGR, cv::Point2i(last_canditate.y, last_canditate.x), 4, dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
+						last_selected = last_canditate;
+					}
+					cv::circle(frameBGR, cv::Point2i(last_canditate.y, last_canditate.x), 1, !dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
+					*/
 					break;
 				}
 				else if (inner_start > 0 && x - inner_start > 10 && innerThresholded.ptr<uchar>(y)[dir ? end -x : x] == 0) {
@@ -259,19 +296,20 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 			}
 			if (break2) break;
 		}
-		if (points.size() > 2) {
+		if (points.size() > 3) {
 			cv::Vec4f newLine;
 			cv::fitLine(points, newLine, CV_DIST_L2, 0, 0.001, 0.001);
-			drawLine(frameBGR, frameHSV, dir, newLine, 2+dir, cv::Scalar(255, 255*(dir+0.3), 0));
+			drawLine(frameBGR, frameHSV, dir, newLine, 2+dir, cv::Scalar(0, 255*(dir+0.3), 0));
 		}
 		//break;
 	}
 
 
-
+	/*
 	cv::imshow("io", innerThresholded + outerThresholded);
 	cv::imshow("i", innerThresholded);
 	cv::imshow("o", outerThresholded);
+	*/
 #endif
 
 }

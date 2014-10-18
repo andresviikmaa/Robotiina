@@ -161,7 +161,7 @@ void Robot::Run()
 			}
 			STATE_BUTTON("BACK", STATE_NONE)
 		}
-		if (STATE_LAUNCH == state) {
+		else if (STATE_LAUNCH == state) {
 			try {
 				CalibrationConfReader calibrator;
 				for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
@@ -174,7 +174,7 @@ void Robot::Run()
 				state = STATE_NONE; // no conf
 			}
 		}
-		if (STATE_CRASH == state){
+		else if(STATE_CRASH == state){
 			//Backwards
 			wheels->Drive(50, 180);
             std::chrono::milliseconds dura(1000);
@@ -189,7 +189,7 @@ void Robot::Run()
 				state = STATE_LOCATE_BALL;
 			}            
 		}
-        if (STATE_LOCATE_BALL == state) {
+		else if(STATE_LOCATE_BALL == state) {
 			
 			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
 			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false);
@@ -197,22 +197,7 @@ void Robot::Run()
             {
                 wheels->Rotate(1, 10);
             }
-			if (location.x != -1 && location.y != -1) /*Ball found*/
-            {
-				wheels->Stop();
-                state = STATE_BALL_LOCATED;
-            }
-
-        }
-        if(STATE_BALL_LOCATED == state) {
-			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
-			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false);
-
-			//If ball is lost
-			if (location.x == -1 && location.y == -1 && location.z == -1){
-				state = STATE_LOCATE_BALL;
-			}
-			else{
+			if (location.x != -1 && location.y != -1) { /*Ball found*/
 				bool ballInTribbler = wheels->DriveToBall(location.x, //distance
 														location.y,	//horizontal dev
 														location.z, //angle
@@ -223,23 +208,26 @@ void Robot::Run()
 			}
             
         }
-        if (STATE_LOCATE_GATE == state)
-        {
-			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
-			cv::Point3d location = finder->Locate(objectThresholds[GATE1], frameHSV, frameBGR, true);
-            //If not found
-			if (location.x == -1 && location.y == -1 && location.z == -1){
-				wheels->Rotate(1, 10);
+		else if (STATE_LOCATE_GATE == state)
+		{
+			//			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
+			bool ballInTribbler = true; // fix me
+			if (!ballInTribbler) {
+				state = STATE_LOCATE_BALL;
+
 			}
-			else{
-				state = STATE_GATE_LOCATED;
+			else {
+				cv::Point3d location = finder->Locate(objectThresholds[GATE1], frameHSV, frameBGR, true);
+				//If not found
+				if (location.x == -1 && location.y == -1 && location.z == -1){
+					wheels->Rotate(1, 10);
+				}
+				else{
+					//TODO: kick ball
+					state = STATE_LOCATE_BALL;
+				}
 			}
-        }
-        if(STATE_GATE_LOCATED == state)
-        {
-            //TODO: kick ball
-            state = STATE_LOCATE_BALL;
-        }
+		}
 		/*
         if(STATE_REMOTE_CONTROL == state) {
 			Dialog launchWindow("Remote Control Mode Enabed", CV_WINDOW_AUTOSIZE);
@@ -259,19 +247,20 @@ void Robot::Run()
 				manualWindow.show();
 		}
 		*/
+		else if (STATE_END_OF_GAME == state) {
+			break;
+		}
+
 		if (false && wheels->CheckStall() &&
 			(state == STATE_LOCATE_BALL ||
-			state == STATE_BALL_LOCATED || 
-			state == STATE_LOCATE_GATE || 
-			state == STATE_GATE_LOCATED))
+			state == STATE_LOCATE_GATE))
 		{
 			state = STATE_CRASH;
 		}
-		if (STATE_END_OF_GAME == state) {
-			break;
-		}
+
 		cv::putText(frameBGR, "fps:" + std::to_string(fps), cv::Point(frameHSV.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
-		
+		cv::putText(frameBGR, "state:" + std::to_string(state), cv::Point(frameHSV.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+
 		show(frameBGR);
 		if (cv::waitKey(1) == 27) {
 			std::cout << "exiting program" << std::endl;
