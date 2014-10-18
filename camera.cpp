@@ -9,28 +9,28 @@ Camera::Camera(const std::string &device)
     {
 		throw std::runtime_error("Camera not found");
     }
+	//cap->set(CV_CAP_PROP_EXPOSURE, 0);
 
 }
 Camera::Camera(int device)
 {
-
+	
 	cap = new cv::VideoCapture(device);
 	if (!cap->isOpened())  // if not success, exit program
 	{
 		throw std::runtime_error("Camera is missing");
 	}
+	//cap->set(CV_CAP_PROP_EXPOSURE,0);
 
 }
 
 const cv::Mat &Camera::Capture()
 {
 	if (cap->isOpened())
+		
 		*cap >> frame;
-	/*	cv::flip(frame, frame, 0);
-		cv::Point2f src_center(frame.cols / 2.0F, frame.rows / 2.0F);
-		cv::Mat rot_matrix = getRotationMatrix2D(src_center, 180.0, 1.0);
-		cv::Mat rotated_img(cv::Size(frame.size().height, frame.size().width), frame.type());
-		warpAffine(frame, frame, rot_matrix, frame.size());*/
+		
+
     return frame;
 }
 const cv::Mat &Camera::CaptureHSV() {
