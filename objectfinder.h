@@ -18,7 +18,7 @@ private:
 public:
     ObjectFinder();
 	virtual cv::Point3d Locate(const HSVColorRange &HSVRange, cv::Mat &frameHSV, cv::Mat &frameBGR);
-	virtual void IsolateField(const HSVColorRange &inner, const HSVColorRange &outer, cv::Mat &frameHSV, cv::Mat &frameBGR);
+	virtual void IsolateField(const HSVColorRange &inner, const HSVColorRange &outer, const HSVColorRange &gate1, const HSVColorRange &gate2, cv::Mat &frameHSV, cv::Mat &frameBGR);
     virtual ~ObjectFinder(){ }
 
 };

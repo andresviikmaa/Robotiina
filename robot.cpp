@@ -130,8 +130,8 @@ void Robot::Run()
     {
 		time = boost::posix_time::second_clock::local_time();
 		boost::posix_time::time_duration::tick_type dt = (time - lastStepTime).total_milliseconds();
-		if (dt > 50) {
-			fps = 1000 * frames / dt;
+		if (dt > 1000) {
+			fps = 1000.0 * frames / dt;
 			lastStepTime = time;
 			frames = 0;
 		}
@@ -141,12 +141,13 @@ void Robot::Run()
         if (STATE_NONE == state) {
 			clearButtons();
 			STATE_BUTTON("(A)utoCalibrate objects", STATE_AUTOCALIBRATE)
-			STATE_BUTTON("(M)anualCalibrate objects", STATE_CALIBRATE)
-			STATE_BUTTON("(S)tart Robot", STATE_LAUNCH)
-//			STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
-//			STATE_BUTTON("Manual (C)ontrol", STATE_MANUAL_CONTROL)
-			STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
-        }
+				STATE_BUTTON("(M)anualCalibrate objects", STATE_CALIBRATE)
+				STATE_BUTTON("(S)tart Robot", STATE_LAUNCH)
+				//			STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
+				//			STATE_BUTTON("Manual (C)ontrol", STATE_MANUAL_CONTROL)
+				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
+
+		}
 		else if (STATE_CALIBRATE == state || STATE_AUTOCALIBRATE == state) {
 			clearButtons();
 			for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
@@ -190,7 +191,7 @@ void Robot::Run()
 		}
         if (STATE_LOCATE_BALL == state) {
 			
-			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], frameHSV, frameBGR);
+			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
 			
 			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR);
 			double distance = location.x;
@@ -209,7 +210,7 @@ void Robot::Run()
             
         }
         if(STATE_BALL_LOCATED == state) {
-			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], frameHSV, frameBGR);
+			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
 			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR);
 			double distance = location.x;
 			double HorizontalDev = location.y;
