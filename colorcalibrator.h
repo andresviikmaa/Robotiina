@@ -6,7 +6,7 @@ protected:
     cv::Mat image;
 public:
     ColorCalibrator();
-    virtual void LoadImage(const cv::Mat &image);
+    virtual void LoadImage(cv::Mat &image);
 	virtual HSVColorRange GetObjectThresholds(int index, const std::string &name);
     virtual ~ColorCalibrator();
 

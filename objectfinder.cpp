@@ -25,27 +25,22 @@ ObjectFinder::ObjectFinder()
 		write_ini("conf/camera.ini", pt);
 	};
 }
-cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, const cv::Mat &frame) {
-	cv::Point2f point = LocateOnScreen(r, frame);
-	cv::Point3d info = ConvertPixelToRealWorld(point, cv::Point2i(frame.cols, frame.rows));
+cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR) {
+	cv::Point2f point = LocateOnScreen(r, frameHSV, frameBGR);
+	cv::Point3d info = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
 	WriteInfoOnScreen(info);
 	return info;
 }
 
-cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &frame) {
+cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR) {
 
 	cv::Point2f center;
-	cv::Mat	imgOriginal = frame;
-	cv::Mat imgHSV;
-	//	cv::imshow("Thresholded Image 2", imgOriginal); //show the thresholded image
-	
-	cvtColor(imgOriginal, imgHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
-
+	//	cv::imshow("Thresholded Image 2", frameHSV); //show the thresholded image
 
 	//	cv::imshow("Thresholded Image 3", imgHSV); //show the thresholded image
 	cv::Mat imgThresholded;
 	
-	inRange(imgHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), imgThresholded); //Threshold the image
+	inRange(frameHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), imgThresholded); //Threshold the image
 
 	cv::Mat dst(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));
 	
@@ -71,8 +66,8 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 			bounding_rect = cv::boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
 		}
 		bounding_rect = cv::boundingRect(contours[i]);
-		cv::rectangle(imgOriginal, bounding_rect, color2);
-		drawContours(imgOriginal, contours, i, color, 1, 8, hierarchy); // Draw the largest contour using previously stored index.
+		cv::rectangle(frameBGR, bounding_rect, color2);
+		drawContours(frameBGR, contours, i, color, 1, 8, hierarchy); // Draw the largest contour using previously stored index.
 	}
 
 
@@ -85,10 +80,107 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, const cv::Mat &
 	}
 
 	//Draw circle
-	cv::circle(imgOriginal, center, 10, colorCircle, 3);
-	cv::imshow("Original", imgOriginal);
-	cv::moveWindow("Original", 0, 0);
+	cv::circle(frameBGR, center, 10, colorCircle, 3);
+//	cv::imshow("Original", imgOriginal);
+//	cv::moveWindow("Original", 0, 0);
 	return center;
+}
+
+void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange &outer, cv::Mat &frameHSV, cv::Mat &frameBGR) {
+
+	//	cv::imshow("Thresholded Image 3", imgHSV); //show the thresholded image
+	cv::Mat innerThresholded;
+	inRange(frameHSV, cv::Scalar(inner.hue.low, inner.sat.low, inner.val.low), cv::Scalar(inner.hue.high, inner.sat.high, inner.val.high), innerThresholded); //Threshold the image
+	cv::Mat outerThresholded;
+	inRange(frameHSV, cv::Scalar(outer.hue.low, outer.sat.low, outer.val.low), cv::Scalar(outer.hue.high, outer.sat.high, outer.val.high), outerThresholded); //Threshold the image
+
+	std::vector<std::vector<cv::Point> > contours; // Vector for storing contour
+	std::vector<cv::Vec4i> hierarchy;
+	std::vector<std::vector<cv::Point> > contours2; // Vector for storing contour
+	std::vector<cv::Vec4i> hierarchy2;
+#ifdef USE_CONTOURS
+	innerThresholded = outerThresholded + innerThresholded;
+	findContours(innerThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); // Find the contours in the image
+	//findContours(outerThresholded, contours2, hierarchy2, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); // Find the contours in the image
+
+	cv::Scalar color(255, 255, 255);
+	cv::Scalar color2(0, 0, 255);
+	cv::Scalar color3(0, 0, 0);
+	cv::Scalar color4(255, 0, 0);
+	cv::RotatedRect bounding_rect;
+
+	for (int i = 0; i < contours.size(); i++) // iterate through each contour.
+	{
+		double a = cv::contourArea(contours[i], false);  //  Find the area of contour
+		bounding_rect = cv::minAreaRect(contours[i]);
+		//cv::rectangle(frameBGR, bounding_rect, color2);
+		// rotated rectangle
+		cv::Point2f rect_points[4]; bounding_rect.points(rect_points);
+		for (int j = 0; j < 4; j++)
+			line(frameBGR, rect_points[j], rect_points[(j + 1) % 4], color2, 1, 8);
+
+		drawContours(frameBGR, contours, i, color, -1, 8, hierarchy); // Draw the largest contour using previously stored index.
+	}
+	/*
+	for (int i = 0; i < contours2.size(); i++) // iterate through each contour.
+	{
+		double a = cv::contourArea(contours2[i], false);  //  Find the area of contour
+		bounding_rect = cv::minAreaRect(contours2[i]);
+		//cv::rectangle(frameBGR, bounding_rect, color4);
+		drawContours(frameBGR, contours2, i, color3, -1, 8, hierarchy2); // Draw the largest contour using previously stored index.
+	}
+	*/
+
+		cv::imshow("i", innerThresholded);
+		cv::imshow("o", outerThresholded);
+#else
+//	cv::Mat image;
+//	frameBGR.copyTo(image);
+//	image.copyTo(frameBGR, imgThresholded);
+	for (int dir = 0; dir < 2; dir++) {
+		int end = dir ? frameHSV.cols - 1 : 0;
+		for (int y = 0; y < frameHSV.rows; y+=5) {
+			int outer_start = -1;
+			int outer_end = -1;
+			int inner_start = -1;
+			int inner_end = -1;
+
+			for (int x = 0; x < frameHSV.cols; x++) {
+				if (inner_end > 0 && inner_end - inner_start > 1) {
+					for (int z = inner_end; z >= 0; z--) {
+						outerThresholded.ptr<uchar>(y)[dir ? end -z : z] = (unsigned char)255;
+						frameBGR.at<cv::Vec3b>(y, dir ? end -z : z) = cv::Vec3b(0, 255, 0);
+						frameHSV.at<cv::Vec3b>(y, dir ? end - z : z) = cv::Vec3b(0, 255, 255);
+					}
+					for (int z = outer_end; z > outer_start; z--) {
+						//outerThresholded.ptr<uchar>(y)[z] = (unsigned char)255;
+						frameBGR.at<cv::Vec3b>(y, dir ? end - z : z) = cv::Vec3b(0, 255, 255);
+					}
+					break;
+				}
+				else if (inner_start > 0 && x - inner_start > 10 && innerThresholded.ptr<uchar>(y)[dir ? end -x : x] == 0) {
+					inner_end = x;
+				}
+				else if (outer_end > 0 && x - outer_end < 150 && inner_start < 0 && innerThresholded.ptr<uchar>(y)[dir ? end -x : x] == 255) {
+					inner_start = x;
+				}
+				else if (outer_end < 0 && outer_start > 0 && x - outer_start > 10 && outerThresholded.ptr<uchar>(y)[dir ? end -x : x] == 0) {
+					outer_end = x;
+				}
+				else if (outer_start < 0 && outerThresholded.ptr<uchar>(y)[dir ? end -x : x] == 255) {
+					outer_start = x;
+				}
+			}
+		}
+	}
+
+
+
+//	cv::imshow("io", innerThresholded + outerThresholded);
+//	cv::imshow("i", innerThresholded);
+//	cv::imshow("o", outerThresholded);
+#endif
+
 }
 
 cv::Point3d ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size)
@@ -111,6 +203,8 @@ cv::Point3d ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, cons
 	}
 	return cv::Point3d(distance, HorizontalDev, Hor_angle);
 }
+
+
 void ObjectFinder::WriteInfoOnScreen(const cv::Point3d &info){
 	cv::Mat infoWindow(100, 250, CV_8UC3, cv::Scalar::all(0));
 	std::ostringstream oss;
@@ -126,3 +220,5 @@ void ObjectFinder::WriteInfoOnScreen(const cv::Point3d &info){
 	cv::imshow("Info Window", infoWindow);
 	return;
 }
+
+

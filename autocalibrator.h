@@ -4,7 +4,7 @@
 class AutoCalibrator: public ColorCalibrator {
 public:
     AutoCalibrator();
-    void LoadImage(const cv::Mat &image);
+    void LoadImage(cv::Mat &image);
     HSVColorRange GetObjectThresholds(int index, const std::string &name);
 
     ~AutoCalibrator();

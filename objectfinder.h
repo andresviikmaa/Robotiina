@@ -5,7 +5,7 @@
 
 class ObjectFinder {
 protected:
-	virtual cv::Point2f LocateOnScreen(const HSVColorRange &HSVRange, const cv::Mat &frame);
+	virtual cv::Point2f LocateOnScreen(const HSVColorRange &HSVRange, cv::Mat &frameHSV, cv::Mat &frameBGR);
 	cv::Point3d ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size);
 private:
 	void WriteInfoOnScreen(const cv::Point3d &info);
@@ -17,7 +17,8 @@ private:
 
 public:
     ObjectFinder();
-	virtual cv::Point3d Locate(const HSVColorRange &HSVRange, const cv::Mat &frame);
+	virtual cv::Point3d Locate(const HSVColorRange &HSVRange, cv::Mat &frameHSV, cv::Mat &frameBGR);
+	virtual void IsolateField(const HSVColorRange &inner, const HSVColorRange &outer, cv::Mat &frameHSV, cv::Mat &frameBGR);
     virtual ~ObjectFinder(){ }
 
 };

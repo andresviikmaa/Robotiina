@@ -11,27 +11,31 @@
 #include "ComPortScanner.h"
 
 #include <opencv2/opencv.hpp>
-#include <boost/algorithm/string.hpp>
 #include <chrono>
 #include <thread>
+#include <map>
+#include <boost/algorithm/string.hpp>
+#include <boost/tuple/tuple.hpp>
 
-#define STATE_BUTTON(dialog, name, new_state) \
-dialog.createButton(name, [](int state, void* self){ ((Robot*)self)->state = new_state; }, this, CV_PUSH_BUTTON, 0);
-#define BUTTON(dialog, name, function_body) \
-dialog.createButton(name, [](int state, void* self){ function_body }, this, CV_PUSH_BUTTON, 0);
+
+#define STATE_BUTTON(name, new_state) \
+createButton(name, [&](){ this->state = new_state; });
+#define BUTTON(name, function_body) \
+createButton(name, [&]() function_body);
 
 std::pair<OBJECT, std::string> objects[] = {
 	std::pair<OBJECT, std::string>(BALL, "Ball"),
-    std::pair<OBJECT, std::string>(GATE, "Gate"),
-    std::pair<OBJECT, std::string>(FIELD, "Field"),
-    std::pair<OBJECT, std::string>(INNER_BORDER, "Inner Border2"),
-    std::pair<OBJECT, std::string>(OUTER_BORDER, "Outer Border2"),
+	std::pair<OBJECT, std::string>(GATE1, "Blue Gate"),
+	std::pair<OBJECT, std::string>(GATE2, "Yellow Gate"),
+	std::pair<OBJECT, std::string>(FIELD, "Field"),
+    std::pair<OBJECT, std::string>(INNER_BORDER, "Inner Border"),
+    std::pair<OBJECT, std::string>(OUTER_BORDER, "Outer Border"),
 
 };
 
 std::map<OBJECT, std::string> OBJECT_LABELS(objects, objects + sizeof(objects) / sizeof(objects[0]));
 
-Robot::Robot(boost::asio::io_service &io) : io(io), camera(0), wheels(0), finder(0)
+Robot::Robot(boost::asio::io_service &io) : Dialog("Robotiina"), io(io), camera(0), wheels(0), finder(0)
 {
     state = STATE_NONE;
     //wheels = new WheelController(io);
@@ -46,19 +50,19 @@ Robot::~Robot()
 		delete finder;
 
 }
-void Robot::CalibrateObjects(const cv::Mat &image, bool autoCalibrate/* = false*/)
+void Robot::CalibrateObject(const cv::Mat &image, bool autoCalibrate/* = false*/)
 {
+	/*
     ColorCalibrator* calibrator = autoCalibrate ? new AutoCalibrator() : new ColorCalibrator();
-	cv::Mat image2 = camera->Capture();
-//return;
-    calibrator->LoadImage(image2);
+    calibrator->LoadImage(image);
+		return calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT) i]);
+            //BUTTON(OBJECT_LABELS[(OBJECT) i], i )
 
-    for(int i = 0; i < NUMBER_OF_OBJECTS; i++) {
-        objectThresholds[(OBJECT) i] = calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT) i]);
     }
-	
-    delete calibrator;
 
+    STATE_BUTTON("Back", STATE_NONE)
+    delete calibrator;
+	*/
 }
 
 bool Robot::Launch(int argc, char* argv[])
@@ -99,7 +103,8 @@ bool Robot::Launch(int argc, char* argv[])
 			wheels = new WheelController(io);
 		}
 		catch (...) {
-			throw std::runtime_error("error to open wheel port(s)");
+                throw;
+			//throw std::runtime_error("error to open wheel port(s)");
 		}
 		std::cout << "Done" << std::endl;
 	}
@@ -110,34 +115,51 @@ bool Robot::Launch(int argc, char* argv[])
 	std::cout << "Starting Robot" << std::endl;
     Run();
 }
-
 void Robot::Run()
 {
  
-    while (state != STATE_END_OF_GAME)
+	double fps = 0;
+	int frames = 0;
+	boost::posix_time::ptime lastStepTime;
+
+	boost::posix_time::time_duration dt;
+	boost::posix_time::ptime time = boost::posix_time::second_clock::local_time();
+
+	cv::Mat frameBGR, frameHSV;
+	while (true)
     {
-		cv::Mat frame = camera->Capture();
+		time = boost::posix_time::second_clock::local_time();
+		boost::posix_time::time_duration::tick_type dt = (time - lastStepTime).total_milliseconds();
+		if (dt > 50) {
+			fps = 1000 * frames / dt;
+			lastStepTime = time;
+			frames = 0;
+		}
+		frameBGR = camera->Capture();
+		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
         if (STATE_NONE == state) {
-
-            Dialog launchWindow("Launch Robotiina", CV_WINDOW_AUTOSIZE);
-			STATE_BUTTON(launchWindow, "AutoCalibrate objects", STATE_AUTOCALIBRATE)
-			STATE_BUTTON(launchWindow, "ManualCalibrate objects", STATE_CALIBRATE)
-			STATE_BUTTON(launchWindow, "Start Robot", STATE_LAUNCH)
-			STATE_BUTTON(launchWindow, "Remote Control", STATE_REMOTE_CONTROL)
-			STATE_BUTTON(launchWindow, "Manual Control", STATE_MANUAL_CONTROL)
-			STATE_BUTTON(launchWindow, "Exit", STATE_END_OF_GAME)
-            launchWindow.show();
-
+			clearButtons();
+			STATE_BUTTON("(A)utoCalibrate objects", STATE_AUTOCALIBRATE)
+			STATE_BUTTON("(M)anualCalibrate objects", STATE_CALIBRATE)
+			STATE_BUTTON("(S)tart Robot", STATE_LAUNCH)
+//			STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
+//			STATE_BUTTON("Manual (C)ontrol", STATE_MANUAL_CONTROL)
+			STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
         }
-        if (STATE_CALIBRATE == state) {
-			CalibrateObjects(frame);
-            state = STATE_NONE;
-        }
-        if (STATE_AUTOCALIBRATE == state) {
-			CalibrateObjects(frame, true);
-            state = STATE_NONE;
-        }
+		else if (STATE_CALIBRATE == state || STATE_AUTOCALIBRATE == state) {
+			clearButtons();
+			for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
+				// objectThresholds[(OBJECT) i] = calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT) i]);
+				createButton(OBJECT_LABELS[(OBJECT)i], [this, i, &frameBGR]{
+					ColorCalibrator* calibrator = STATE_AUTOCALIBRATE == state ? new AutoCalibrator() : new ColorCalibrator();
+					calibrator->LoadImage(frameBGR);
+					calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
+					delete calibrator;
+				});
+			}
+			STATE_BUTTON("BACK", STATE_NONE)
+		}
 		if (STATE_LAUNCH == state) {
 			try {
 				CalibrationConfReader calibrator;
@@ -154,12 +176,12 @@ void Robot::Run()
 		if (STATE_CRASH == state){
 			//Backwards
 			wheels->Drive(50, 180);
-            boost::chrono::milliseconds dura(1000);
-			boost::this_thread::sleep_for(dura);
+            std::chrono::milliseconds dura(1000);
+			std::this_thread::sleep_for(dura);
 			wheels->Stop();
 			//Turn a littlebit
 			wheels->Rotate(1, 100);
-            boost::this_thread::sleep_for(dura);
+			std::this_thread::sleep_for(dura);
 			wheels->Stop();
 			//Check again
 			if (!wheels->CheckStall()){
@@ -167,7 +189,10 @@ void Robot::Run()
 			}            
 		}
         if (STATE_LOCATE_BALL == state) {
-			cv::Point3d location = finder->Locate(objectThresholds[BALL], frame);
+			
+			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], frameHSV, frameBGR);
+			
+			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR);
 			double distance = location.x;
 			double HorizontalDev = location.y;
 			double HorizontalAngle = location.z;
@@ -180,10 +205,12 @@ void Robot::Run()
 				wheels->Stop();
                 state = STATE_BALL_LOCATED;
             }
+			
             
         }
         if(STATE_BALL_LOCATED == state) {
-			cv::Point3d location = finder->Locate(objectThresholds[BALL], frame);
+			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], frameHSV, frameBGR);
+			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR);
 			double distance = location.x;
 			double HorizontalDev = location.y;
 			double HorizontalAngle = location.z;
@@ -241,6 +268,7 @@ void Robot::Run()
             //TODO: kick ball
             state = STATE_LOCATE_BALL;
         }
+		/*
         if(STATE_REMOTE_CONTROL == state) {
 			Dialog launchWindow("Remote Control Mode Enabed", CV_WINDOW_AUTOSIZE);
 			STATE_BUTTON(launchWindow, "Back", STATE_NONE)
@@ -258,24 +286,27 @@ void Robot::Run()
 				STATE_BUTTON(manualWindow, "Back", STATE_NONE)
 				manualWindow.show();
 		}
+		*/
 		if (false && wheels->CheckStall() &&
 			(state == STATE_LOCATE_BALL ||
 			state == STATE_BALL_LOCATED || 
 			state == STATE_LOCATE_GATE || 
-			state == STATE_GATE_LOCATED)
-		){
+			state == STATE_GATE_LOCATED))
+		{
 			state = STATE_CRASH;
 		}
+		if (STATE_END_OF_GAME == state) {
+			break;
+		}
+		cv::putText(frameBGR, "fps:" + std::to_string(fps), cv::Point(frameHSV.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		
+		show(frameBGR);
+		if (cv::waitKey(1) == 27) {
+			std::cout << "exiting program" << std::endl;
+			break;
+		}
+		frames++;
 
-		// This slows system down to 33.3 FPS
-        if (cv::waitKey(1) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
-        {
-          //  const cv::Mat frame = camera->Capture();
-
-            std::cout << "esc key is pressed by user" << std::endl;
-            //state = STATE_END_OF_GAME;
-            state = STATE_NONE;
-        }
     }
 }
 std::string Robot::ExecuteRemoteCommand(const std::string &command){

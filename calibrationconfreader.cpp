@@ -6,7 +6,7 @@
 
 CalibrationConfReader::CalibrationConfReader()
 {
-	range = { { 0, 179 }, { 0, 255 }, { 0, 255 } };
+	range = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
 
 }
 
@@ -28,13 +28,18 @@ void CalibrationConfReader::LoadConf(const std::string &name){
 	using boost::property_tree::ptree;
 
 	ptree pt;
-	read_ini(std::string("conf/") + name + ".ini", pt);
-	range.hue.low = pt.get<int>("hue.low");
-	range.hue.high = pt.get<int>("hue.high");
-	range.sat.low = pt.get<int>("sat.low");
-	range.sat.high = pt.get<int>("sat.high");
-	range.val.low = pt.get<int>("val.low");
-	range.val.high = pt.get<int>("val.high");
+	try
+	{
+		read_ini(std::string("conf/") + name + ".ini", pt);
+
+		range.hue.low = pt.get<int>("hue.low");
+		range.hue.high = pt.get<int>("hue.high");
+		range.sat.low = pt.get<int>("sat.low");
+		range.sat.high = pt.get<int>("sat.high");
+		range.val.low = pt.get<int>("val.low");
+		range.val.high = pt.get<int>("val.high");
+	}
+	catch (...){};
 
 }
 

@@ -5,17 +5,14 @@ ColorCalibrator::ColorCalibrator()
 {
 };
 
-void ColorCalibrator::LoadImage(const cv::Mat &image)
+void ColorCalibrator::LoadImage(cv::Mat &image)
 {
     this->image = image;
 };
 HSVColorRange ColorCalibrator::GetObjectThresholds (int index, const std::string &name)
 {
-	try
-	{
-		LoadConf(name);
-	}
-	catch (...){};
+	LoadConf(name);
+
 
     cvNamedWindow("ColorCalibrator", CV_WINDOW_AUTOSIZE); //create a window called "Control"
     cvCreateTrackbar("LowH", "ColorCalibrator", &range.hue.low, 179); //Hue (0 - 179)

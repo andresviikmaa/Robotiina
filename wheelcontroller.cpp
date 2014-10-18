@@ -6,7 +6,11 @@ WheelController::WheelController(boost::asio::io_service &io)
 {
     using boost::property_tree::ptree;
     ptree pt;
+
+    try {
     read_ini("conf/ports.ini", pt);
+    }
+    catch (...) {};
 
 	try {
 		w_left = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200);

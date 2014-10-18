@@ -1,13 +1,14 @@
 #include "types.h"
 #include "objectfinder.h"
-
+#include "dialog.h"
 #include <boost/atomic.hpp>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread/mutex.hpp>
+
 namespace po = boost::program_options;
 class WheelController;
-class Robot {
+class Robot: public Dialog {
 private:
 	po::variables_map config;
 
@@ -19,7 +20,7 @@ private:
     std::map<OBJECT, HSVColorRange> objectThresholds;
     //STATE state = STATE_NONE;
     boost::atomic<STATE> state;
-	void CalibrateObjects(const cv::Mat &image, bool autoCalibrate = false);
+	void CalibrateObject(const cv::Mat &image, bool autoCalibrate = false);
 	bool ParseOptions(int argc, char* argv[]);
 
 	void Run();

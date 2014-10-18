@@ -7,16 +7,21 @@ AutoCalibrator::AutoCalibrator()
 {
     range = {{0,179},{0,255},{0,255}};
 };
-void AutoCalibrator::LoadImage(const cv::Mat &image)
+void AutoCalibrator::LoadImage(cv::Mat &image)
 {
     ColorCalibrator::LoadImage(image);
     //float data[6][3] = {{1, 0, 0/*blue*/}, {0, 0, 1 /* orange*/}, {1 ,1, 0 /* yellow*/}, {0,1, 0}/*green*/, {1,1,1}, {0,0,0}};
 	//bestLabels = cv::Mat(6, 3, CV_32F, &data); //BGR
-    DetectThresholds(16);
+    DetectThresholds(32);
 };
 
 HSVColorRange AutoCalibrator::GetObjectThresholds (int index, const std::string &name)
 {
+	try {
+		LoadConf(name);
+	}
+	catch (...) {
+	}
 	this->name = name;
     cv::imshow(name.c_str(), image); //show the thresholded image
 	cv::moveWindow(name.c_str(), 0, 0);
@@ -46,8 +51,8 @@ HSVColorRange AutoCalibrator::GetObjectThresholds (int index, const std::string 
 };
 
 void AutoCalibrator::mouseClicked(int x, int y, int flags) {
-    //cv::Mat imgHSV;
-	//cvtColor(image, imgHSV, CV_BGR2HSV);
+    cv::Mat imgHSV;
+	cvtColor(image, imgHSV, CV_BGR2HSV);
 
     int label = bestLabels.at<int>(y*image.cols + x);
     //range =  {{179,0},{255,0},{255,0}} /* reverse initial values for min/max to work*/;
@@ -55,9 +60,9 @@ void AutoCalibrator::mouseClicked(int x, int y, int flags) {
 
     for(int i=0; i<image.cols*image.rows; i++) {
         if(bestLabels.at<int>(i) == label){
-			hue.push_back(image.at<cv::Vec3b>(i).val[0]);
-			sat.push_back(image.at<cv::Vec3b>(i).val[1]);
-			val.push_back(image.at<cv::Vec3b>(i).val[2]);
+			hue.push_back(imgHSV.at<cv::Vec3b>(i).val[0]);
+			sat.push_back(imgHSV.at<cv::Vec3b>(i).val[1]);
+			val.push_back(imgHSV.at<cv::Vec3b>(i).val[2]);
 
         }
     }
@@ -87,15 +92,16 @@ void AutoCalibrator::mouseClicked(int x, int y, int flags) {
 	}
 
 	cv::Mat imgThresholded;
-	cv::inRange(image, cv::Scalar(range.hue.low, range.sat.low, range.val.low), cv::Scalar(range.hue.high, range.sat.high, range.val.high), imgThresholded); //Threshold the image
+	cv::inRange(imgHSV, cv::Scalar(range.hue.low, range.sat.low, range.val.low), cv::Scalar(range.hue.high, range.sat.high, range.val.high), imgThresholded); //Threshold the image
 	std::cout << cv::Scalar(range.hue.low, range.sat.low, range.val.low) << cv::Scalar(range.hue.high, range.sat.high, range.val.high) << std::endl;
 	
 	cv::Mat selected(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));
 
 	image.copyTo(selected, 255 - imgThresholded);
 
-//	cv::imshow("auto thresholded", image); //show the thresholded image
-//	cv::imshow("auto thresholded 2", imgThresholded); //show the thresholded image
+	//cv::imshow("auto thresholded", image); //show the thresholded image
+    //cv::imshow("auto thresholded 2", imgThresholded); //show the thresholded image
+    //cv::imshow("auto thresholded 3", clustered); //show the thresholded image
 
 	//cv::imshow("original", image); //show the thresholded image
 	cv::imshow(this->name.c_str(), selected); //show the thresholded image
@@ -108,8 +114,9 @@ AutoCalibrator::~AutoCalibrator(){
 }
 
 void AutoCalibrator::DetectThresholds(int number_of_objects){
-    cv::Mat img(image);
-    cvtColor(img,image,CV_BGR2HSV);
+    cv::Mat img;
+    //cvtColor(img,image,CV_BGR2HSV);
+    image.copyTo(img);
     int origRows = img.rows;
     cv::Mat colVec = img.reshape(1, img.rows*img.cols); // change to a Nx3 column vector
     cv::Mat colVecD;
@@ -142,7 +149,6 @@ void AutoCalibrator::DetectThresholds(int number_of_objects){
     clustered = clustered.reshape(3, img.rows);
     std::cout << "clustered image is: " << clustered.rows << "x" << clustered.cols << std::endl;
 
-    //cvtColor(clustered,img,CV_HSV2BGR);
 
 
 
