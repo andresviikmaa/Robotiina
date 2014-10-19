@@ -16,6 +16,7 @@
 #include <map>
 #include <boost/algorithm/string.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/timer/timer.hpp>
 
 
 #define STATE_BUTTON(name, new_state) \
@@ -117,19 +118,23 @@ bool Robot::Launch(int argc, char* argv[])
 }
 void Robot::Run()
 {
- 
 	double fps = 0;
 	int frames = 0;
-	boost::posix_time::ptime lastStepTime;
+	//timer for rotation measure
+	boost::posix_time::ptime lastStepTime;	
+	boost::posix_time::time_duration dt;	
+	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 
-	boost::posix_time::time_duration dt;
-	boost::posix_time::ptime time = boost::posix_time::second_clock::local_time();
-
+	boost::posix_time::ptime rotateTime = time;
+	boost::posix_time::time_duration rotateDuration;
 	cv::Mat frameBGR, frameHSV;
 	while (true)
     {
+		
 		time = boost::posix_time::second_clock::local_time();
 		boost::posix_time::time_duration::tick_type dt = (time - lastStepTime).total_milliseconds();
+		boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateTime).total_milliseconds();
+
 		if (dt > 1000) {
 			fps = 1000.0 * frames / dt;
 			lastStepTime = time;
@@ -191,13 +196,29 @@ void Robot::Run()
 		}
 		else if(STATE_LOCATE_BALL == state) {
 			
-			//finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
+			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
 			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false);
 			if (location.x == -1 && location.y == -1 && location.z == -1) /* Ball not found */
             {
-                wheels->Rotate(1, 10);
+				time = boost::posix_time::microsec_clock::local_time();
+				boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateTime).total_milliseconds();
+				if (rotateDuration >= 700){
+					wheels->Stop();
+					std::cout << "i'm waiting "<< rotateDuration << "\n";
+					if (rotateDuration >= 800){
+						rotateTime = time; //reset
+						std::cout << "reset" << "\n";
+					}
+						
+				}
+				else{
+					wheels->Rotate(1, 80);
+					std::cout << "i'm rotating " << rotateDuration << "\n";
+				}
             }
+
 			if (location.x != -1 && location.y != -1) { /*Ball found*/
+				rotateTime = time; //reset timer
 				bool ballInTribbler = wheels->DriveToBall(location.x, //distance
 														location.y,	//horizontal dev
 														location.z, //angle
@@ -210,11 +231,10 @@ void Robot::Run()
         }
 		else if (STATE_LOCATE_GATE == state)
 		{
-			//			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
+			//finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
 			bool ballInTribbler = true; // fix me
 			if (!ballInTribbler) {
 				state = STATE_LOCATE_BALL;
-
 			}
 			else {
 				cv::Point3d location = finder->Locate(objectThresholds[GATE1], frameHSV, frameBGR, true);
