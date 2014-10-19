@@ -137,15 +137,15 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 	inRange(frameHSV, cv::Scalar(inner.hue.low, inner.sat.low, inner.val.low), cv::Scalar(inner.hue.high, inner.sat.high, inner.val.high), innerThresholded); //Threshold the image
 	cv::Mat outerThresholded;
 	inRange(frameHSV, cv::Scalar(outer.hue.low, outer.sat.low, outer.val.low), cv::Scalar(outer.hue.high, outer.sat.high, outer.val.high), outerThresholded); //Threshold the image
-	/**/
+	/*
 	cv::Mat gate1Thresholded;
 	inRange(frameHSV, cv::Scalar(gate1.hue.low, gate1.sat.low, gate1.val.low), cv::Scalar(gate1.hue.high, gate1.sat.high, gate1.val.high), gate1Thresholded); //Threshold the image
 	cv::Mat gate2Thresholded;
 	inRange(frameHSV, cv::Scalar(gate2.hue.low, gate2.sat.low, gate2.val.low), cv::Scalar(gate2.hue.high, gate2.sat.high, gate2.val.high), gate2Thresholded); //Threshold the image
+	*/
 
 
-
-	/*
+	/* 
 	cv::Point2d orgin(frameBGR.cols / 2, frameBGR.rows *0.9);
 	cv::circle(frameBGR, orgin, 40, cv::Scalar(40, 20, 100), 10);
 	for (float a = -PI; a < 0 ; a += PI/10) {
