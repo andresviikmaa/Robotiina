@@ -79,20 +79,17 @@ void WheelController::DriveRotate(int velocity, double direction, int rotate){
 		}
 	}
 
-	if (rotate < 0 && velocity > 0){
-		velocity = velocity + abs(rotate);
-	}
-	else if (rotate > 0 && velocity < 0){
-		velocity = velocity - abs(rotate);
-	}
-	else{
-		if ((rotate + velocity) > 190){
+
+	if ((abs(rotate) + velocity) > 190){
+		if (rotate > 0){
 			velocity = velocity - rotate;
 		}
-		else if ((rotate + velocity) < -190){
-			velocity = velocity - rotate;
+		else{
+			velocity = velocity + rotate;
 		}
+			
 	}
+
 
 	w_left->Run((velocity*cos((150 - direction) * PI / 180.0)) + rotate);
 	w_right->Run((velocity*cos((30 - direction)  * PI / 180.0)) + rotate);
@@ -104,7 +101,14 @@ void WheelController::DriveRotate(int velocity, double direction, int rotate){
 
 bool WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance){
 	int speed;
-
+	int rotate;
+	//rotate calculation
+	if (horizontalAngle > 200){
+		rotate = (360 - horizontalAngle) * 2.5;
+	}
+	else{
+		rotate = horizontalAngle * 2.5;
+	}
 	//if ball is close and center
 	if (distance < desiredDistance && (horizontalDev > -10 && horizontalDev < 10)){
 		//TODO: start catching the ball with tribbler
@@ -115,10 +119,10 @@ bool WheelController::DriveToBall(double distance, double horizontalDev, double 
 	else if (distance < desiredDistance){
 		//TODO: start tribbler
 		if (horizontalDev < -10){
-			Rotate(0, abs(horizontalDev)*0.1125 + 5);
+			Rotate(0, rotate);
 		}
 		else if (horizontalDev > 10){
-			Rotate(1, horizontalDev*0.1125 + 5);
+			Rotate(1, rotate);
 		}
 		else{
 			Stop();
@@ -140,10 +144,10 @@ bool WheelController::DriveToBall(double distance, double horizontalDev, double 
 			Drive(speed, horizontalAngle);
 		}
 		else if (horizontalDev >= 20){
-			DriveRotate(speed, horizontalAngle, horizontalDev*0.1125+5);
+			DriveRotate(speed, horizontalAngle, rotate);
 		}
 		else{
-			DriveRotate(speed, horizontalAngle, -(abs(horizontalDev)*0.1125 + 5));
+			DriveRotate(speed, horizontalAngle, -(rotate));
 		}
 		return false;
 	}
