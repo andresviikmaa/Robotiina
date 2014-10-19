@@ -198,9 +198,9 @@ void Robot::Run()
 			
 			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
 			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false);
+			time = boost::posix_time::microsec_clock::local_time();
 			if (location.x == -1 && location.y == -1 && location.z == -1) /* Ball not found */
             {
-				time = boost::posix_time::microsec_clock::local_time();
 				boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateTime).total_milliseconds();
 				if (rotateDuration >= 700){
 					wheels->Stop();
@@ -208,8 +208,7 @@ void Robot::Run()
 					if (rotateDuration >= 800){
 						rotateTime = time; //reset
 						std::cout << "reset" << "\n";
-					}
-						
+					}	
 				}
 				else{
 					wheels->Rotate(1, 80);
