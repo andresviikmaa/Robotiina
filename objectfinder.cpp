@@ -188,7 +188,7 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 			int inner_start = -1;
 			int inner_end = -1;
 			bool break2 = false;
-			for (int x = 0; x < frameHSV.cols; x += 3) {
+			for (int x = 0; x < frameHSV.cols; x += 3) { // TODO: start near the last found piont
 				//cv::circle(frameBGR, cv::Point2i(dir ? end - x : x, y), 1, dir ? cv::Scalar(255, 0, 0) : cv::Scalar(120, 0, 0), 10);
 				if (inner_end > 0 && inner_end - inner_start > 1) {
 					// we have detected new point on the border
@@ -244,7 +244,7 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 		}
 		if (points.size() > 3) {
 			cv::Vec4f newLine;
-			cv::fitLine(points, newLine, CV_DIST_L2, 0, 0.001, 0.001);
+			cv::fitLine(points, newLine, CV_DIST_L2, 0, 0.1, 0.1);
 			drawLine(frameBGR, frameHSV, dir, newLine, 2+dir, cv::Scalar(0, 255*(dir+0.3), 0));
 		}
 		//break;
