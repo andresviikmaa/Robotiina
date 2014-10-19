@@ -90,7 +90,7 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameH
 
 void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickness, CvScalar color)
 {
-	std::cout << "drawLine: " << dir << std::endl;
+	//std::cout << "drawLine: " << dir << std::endl;
 	double theMult = std::max(img.cols, img.rows);
 	// calculate start point
 	cv::Point startPoint;
@@ -137,16 +137,13 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 	inRange(frameHSV, cv::Scalar(inner.hue.low, inner.sat.low, inner.val.low), cv::Scalar(inner.hue.high, inner.sat.high, inner.val.high), innerThresholded); //Threshold the image
 	cv::Mat outerThresholded;
 	inRange(frameHSV, cv::Scalar(outer.hue.low, outer.sat.low, outer.val.low), cv::Scalar(outer.hue.high, outer.sat.high, outer.val.high), outerThresholded); //Threshold the image
-
+	/**/
 	cv::Mat gate1Thresholded;
 	inRange(frameHSV, cv::Scalar(gate1.hue.low, gate1.sat.low, gate1.val.low), cv::Scalar(gate1.hue.high, gate1.sat.high, gate1.val.high), gate1Thresholded); //Threshold the image
 	cv::Mat gate2Thresholded;
 	inRange(frameHSV, cv::Scalar(gate2.hue.low, gate2.sat.low, gate2.val.low), cv::Scalar(gate2.hue.high, gate2.sat.high, gate2.val.high), gate2Thresholded); //Threshold the image
 
-	std::vector<std::vector<cv::Point> > contours; // Vector for storing contour
-	std::vector<cv::Vec4i> hierarchy;
-	std::vector<std::vector<cv::Point> > contours2; // Vector for storing contour
-	std::vector<cv::Vec4i> hierarchy2;
+
 
 	/*
 	cv::Point2d orgin(frameBGR.cols / 2, frameBGR.rows *0.9);
@@ -175,53 +172,15 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 	}
 	*/
 
-#ifdef USE_CONTOURS
-	innerThresholded = outerThresholded + innerThresholded;
-	findContours(innerThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); // Find the contours in the image
-	//findContours(outerThresholded, contours2, hierarchy2, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); // Find the contours in the image
+//	cv::Mat gateThresholded = gate1Thresholded + gate2Thresholded;
 
-	cv::Scalar color(255, 255, 255);
-	cv::Scalar color2(0, 0, 255);
-	cv::Scalar color3(0, 0, 0);
-	cv::Scalar color4(255, 0, 0);
-	cv::RotatedRect bounding_rect;
-
-	for (int i = 0; i < contours.size(); i++) // iterate through each contour.
-	{
-		double a = cv::contourArea(contours[i], false);  //  Find the area of contour
-		bounding_rect = cv::minAreaRect(contours[i]);
-		//cv::rectangle(frameBGR, bounding_rect, color2);
-		// rotated rectangle
-		cv::Point2f rect_points[4]; bounding_rect.points(rect_points);
-		for (int j = 0; j < 4; j++)
-			line(frameBGR, rect_points[j], rect_points[(j + 1) % 4], color2, 1, 8);
-
-		drawContours(frameBGR, contours, i, color, -1, 8, hierarchy); // Draw the largest contour using previously stored index.
-	}
-	/*
-	for (int i = 0; i < contours2.size(); i++) // iterate through each contour.
-	{
-		double a = cv::contourArea(contours2[i], false);  //  Find the area of contour
-		bounding_rect = cv::minAreaRect(contours2[i]);
-		//cv::rectangle(frameBGR, bounding_rect, color4);
-		drawContours(frameBGR, contours2, i, color3, -1, 8, hierarchy2); // Draw the largest contour using previously stored index.
-	}
-	*/
-
-		cv::imshow("i", innerThresholded);
-		cv::imshow("o", outerThresholded);
-#else
-
-	cv::Mat gateThresholded = gate1Thresholded + gate2Thresholded;
-//	cv::Mat image;
-//	frameBGR.copyTo(image);
-//	image.copyTo(frameBGR, imgThresholded);
 	//dir: left -> right, right -> left, top -> down
 	for (int dir = 0; dir < 2; dir++) {
 		std::vector<cv::Point2i> points;
 		int end = dir ? frameHSV.cols - 1 : 0;
 		//int last_y = -1;
 		cv::Point2i last_canditate(-1, -1);
+		int dx = 0;
 		cv::Point2i last_selected(-1, -1);
 		for (int y = 0; y < frameHSV.rows; y += 5) {
 			int outer_start = -1;
@@ -229,15 +188,21 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 			int inner_start = -1;
 			int inner_end = -1;
 			bool break2 = false;
-			for (int x = 0; x < frameHSV.cols; x++) {
+			for (int x = 0; x < frameHSV.cols; x += 3) {
+				//cv::circle(frameBGR, cv::Point2i(dir ? end - x : x, y), 1, dir ? cv::Scalar(255, 0, 0) : cv::Scalar(120, 0, 0), 10);
 				if (inner_end > 0 && inner_end - inner_start > 1) {
 					// we have detected new point on the border
 					if (last_canditate.x != -1) {
 						// check the distance form last candidate
 						if (abs(y - last_canditate.y) < 40 && abs(x - last_canditate.x) < 40) { // close enough
 							cv::Point2i new_point = cv::Point2i(dir ? end - last_selected.x : last_selected.x, last_selected.y);
-							cv::circle(frameBGR, new_point, 4, dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
+							//cv::circle(frameBGR, new_point, 4, dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
 							points.push_back(new_point);
+							dx = last_selected.x - outer_start;
+							if (points.size() > 7) {
+								break2 = true;
+								break;
+							}
 						}
 						else {
 							// to big gap, either restart or stop
@@ -257,28 +222,9 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 					{
 						last_canditate = cv::Point2i(x, y);
 						last_selected = cv::Point2i(inner_start, y);
-						cv::Point2i new_point = cv::Point2i(dir ? end - last_selected.x : last_selected.x, last_selected.y);
-						cv::circle(frameBGR, new_point, 1, !dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
+						//cv::Point2i new_point = cv::Point2i(dir ? end - last_selected.x : last_selected.x, last_selected.y);
+						//cv::circle(frameBGR, new_point, 1, !dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
 					}
-					/*
-					// chekck the monotonicity
-					if (last_selected.x != -1 &&  !(((last_canditate.x - new_point.x) >= 0) ^ ((last_selected.x - last_canditate.x) < 0))) { // direction change, not straight line
-						break2 = true;
-						break;
-					}
-					
-					if (last_canditate.x != -1 && abs(new_point.x - last_canditate.x) > 30){ // to big gap, break
-						break2 = true;
-						break;
-					}
-					
-					if (last_canditate.y != -1 && new_point.y - last_canditate.y < 40 && new_point.x - last_canditate.x < 40) {
-						points.push_back(last_canditate);
-						cv::circle(frameBGR, cv::Point2i(last_canditate.y, last_canditate.x), 4, dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
-						last_selected = last_canditate;
-					}
-					cv::circle(frameBGR, cv::Point2i(last_canditate.y, last_canditate.x), 1, !dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
-					*/
 					break;
 				}
 				else if (inner_start > 0 && x - inner_start > 10 && innerThresholded.ptr<uchar>(y)[dir ? end -x : x] == 0) {
@@ -310,7 +256,7 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 	cv::imshow("i", innerThresholded);
 	cv::imshow("o", outerThresholded);
 	*/
-#endif
+
 
 }
 
