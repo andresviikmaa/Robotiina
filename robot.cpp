@@ -20,9 +20,12 @@
 
 
 #define STATE_BUTTON(name, new_state) \
-createButton(name, [&](){ this->state = new_state; });
+createButton(name, [&](){ this->SetState(new_state); });
 #define BUTTON(name, function_body) \
 createButton(name, [&]() function_body);
+#define START_DIALOG if (state != last_state) { \
+clearButtons();
+#define END_DIALOG }
 
 std::pair<OBJECT, std::string> objects[] = {
 	std::pair<OBJECT, std::string>(BALL, "Ball"),
@@ -30,16 +33,47 @@ std::pair<OBJECT, std::string> objects[] = {
 	std::pair<OBJECT, std::string>(GATE2, "Yellow Gate"),
 	std::pair<OBJECT, std::string>(FIELD, "Field"),
     std::pair<OBJECT, std::string>(INNER_BORDER, "Inner Border"),
-    std::pair<OBJECT, std::string>(OUTER_BORDER, "Outer Border"),
+	std::pair<OBJECT, std::string>(OUTER_BORDER, "Outer Border"),
+//	std::pair<OBJECT, std::string>(NUMBER_OF_OBJECTS, "") // this is intentionally left out
 
 };
 
 std::map<OBJECT, std::string> OBJECT_LABELS(objects, objects + sizeof(objects) / sizeof(objects[0]));
 
+std::pair<STATE, std::string> states[] = {
+	std::pair<STATE, std::string>(STATE_NONE, "None"),
+	std::pair<STATE, std::string>(STATE_AUTOCALIBRATE, "Autocalibrate"),
+	std::pair<STATE, std::string>(STATE_CALIBRATE, "Manual calibrate"),
+	std::pair<STATE, std::string>(STATE_LAUNCH, "Launch"),
+	std::pair<STATE, std::string>(STATE_LOCATE_BALL, "Locate Ball"),
+	std::pair<STATE, std::string>(STATE_LOCATE_GATE, "Locate Gate"),
+	std::pair<STATE, std::string>(STATE_REMOTE_CONTROL, "Remote Control"),
+	std::pair<STATE, std::string>(STATE_CRASH, "Crash"),
+	std::pair<STATE, std::string>(STATE_MANUAL_CONTROL, "Manual Control"),
+	std::pair<STATE, std::string>(STATE_SELECT_GATE, "Select Gate"),
+	std::pair<STATE, std::string>(STATE_DANCE, "Dance"),
+	//	std::pair<STATE, std::string>(STATE_END_OF_GAME, "End of Game") // this is intentionally left out
+
+};
+
+std::map<STATE, std::string> STATE_LABELS(states, states + sizeof(states) / sizeof(states[0]));
+
+/* BEGIN DANCE MOVES */
+void dance_step(float time, float &move1, float &move2) {
+	move1 = 50*sin(time/1000);
+	move2 = 10;// 180 * cos(time / 10000);
+}
+
+/* END DANCE MOVES */
+
 Robot::Robot(boost::asio::io_service &io) : Dialog("Robotiina"), io(io), camera(0), wheels(0), finder(0)
 {
-    state = STATE_NONE;
+	
+	last_state = STATE_END_OF_GAME;
+	state = STATE_NONE;
     //wheels = new WheelController(io);
+	assert(OBJECT_LABELS.size() == NUMBER_OF_OBJECTS);
+	assert(STATE_LABELS.size() == STATE_END_OF_GAME);
 }
 Robot::~Robot()
 {
@@ -124,6 +158,7 @@ void Robot::Run()
 	boost::posix_time::ptime lastStepTime;	
 	boost::posix_time::time_duration dt;	
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
+	boost::posix_time::ptime epoch = boost::posix_time::microsec_clock::local_time();
 
 	boost::posix_time::ptime rotateTime = time;
 	boost::posix_time::time_duration rotateDuration;
@@ -131,7 +166,7 @@ void Robot::Run()
 	while (true)
     {
 		
-		time = boost::posix_time::second_clock::local_time();
+		time = boost::posix_time::microsec_clock::local_time();
 		boost::posix_time::time_duration::tick_type dt = (time - lastStepTime).total_milliseconds();
 		boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateTime).total_milliseconds();
 
@@ -144,39 +179,61 @@ void Robot::Run()
 		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
         if (STATE_NONE == state) {
-			clearButtons();
-			STATE_BUTTON("(A)utoCalibrate objects", STATE_AUTOCALIBRATE)
+			START_DIALOG
+				STATE_BUTTON("(A)utoCalibrate objects", STATE_AUTOCALIBRATE)
 				STATE_BUTTON("(M)anualCalibrate objects", STATE_CALIBRATE)
 				STATE_BUTTON("(S)tart Robot", STATE_LAUNCH)
+				STATE_BUTTON("(D)ance", STATE_DANCE)
+				//STATE_BUTTON("(D)ance", STATE_DANCE)
 				//			STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
 				//			STATE_BUTTON("Manual (C)ontrol", STATE_MANUAL_CONTROL)
 				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
-
+			END_DIALOG
 		}
 		else if (STATE_CALIBRATE == state || STATE_AUTOCALIBRATE == state) {
-			clearButtons();
-			for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
-				// objectThresholds[(OBJECT) i] = calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT) i]);
-				createButton(OBJECT_LABELS[(OBJECT)i], [this, i, &frameBGR]{
-					ColorCalibrator* calibrator = STATE_AUTOCALIBRATE == state ? new AutoCalibrator() : new ColorCalibrator();
-					calibrator->LoadImage(frameBGR);
-					calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
-					delete calibrator;
+			START_DIALOG
+				for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
+					// objectThresholds[(OBJECT) i] = calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT) i]);
+					createButton(OBJECT_LABELS[(OBJECT)i], [this, i, &frameBGR]{
+						ColorCalibrator* calibrator = STATE_AUTOCALIBRATE == state ? new AutoCalibrator() : new ColorCalibrator();
+						calibrator->LoadImage(frameBGR);
+						calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
+						delete calibrator;
+					});
+				}
+				STATE_BUTTON("BACK", STATE_NONE)
+			END_DIALOG
+		}
+		else if (STATE_SELECT_GATE == state) {
+			START_DIALOG
+				createButton(OBJECT_LABELS[GATE1], [this]{
+					this->targetGate = GATE1;
+					this->SetState(STATE_LAUNCH);
 				});
-			}
-			STATE_BUTTON("BACK", STATE_NONE)
+				createButton(OBJECT_LABELS[GATE2], [this]{
+					this->targetGate = GATE2;
+					this->SetState(STATE_LAUNCH);
+				});
+			END_DIALOG
 		}
 		else if (STATE_LAUNCH == state) {
-			try {
-				CalibrationConfReader calibrator;
-				for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
-					objectThresholds[(OBJECT)i] = calibrator.GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
-				}
-				state = STATE_LOCATE_BALL;
+			if (targetGate == NUMBER_OF_OBJECTS) {
+				std::cout << "Select target gate" << std::endl;
+				SetState(STATE_SELECT_GATE);
 			}
-			catch (...){
-				//TODO: display error
-				state = STATE_NONE; // no conf
+			else {
+				try {
+					CalibrationConfReader calibrator;
+					for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
+						objectThresholds[(OBJECT)i] = calibrator.GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
+					}
+					SetState(STATE_LOCATE_BALL);
+				}
+				catch (...){
+					std::cout << "Calibration data is missing!" << std::endl;
+					//TODO: display error
+					SetState(STATE_NONE); // no conf
+				}
 			}
 		}
 		else if(STATE_CRASH == state){
@@ -191,12 +248,21 @@ void Robot::Run()
 			wheels->Stop();
 			//Check again
 			if (!wheels->CheckStall()){
-				state = STATE_LOCATE_BALL;
+				SetState(STATE_LOCATE_BALL);
 			}            
 		}
 		else if(STATE_LOCATE_BALL == state) {
-			
-			finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
+			START_DIALOG
+				STATE_BUTTON("Go to Locate Gate", STATE_LOCATE_GATE)
+				createButton(std::string("Border detection: ") + (DetectBorders ? "on" : "off"), [this]{
+					this->DetectBorders = !this->DetectBorders;
+				}); 
+				STATE_BUTTON("(B)ack", STATE_NONE)
+				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
+			END_DIALOG
+			if (DetectBorders) {
+				finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
+			}
 			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false);
 			time = boost::posix_time::microsec_clock::local_time();
 			if (location.x == -1 && location.y == -1 && location.z == -1) /* Ball not found */
@@ -223,7 +289,7 @@ void Robot::Run()
 														location.z, //angle
 														350); //desired distance
 				if (ballInTribbler){
-					state = STATE_LOCATE_GATE;
+					SetState(STATE_LOCATE_GATE);
 				}
 			}
             
@@ -233,10 +299,10 @@ void Robot::Run()
 			//finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
 			bool ballInTribbler = true; // fix me
 			if (!ballInTribbler) {
-				state = STATE_LOCATE_BALL;
+				SetState(STATE_LOCATE_BALL);
 			}
 			else {
-				cv::Point3d location = finder->Locate(objectThresholds[GATE1], frameHSV, frameBGR, true);
+				cv::Point3d location = finder->Locate(objectThresholds[targetGate], frameHSV, frameBGR, true);
 				//If not found
 				if (location.x == -1 && location.y == -1 && location.z == -1){
 					wheels->Rotate(1, 10);
@@ -266,6 +332,13 @@ void Robot::Run()
 				manualWindow.show();
 		}
 		*/
+		else if (STATE_DANCE == state) {
+			float move1, move2;
+			dance_step(((float)(time - epoch).total_milliseconds()), move1, move2);
+			wheels->Drive(move1, move2);
+			cv::putText(frameBGR, "move1:" + std::to_string(move1), cv::Point(frameHSV.cols - 140, 120), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+			cv::putText(frameBGR, "move2:" + std::to_string(move2), cv::Point(frameHSV.cols - 140, 140), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		}
 		else if (STATE_END_OF_GAME == state) {
 			break;
 		}
@@ -274,11 +347,12 @@ void Robot::Run()
 			(state == STATE_LOCATE_BALL ||
 			state == STATE_LOCATE_GATE))
 		{
-			state = STATE_CRASH;
+			SetState(STATE_CRASH);
 		}
 
 		cv::putText(frameBGR, "fps:" + std::to_string(fps), cv::Point(frameHSV.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
-		cv::putText(frameBGR, "state:" + std::to_string(state), cv::Point(frameHSV.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		assert(STATE_END_OF_GAME != state);
+		cv::putText(frameBGR, "state:" + STATE_LABELS[state], cv::Point(frameHSV.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 
 		show(frameBGR);
 		if (cv::waitKey(1) == 27) {
