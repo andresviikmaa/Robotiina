@@ -275,26 +275,22 @@ void Robot::Run()
 			if (location.x == -1 && location.y == -1 && location.z == -1) /* Ball not found */
             {
 				boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateTime).total_milliseconds();
-				if (rotateDuration >= 700){
+				if (rotateDuration >= 500){
 					wheels->Stop();
-					std::cout << "i'm waiting "<< rotateDuration << "\n";
-					if (rotateDuration >= 800){
+					if (rotateDuration >= 600){
 						rotateTime = time; //reset
-						std::cout << "reset" << "\n";
 					}	
 				}
 				else{
-					wheels->Rotate(1, 80);
-					std::cout << "i'm rotating " << rotateDuration << "\n";
+					wheels->Rotate(1, 30);
 				}
             }
-
-			if (location.x != -1 && location.y != -1) { /*Ball found*/
+			else { /*Ball found*/
 				rotateTime = time; //reset timer
 				bool ballInTribbler = wheels->DriveToBall(location.x, //distance
 														location.y,	//horizontal dev
 														location.z, //angle
-														350); //desired distance
+														200); //desired distance
 				if (ballInTribbler){
 					SetState(STATE_LOCATE_GATE);
 				}
@@ -316,7 +312,13 @@ void Robot::Run()
 				}
 				else{
 					//TODO: kick ball
-					state = STATE_LOCATE_BALL;
+					bool ballInGate = wheels->DriveToBall(location.x, //distance
+						location.y,	//horizontal dev
+						location.z, //angle
+						200); //desired distance
+					if (ballInGate){
+						SetState(STATE_LOCATE_BALL);
+					}
 				}
 			}
 		}

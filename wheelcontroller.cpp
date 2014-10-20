@@ -131,7 +131,7 @@ bool WheelController::DriveToBall(double distance, double horizontalDev, double 
 			speed = 150;
 		}
 		else{
-			speed = distance * 0.35 - 91;
+			speed = distance * 0.26 - 32;
 		}
 		//driving commands
 		if (horizontalDev > -20 && horizontalDev < 20){
