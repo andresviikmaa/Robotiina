@@ -256,6 +256,7 @@ void Robot::Run()
 				STATE_BUTTON("Go to Locate Gate", STATE_LOCATE_GATE)
 				createButton(std::string("Border detection: ") + (DetectBorders ? "on" : "off"), [this]{
 					this->DetectBorders = !this->DetectBorders;
+					this->last_state = STATE_NONE; // force dialog redraw
 				}); 
 				STATE_BUTTON("(B)ack", STATE_NONE)
 				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
