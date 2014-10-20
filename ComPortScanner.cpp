@@ -91,7 +91,8 @@ bool ComPortScanner::Scan(boost::asio::io_service &io_service)
 		write_ini("conf/ports_new.ini", ports);
 	}
 	if (Verify(io_service, "conf/ports_new.ini")) {
-		rename("conf / ports_new.ini", "conf/ports.ini");
+		_unlink("conf/ports.ini");
+		rename("conf/ports_new.ini", "conf/ports.ini");
 		return true;
 	}
 	return false;

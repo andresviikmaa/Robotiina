@@ -185,8 +185,8 @@ void Robot::Run()
 				STATE_BUTTON("(S)tart Robot", STATE_LAUNCH)
 				STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(D)ance", STATE_DANCE)
-				//			STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
-				//			STATE_BUTTON("Manual (C)ontrol", STATE_MANUAL_CONTROL)
+				//STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
+				STATE_BUTTON("Manual (C)ontrol", STATE_MANUAL_CONTROL)
 				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
 			END_DIALOG
 		}
@@ -258,6 +258,12 @@ void Robot::Run()
 					this->DetectBorders = !this->DetectBorders;
 					this->last_state = STATE_NONE; // force dialog redraw
 				}); 
+				createButton(std::string("Mouse control: ") + (dynamic_cast<MouseFinder*>(finder) == NULL ? "off" : "on"), [this]{
+					bool isMouse = dynamic_cast<MouseFinder*>(finder) != NULL;
+					delete this->finder;
+					this->finder = isMouse ? new ObjectFinder() : new MouseFinder();
+					this->last_state = STATE_NONE;
+				});
 				STATE_BUTTON("(B)ack", STATE_NONE)
 				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
 			END_DIALOG
@@ -315,24 +321,25 @@ void Robot::Run()
 			}
 		}
 		/*
-        if(STATE_REMOTE_CONTROL == state) {
+        else if(STATE_REMOTE_CONTROL == state) {
 			Dialog launchWindow("Remote Control Mode Enabed", CV_WINDOW_AUTOSIZE);
 			STATE_BUTTON(launchWindow, "Back", STATE_NONE)
 			launchWindow.show();
 
         }
-
-		if (STATE_MANUAL_CONTROL == state) {
-			Dialog manualWindow("Manual Control Mode Enabed", CV_WINDOW_AUTOSIZE);
-			BUTTON(manualWindow, "Move Left", ((Robot*)self)->wheels->Drive(20, 90);)
-				BUTTON(manualWindow, "Move Right", ((Robot*)self)->wheels->Drive(20, 270);)
-				BUTTON(manualWindow, "Move Forward", ((Robot*)self)->wheels->Drive(20, 0);)
-				BUTTON(manualWindow, "Move Back", ((Robot*)self)->wheels->Drive(-20, 0);)
-				BUTTON(manualWindow, "Rotate", ((Robot*)self)->wheels->Rotate(1,10);)
-				STATE_BUTTON(manualWindow, "Back", STATE_NONE)
-				manualWindow.show();
-		}
 		*/
+		else if (STATE_MANUAL_CONTROL == state) {
+			START_DIALOG
+				createButton("Move Left", [this]{this->wheels->Drive(20, 90); });
+				createButton("Move Right", [this]{this->wheels->Drive(20, 270); });
+				createButton("Move Forward", [this]{this->wheels->Drive(20, 0); });
+				createButton("Move Back", [this]{this->wheels->Drive(-20, 0); });
+				createButton("Rotate Right", [this]{this->wheels->Rotate(0, 10); });
+				createButton("Rotate Left", [this]{this->wheels->Rotate(1, 10); });
+				STATE_BUTTON("Back", STATE_NONE)
+			END_DIALOG
+		}
+
 		else if (STATE_DANCE == state) {
 			float move1, move2;
 			dance_step(((float)(time - epoch).total_milliseconds()), move1, move2);

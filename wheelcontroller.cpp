@@ -16,18 +16,22 @@ WheelController::WheelController(boost::asio::io_service &io)
 		w_left = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200);
 	}
 	catch (...) {
+		std::cout << "error opening left wheel " << std::endl;
 		w_left = new DummyWheel();
+		throw;
 	}
 	try {
 		w_right = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200);
 	}
 	catch (...) {
+		std::cout << "error opening right wheel " << std::endl;
 		w_right = new DummyWheel();
 	}
 	try {
 		w_back = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_BACK)), 115200);
 	}
 	catch (...) {
+		std::cout << "error opening back wheel " << std::endl;
 		w_back = new DummyWheel();
 	}
 };
@@ -40,32 +44,11 @@ void WheelController::Forward(int speed){
 
 }
 void WheelController::Rotate(bool direction, int speed){
-	if (direction){
-		w_left->Run(speed);
-		w_right->Run(speed);
-		w_back->Run(speed);
-	}
-	else {
-		w_left->Run(-speed);
-		w_right->Run(-speed);
-		w_back->Run(-speed);
-	}
 
-
+	DriveRotate(0,0, direction ? speed : -speed);
 }
 void WheelController::Drive(int velocity, double direction){
-	if (abs(velocity) > 190){
-		if (velocity < 0){
-			velocity = -190;
-		}
-		else{
-			velocity = 190;
-		}
-	}
-
-	w_left->Run((velocity*cos((150 - direction) * PI / 180.0)));
-	w_right->Run((velocity*cos((30 - direction)  * PI / 180.0)));
-	w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)));
+	DriveRotate(velocity, direction, 0);
 
 }
 
@@ -90,6 +73,17 @@ void WheelController::DriveRotate(int velocity, double direction, int rotate){
 			
 	}
 
+	cv::namedWindow("wheels");
+	cv::Point2i c(200, 200);
+	cv::Mat infoWindow(c.x * 2, c.y * 2, CV_8UC3, cv::Scalar::all(0));
+	/*
+	pygame.draw.line(self.screen, self.WHITE, (305, 314), (
+		305 + np.sin(self.logic.motors.direction)*self.logic.motors.speed,
+		314 - np.cos(self.logic.motors.direction)*self.logic.motors.speed), 1)
+	*/
+	cv::Point2i e(sin(direction* PI / 180.0)* velocity, cos(direction* PI / 180.0)*velocity);
+	cv::line(infoWindow, c, c + e, cv::Scalar(255, 255, 255), 1, 8, 0);
+	cv::imshow("wheels", infoWindow);
 
 	w_left->Run((velocity*cos((150 - direction) * PI / 180.0)) + rotate);
 	w_right->Run((velocity*cos((30 - direction)  * PI / 180.0)) + rotate);
