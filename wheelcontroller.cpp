@@ -18,7 +18,7 @@ WheelController::WheelController(boost::asio::io_service &io)
 	catch (...) {
 		std::cout << "error opening left wheel " << std::endl;
 		w_left = new DummyWheel();
-		throw;
+//		throw;
 	}
 	try {
 		w_right = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200);
