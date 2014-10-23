@@ -29,7 +29,8 @@ private:
 protected:
 	boost::asio::io_service &io;
 	OBJECT targetGate= NUMBER_OF_OBJECTS; //uselected
-	bool DetectBorders = false;
+	bool detectBorders = false;
+	bool captureFrames = false;
 public:
     Robot(boost::asio::io_service &io);
 	bool Launch(int argc, char* argv[]);

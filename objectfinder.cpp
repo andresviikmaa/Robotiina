@@ -196,7 +196,7 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 						// check the distance form last candidate
 						if (abs(y - last_canditate.y) < 40 && abs(x - last_canditate.x) < 40) { // close enough
 							cv::Point2i new_point = cv::Point2i(dir ? end - last_selected.x : last_selected.x, last_selected.y);
-							//cv::circle(frameBGR, new_point, 4, dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
+							cv::circle(frameBGR, new_point, 4, dir ? cv::Scalar(255, 255, 100) : cv::Scalar(0, 20, 100), 10);
 							points.push_back(new_point);
 							dx = last_selected.x - outer_start;
 							if (points.size() > 7) {

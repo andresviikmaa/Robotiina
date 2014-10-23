@@ -1,1 +1,1 @@
-Debug\wheelemulator.exe COM7 COM9 COM11
+Debug\wheelemulator.exe COM4 COM7 COM9
