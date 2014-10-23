@@ -65,7 +65,7 @@ std::map<STATE, std::string> STATE_LABELS(states, states + sizeof(states) / size
 /* BEGIN DANCE MOVES */
 void dance_step(float time, float &move1, float &move2) {
 	move1 = 50*sin(time/1000);
-	move2 = 10;// 180 * cos(time / 10000);
+	move2 = 360 * cos(time / 1000);
 }
 
 /* END DANCE MOVES */
@@ -252,16 +252,16 @@ void Robot::Run()
 			START_DIALOG
 				createButton(OBJECT_LABELS[GATE1], [this]{
 					this->targetGate = GATE1;
-					this->SetState(STATE_LAUNCH);
+					this->SetState(STATE_LOCATE_BALL);
 				});
 				createButton(OBJECT_LABELS[GATE2], [this]{
 					this->targetGate = GATE2;
-					this->SetState(STATE_LAUNCH);
+					this->SetState(STATE_LOCATE_BALL);
 				});
 			END_DIALOG
 		}
 		else if (STATE_LAUNCH == state) {
-			if (targetGate == NUMBER_OF_OBJECTS) {
+			if (false && targetGate == NUMBER_OF_OBJECTS) {
 				std::cout << "Select target gate" << std::endl;
 				SetState(STATE_SELECT_GATE);
 			}
@@ -271,7 +271,7 @@ void Robot::Run()
 					for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
 						objectThresholds[(OBJECT)i] = calibrator.GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
 					}
-					SetState(STATE_LOCATE_BALL);
+					SetState(STATE_SELECT_GATE);
 				}
 				catch (...){
 					std::cout << "Calibration data is missing!" << std::endl;
@@ -343,7 +343,7 @@ void Robot::Run()
 				movements = wheels->DriveToBall(location.x, //distance
 														location.y,	//horizontal dev
 														location.z, //angle
-														200); //desired distance
+														210); //desired distance
 				if (sqrt(pow(movements.x, 2) + pow(movements.y, 2)) < 0.1){
 					SetState(STATE_LOCATE_GATE);
 				}
@@ -368,8 +368,8 @@ void Robot::Run()
 					movements = wheels->DriveToBall(location.x, //distance
 						location.y,	//horizontal dev
 						location.z, //angle
-						200); //desired distance
-					if (sqrt(pow(movements.x,2)+ pow(movements.y,2)) < 0.1){
+						210);//desired distance
+					if (sqrt(pow(movements.x, 2) + pow(movements.y, 2)) < 0.1){
 						SetState(STATE_LOCATE_BALL);
 					}
 				}
