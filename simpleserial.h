@@ -26,6 +26,7 @@ public:
 		{
 			
 			asio::read(serial, asio::buffer(&c, 1));
+			
 			switch (c)
 			{
 				case '\r':

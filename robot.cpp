@@ -157,6 +157,7 @@ void Robot::Run()
 	//timer for rotation measure
 	boost::posix_time::ptime lastStepTime;	
 	boost::posix_time::time_duration dt;	
+
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime epoch = boost::posix_time::microsec_clock::local_time();
 
@@ -238,12 +239,12 @@ void Robot::Run()
 		}
 		else if(STATE_CRASH == state){
 			//Backwards
-			wheels->Drive(50, 180);
-            std::chrono::milliseconds dura(1000);
+			wheels->Drive(20, 180);
+            		std::chrono::milliseconds dura(1000);
 			std::this_thread::sleep_for(dura);
 			wheels->Stop();
 			//Turn a littlebit
-			wheels->Rotate(1, 100);
+			wheels->Rotate(1, 20);
 			std::this_thread::sleep_for(dura);
 			wheels->Stop();
 			//Check again
@@ -353,7 +354,7 @@ void Robot::Run()
 			break;
 		}
 
-		if (false && wheels->CheckStall() &&
+		if (wheels->CheckStall() &&
 			(state == STATE_LOCATE_BALL ||
 			state == STATE_LOCATE_GATE))
 		{
