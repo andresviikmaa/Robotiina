@@ -16,11 +16,12 @@ public:
 	WheelController(boost::asio::io_service &io);
 	void Forward(int speed);
     void MoveTo(const CvPoint &);
-    void Rotate(bool direction, int speed);
-	void Drive(int velocity, double direction);
-	void DriveRotate(int velocity, double direction, int rotate);
-	bool DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance);
-	void Stop();
+	cv::Point3f Rotate(bool direction, int speed);
+	cv::Point3f Drive(int velocity, double direction);
+	cv::Point3f DriveRotate(int velocity, double direction, int rotate);
+	cv::Point3f DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance);
+	cv::Point3f Stop();
+
 	bool CheckStall();
     ~WheelController(){
 		if (w_left)

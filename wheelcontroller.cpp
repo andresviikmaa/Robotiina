@@ -43,16 +43,16 @@ void WheelController::Forward(int speed){
 	w_back->Run(0);
 
 }
-void WheelController::Rotate(bool direction, int speed){
+cv::Point3f WheelController::Rotate(bool direction, int speed){
 
-	DriveRotate(0,0, direction ? speed : -speed);
+	return DriveRotate(0,0, direction ? speed : -speed);
 }
-void WheelController::Drive(int velocity, double direction){
-	DriveRotate(velocity, direction, 0);
+cv::Point3f WheelController::Drive(int velocity, double direction){
+	return DriveRotate(velocity, direction, 0);
 
 }
 
-void WheelController::DriveRotate(int velocity, double direction, int rotate){
+cv::Point3f WheelController::DriveRotate(int velocity, double direction, int rotate){
 	if (abs(velocity) > 190){
 		if (velocity > 0){
 			velocity = 190;
@@ -81,7 +81,7 @@ void WheelController::DriveRotate(int velocity, double direction, int rotate){
 		305 + np.sin(self.logic.motors.direction)*self.logic.motors.speed,
 		314 - np.cos(self.logic.motors.direction)*self.logic.motors.speed), 1)
 	*/
-	cv::Point2i e(sin(direction* PI / 180.0)* velocity, cos(direction* PI / 180.0)*velocity);
+	cv::Point2i e(sin(direction* PI / 180.0)* velocity + rotate, cos(direction* PI / 180.0)*velocity + rotate);
 	cv::line(infoWindow, c, c + e, cv::Scalar(255, 255, 255), 1, 8, 0);
 	cv::imshow("wheels", infoWindow);
 
@@ -89,11 +89,11 @@ void WheelController::DriveRotate(int velocity, double direction, int rotate){
 	w_right->Run((velocity*cos((30 - direction)  * PI / 180.0)) + rotate);
 	w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)) + rotate);
 
-	
+	return cv::Point3f(e.x, e.y, 0);
 	
 }
 
-bool WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance){
+cv::Point3f WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance){
 	int speed;
 	int rotate;
 	//rotate calculation
@@ -106,23 +106,20 @@ bool WheelController::DriveToBall(double distance, double horizontalDev, double 
 	//if ball is close and center
 	if (distance < desiredDistance && (horizontalDev > -10 && horizontalDev < 10)){
 		//TODO: start catching the ball with tribbler
-		Stop();
-		return true;
+		return Stop();
 	}
 	//if ball is close but not center
 	else if (distance < desiredDistance){
 		//TODO: start tribbler
 		if (horizontalDev < -10){
-			Rotate(0, rotate);
+			return Rotate(0, rotate);
 		}
 		else if (horizontalDev > 10){
-			Rotate(1, rotate);
+			return Rotate(1, rotate);
 		}
 		else{
-			Stop();
+			return Stop();
 		}
-		return false;
-		
 	}
 	//if ball is not close 
 	else{
@@ -135,23 +132,24 @@ bool WheelController::DriveToBall(double distance, double horizontalDev, double 
 		}
 		//driving commands
 		if (horizontalDev > -20 && horizontalDev < 20){
-			Drive(speed, horizontalAngle);
+			return Drive(speed, horizontalAngle);
 		}
 		else if (horizontalDev >= 20){
-			DriveRotate(speed, horizontalAngle, rotate);
+			return DriveRotate(speed, horizontalAngle, rotate);
 		}
 		else{
-			DriveRotate(speed, horizontalAngle, -(rotate));
+			return DriveRotate(speed, horizontalAngle, -(rotate));
 		}
-		return false;
+		
 	}
 
 }
 
-void WheelController::Stop(){
+cv::Point3f WheelController::Stop(){
 	w_left->Stop();
 	w_right->Stop();
 	w_back->Stop();
+	return cv::Point3f(0, 0, 0);
 }
 
 bool WheelController::CheckStall(){

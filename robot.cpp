@@ -17,6 +17,10 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/timer/timer.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
+#include <boost/filesystem.hpp>
+
 
 
 #define STATE_BUTTON(name, new_state) \
@@ -116,6 +120,7 @@ bool Robot::Launch(int argc, char* argv[])
 	else
 		finder = new ObjectFinder();
 
+	captureFrames = config.count("capture-frames") > 0;
 	bool portsOk = false;
 	if (config.count("skip-ports")) {
 		std::cout << "Skiping COM port check" << std::endl;
@@ -164,6 +169,19 @@ void Robot::Run()
 	boost::posix_time::ptime rotateTime = time;
 	boost::posix_time::time_duration rotateDuration;
 	cv::Mat frameBGR, frameHSV;
+
+	std::string captureDir = "videos/" + boost::posix_time::to_simple_string(time) + "/";
+	std::replace(captureDir.begin(), captureDir.end(), ':', '.');
+	if (captureFrames) {
+		boost::filesystem::create_directories(captureDir);
+	}
+	cv::Point3f movements; // movements
+	cv::Point3f pos(0, 0, 0); // robot position
+	
+	cv::Mat track, track_rotated;
+	cv::Point2i tc(300, 300);
+	cv::Mat track_empty(tc.x * 2, tc.y * 2, CV_8UC1, cv::Scalar::all(0));
+	track_empty.copyTo(track);
 	while (true)
     {
 		
@@ -176,7 +194,33 @@ void Robot::Run()
 			lastStepTime = time;
 			frames = 0;
 		}
+		/*
+		if (pos.x < -tc.x) { pos.x += tc.x; track_empty.copyTo(track); };
+		if (pos.y < -tc.y) { pos.y += tc.y; track_empty.copyTo(track); };
+		if (pos.x > tc.x) { pos.x -= tc.x; track_empty.copyTo(track); };
+		if (pos.y > tc.y) { pos.y -= tc.y; track_empty.copyTo(track); };
+		*/
+		/*
+		cv::Vec2d magnitudes, angles;
+		cv::Point3f new_pos = movements * ((float)dt / 10000.0);
+		cv::cartToPolar(cv::Vec2d(pos.x, new_pos.x), cv::Vec2d(pos.y, new_pos.y), magnitudes, angles);
+		cv::Mat rot_mat = cv::getRotationMatrix2D(cv::Point(0, 0), angles[0], 1.0);
+		cv::Mat new_pos2 = rot_mat * cv::Mat(2, 1, CV_32F, cv::Scalar(new_pos.x, new_pos.y));
+		std::cout << new_pos2 << std::endl;
+
+		/*
+		warpAffine(cv::new_pos, new_pos, rot_mat, new_pos.size());
+		cv::line(track, tc, cv::Point(new_pos.x, new_pos.y) + tc, cv::Scalar(255, 255, 255));
+		* /
+		cv::imshow("track", track);
+		pos = new_pos;
+		*/
 		frameBGR = camera->Capture();
+		if (captureFrames) {
+			std::string frameName = captureDir + boost::posix_time::to_simple_string(time) + ".jpg";
+			std::replace(frameName.begin(), frameName.end(), ':', '.');
+			cv::imwrite(frameName , frameBGR);
+		}
 		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
         if (STATE_NONE == state) {
@@ -239,8 +283,8 @@ void Robot::Run()
 		}
 		else if(STATE_CRASH == state){
 			//Backwards
-			wheels->Drive(20, 180);
-            		std::chrono::milliseconds dura(1000);
+			movements = wheels->Drive(50, 180);
+		        std::chrono::milliseconds dura(1000);
 			std::this_thread::sleep_for(dura);
 			wheels->Stop();
 			//Turn a littlebit
@@ -255,10 +299,19 @@ void Robot::Run()
 		else if(STATE_LOCATE_BALL == state) {
 			START_DIALOG
 				STATE_BUTTON("Go to Locate Gate", STATE_LOCATE_GATE)
-				createButton(std::string("Border detection: ") + (DetectBorders ? "on" : "off"), [this]{
-					this->DetectBorders = !this->DetectBorders;
+				createButton(std::string("Save video: ") + (captureFrames ? "on" : "off"), [this, &captureDir, &time]{
+					this->captureFrames = !this->captureFrames;
+					if (this->captureFrames) {
+						captureDir = "videos/" + boost::posix_time::to_simple_string(time) + "/";
+						std::replace(captureDir.begin(), captureDir.end(), ':', '.');
+						boost::filesystem::create_directories(captureDir);
+					}
 					this->last_state = STATE_NONE; // force dialog redraw
 				}); 
+				createButton(std::string("Border detection: ") + (detectBorders ? "on" : "off"), [this]{
+					this->detectBorders = !this->detectBorders;
+					this->last_state = STATE_NONE; // force dialog redraw
+				});
 				createButton(std::string("Mouse control: ") + (dynamic_cast<MouseFinder*>(finder) == NULL ? "off" : "on"), [this]{
 					bool isMouse = dynamic_cast<MouseFinder*>(finder) != NULL;
 					delete this->finder;
@@ -268,7 +321,7 @@ void Robot::Run()
 				STATE_BUTTON("(B)ack", STATE_NONE)
 				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
 			END_DIALOG
-			if (DetectBorders) {
+			if (detectBorders) {
 				finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
 			}
 			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false);
@@ -288,11 +341,11 @@ void Robot::Run()
             }
 			else { /*Ball found*/
 				rotateTime = time; //reset timer
-				bool ballInTribbler = wheels->DriveToBall(location.x, //distance
+				movements = wheels->DriveToBall(location.x, //distance
 														location.y,	//horizontal dev
 														location.z, //angle
-														210);//desired distance
-				if (ballInTribbler){
+														210); //desired distance
+				if (sqrt(pow(movements.x, 2) + pow(movements.y, 2)) < 0.1){
 					SetState(STATE_LOCATE_GATE);
 				}
 			}
@@ -313,11 +366,11 @@ void Robot::Run()
 				}
 				else{
 					//TODO: kick ball
-					bool ballInGate = wheels->DriveToBall(location.x, //distance
+					movements = wheels->DriveToBall(location.x, //distance
 						location.y,	//horizontal dev
 						location.z, //angle
 						210);//desired distance
-					if (ballInGate){
+					if (sqrt(pow(movements.x, 2) + pow(movements.y, 2)) < 0.1){
 						SetState(STATE_LOCATE_BALL);
 					}
 				}
@@ -333,7 +386,7 @@ void Robot::Run()
 		*/
 		else if (STATE_MANUAL_CONTROL == state) {
 			START_DIALOG
-				createButton("Move Left", [this]{this->wheels->Drive(20, 90); });
+				createButton("Move Left", [this, &movements] {movements = this->wheels->Drive(20, 90); });
 				createButton("Move Right", [this]{this->wheels->Drive(20, 270); });
 				createButton("Move Forward", [this]{this->wheels->Drive(20, 0); });
 				createButton("Move Back", [this]{this->wheels->Drive(-20, 0); });
@@ -346,7 +399,7 @@ void Robot::Run()
 		else if (STATE_DANCE == state) {
 			float move1, move2;
 			dance_step(((float)(time - epoch).total_milliseconds()), move1, move2);
-			wheels->Drive(move1, move2);
+			movements = wheels->Drive(move1, move2);
 			cv::putText(frameBGR, "move1:" + std::to_string(move1), cv::Point(frameHSV.cols - 140, 120), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 			cv::putText(frameBGR, "move2:" + std::to_string(move2), cv::Point(frameHSV.cols - 140, 140), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		}
@@ -364,7 +417,6 @@ void Robot::Run()
 		cv::putText(frameBGR, "fps:" + std::to_string(fps), cv::Point(frameHSV.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		assert(STATE_END_OF_GAME != state);
 		cv::putText(frameBGR, "state:" + STATE_LABELS[state], cv::Point(frameHSV.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
-
 		show(frameBGR);
 		if (cv::waitKey(1) == 27) {
 			std::cout << "exiting program" << std::endl;
@@ -409,8 +461,9 @@ bool Robot::ParseOptions(int argc, char* argv[])
 	desc.add_options()
 		("help", "produce help message")
 		("camera", po::value<std::string>(), "set camera index or path")
-		("locate_cursor", po::value<std::string>(), "find cursor instead of ball")
-		("skip-ports", po::value<std::string>(), "skip COM port checks");
+		("locate_cursor", "find cursor instead of ball")
+		("skip-ports", "skip COM port checks")
+		("save-frames", "Save captured frames to disc");
 
 	po::store(po::parse_command_line(argc, argv, desc), config);
 	po::notify(config);

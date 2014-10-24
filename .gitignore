@@ -46,3 +46,4 @@ CMakeCache.txt
 *.cmake
 Makefile
 robotiina
+videos/*
