@@ -2,37 +2,21 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
-WheelController::WheelController(boost::asio::io_service &io)
+WheelController::WheelController(boost::asio::io_service &io, bool useDummyPorts)
 {
     using boost::property_tree::ptree;
     ptree pt;
-
-    try {
-    read_ini("conf/ports.ini", pt);
-    }
-    catch (...) {};
-
-	try {
-		w_left = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200);
-	}
-	catch (...) {
-		std::cout << "error opening left wheel " << std::endl;
+	if (useDummyPorts) {
 		w_left = new DummyWheel();
-//		throw;
-	}
-	try {
-		w_right = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200);
-	}
-	catch (...) {
-		std::cout << "error opening right wheel " << std::endl;
 		w_right = new DummyWheel();
-	}
-	try {
-		w_back = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_BACK)), 115200);
-	}
-	catch (...) {
-		std::cout << "error opening back wheel " << std::endl;
 		w_back = new DummyWheel();
+
+	}
+	else {
+		read_ini("conf/ports.ini", pt);
+		w_left = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200);
+		w_right = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200);
+		w_back = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_BACK)), 115200);
 	}
 };
 
@@ -43,16 +27,16 @@ void WheelController::Forward(int speed){
 	w_back->Run(0);
 
 }
-cv::Point3f WheelController::Rotate(bool direction, int speed){
+cv::Point2f WheelController::Rotate(bool direction, int speed){
 
 	return DriveRotate(0,0, direction ? speed : -speed);
 }
-cv::Point3f WheelController::Drive(int velocity, double direction){
+cv::Point2f WheelController::Drive(int velocity, double direction){
 	return DriveRotate(velocity, direction, 0);
 
 }
 
-cv::Point3f WheelController::DriveRotate(int velocity, double direction, int rotate){
+cv::Point2f WheelController::DriveRotate(int velocity, double direction, int rotate){
 	if (abs(velocity) > 190){
 		if (velocity > 0){
 			velocity = 190;
@@ -89,11 +73,11 @@ cv::Point3f WheelController::DriveRotate(int velocity, double direction, int rot
 	w_right->Run((velocity*cos((30 - direction)  * PI / 180.0)) + rotate);
 	w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)) + rotate);
 
-	return cv::Point3f(e.x, e.y, 0);
+	return e;
 	
 }
 
-cv::Point3f WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance){
+cv::Point2f WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance){
 	int speed;
 	int rotate;
 	//rotate calculation
@@ -145,11 +129,11 @@ cv::Point3f WheelController::DriveToBall(double distance, double horizontalDev, 
 
 }
 
-cv::Point3f WheelController::Stop(){
+cv::Point2f WheelController::Stop(){
 	w_left->Stop();
 	w_right->Stop();
 	w_back->Stop();
-	return cv::Point3f(0, 0, 0);
+	return cv::Point2f(0, 0);
 }
 
 bool WheelController::CheckStall(){

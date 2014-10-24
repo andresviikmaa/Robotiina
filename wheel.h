@@ -9,7 +9,7 @@
 class DummyWheel
 {
 public:
-	DummyWheel(){};
+	DummyWheel(){ stall = false; };
 	virtual ~DummyWheel(){};
 	virtual void Run(int given_speed){};
 	virtual void Stop(){};

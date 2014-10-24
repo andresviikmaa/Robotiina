@@ -106,6 +106,42 @@ void Robot::CalibrateObject(const cv::Mat &image, bool autoCalibrate/* = false*/
 
 bool Robot::Launch(int argc, char* argv[])
 {
+	/* Experiment by Andres
+	cv::Point2f speed; // speed
+	//cv::Point2f pos(0, 0); // robot position
+	cv::Point2f tc(300, 300);
+
+	cv::Mat track, track2, track3, track_rotated;
+	cv::Mat track_empty(tc.x * 2, tc.y * 2, CV_8UC3, cv::Scalar::all(0));
+	track_empty.copyTo(track);
+	track_empty.copyTo(track2);
+
+
+
+	cv::Point2f pos(90, 0);
+	cv::Point2f new_pos(60, 0);
+
+	//cv::line(track, tc, pos + tc, cv::Scalar(0, 0, 255));
+	float angle = atan(pos.x / pos.y) * (180 / PI);
+	//cv::line(track, tc, new_pos + tc, cv::Scalar(255, 0, 0));
+
+	cv::Mat rot_mat = cv::getRotationMatrix2D(cv::Point2f(0, 0), angle, 1.0);
+
+	double data[3] = { new_pos.x, new_pos.y, 0 };
+	cv::Mat pos_mat = cv::Mat(3, 1, CV_64FC1, data);
+	cv::Mat new_pos2 = rot_mat * pos_mat;
+
+	new_pos = cv::Point2f(new_pos2.at<double>(cv::Point(0, 0)), new_pos2.at<double>(cv::Point(0, 1)));
+
+	cv::line(track, tc + pos, tc + pos + new_pos, cv::Scalar(0, 255, 0));
+	cv::imshow("track", track);
+
+
+	cv::imshow("track2", track3);
+
+	cv::waitKey();
+	return false;
+	*/
 	if (!ParseOptions(argc, argv)) return false;
 
 	std::cout << "Initializing camera... " << std::endl;
@@ -140,7 +176,7 @@ bool Robot::Launch(int argc, char* argv[])
 	if (portsOk) {
 		std::cout << "Initializing Wheels... " << std::endl;
 		try {
-			wheels = new WheelController(io);
+			wheels = new WheelController(io, config.count("skip-ports") > 0);
 		}
 		catch (...) {
                 throw;
@@ -175,11 +211,12 @@ void Robot::Run()
 	if (captureFrames) {
 		boost::filesystem::create_directories(captureDir);
 	}
-	cv::Point3f movements; // movements
-	cv::Point3f pos(0, 0, 0); // robot position
-	
+	cv::Point2f speed; // speed
+	cv::Point2f pos(0, 0); // robot position
+	double heading =0.0;
+
 	cv::Mat track, track_rotated;
-	cv::Point2i tc(300, 300);
+	cv::Point2f tc(300, 300);
 	cv::Mat track_empty(tc.x * 2, tc.y * 2, CV_8UC1, cv::Scalar::all(0));
 	track_empty.copyTo(track);
 	while (true)
@@ -200,21 +237,26 @@ void Robot::Run()
 		if (pos.x > tc.x) { pos.x -= tc.x; track_empty.copyTo(track); };
 		if (pos.y > tc.y) { pos.y -= tc.y; track_empty.copyTo(track); };
 		*/
-		/*
-		cv::Vec2d magnitudes, angles;
-		cv::Point3f new_pos = movements * ((float)dt / 10000.0);
-		cv::cartToPolar(cv::Vec2d(pos.x, new_pos.x), cv::Vec2d(pos.y, new_pos.y), magnitudes, angles);
-		cv::Mat rot_mat = cv::getRotationMatrix2D(cv::Point(0, 0), angles[0], 1.0);
-		cv::Mat new_pos2 = rot_mat * cv::Mat(2, 1, CV_32F, cv::Scalar(new_pos.x, new_pos.y));
-		std::cout << new_pos2 << std::endl;
+		
+		//cv::line(track, tc, new_pos + tc, cv::Scalar(255, 0, 0));
 
-		/*
-		warpAffine(cv::new_pos, new_pos, rot_mat, new_pos.size());
-		cv::line(track, tc, cv::Point(new_pos.x, new_pos.y) + tc, cv::Scalar(255, 255, 255));
-		* /
+		cv::Mat rot_mat = cv::getRotationMatrix2D(cv::Point2f(0, 0), heading, 1.0);
+		heading = (int)speed.y == 0 ? (int)speed.x == 0 ? 0 : 90 : atan(speed.x / speed.y) * (180 / PI);
+		if (heading > 360) heading -= 360;
+		if (heading < -360) heading += 360;
+		cv::Point2f new_pos = speed * ((float)dt / 3000.0);
+
+
+		double data[3] = { new_pos.x, new_pos.y, 0 };
+		cv::Mat pos_mat = cv::Mat(3, 1, CV_64FC1, data);
+		cv::Mat new_pos2 = rot_mat * pos_mat;
+
+		new_pos = cv::Point2f(new_pos2.at<double>(cv::Point(0, 0)), new_pos2.at<double>(cv::Point(0, 1)));
+
+		cv::line(track, tc + pos, tc + pos + new_pos, cv::Scalar(255, 255, 255));
 		cv::imshow("track", track);
 		pos = new_pos;
-		*/
+		
 		frameBGR = camera->Capture();
 		if (captureFrames) {
 			std::string frameName = captureDir + boost::posix_time::to_simple_string(time) + ".jpg";
@@ -283,7 +325,7 @@ void Robot::Run()
 		}
 		else if(STATE_CRASH == state){
 			//Backwards
-			movements = wheels->Drive(50, 180);
+			speed = wheels->Drive(50, 180);
 		        std::chrono::milliseconds dura(1000);
 			std::this_thread::sleep_for(dura);
 			wheels->Stop();
@@ -341,11 +383,11 @@ void Robot::Run()
             }
 			else { /*Ball found*/
 				rotateTime = time; //reset timer
-				movements = wheels->DriveToBall(location.x, //distance
+				speed = wheels->DriveToBall(location.x, //distance
 														location.y,	//horizontal dev
 														location.z, //angle
 														210); //desired distance
-				if (sqrt(pow(movements.x, 2) + pow(movements.y, 2)) < 0.1){
+				if (sqrt(pow(speed.x, 2) + pow(speed.y, 2)) < 0.1){
 					SetState(STATE_LOCATE_GATE);
 				}
 			}
@@ -366,11 +408,11 @@ void Robot::Run()
 				}
 				else{
 					//TODO: kick ball
-					movements = wheels->DriveToBall(location.x, //distance
+					speed = wheels->DriveToBall(location.x, //distance
 						location.y,	//horizontal dev
 						location.z, //angle
 						210);//desired distance
-					if (sqrt(pow(movements.x, 2) + pow(movements.y, 2)) < 0.1){
+					if (sqrt(pow(speed.x, 2) + pow(speed.y, 2)) < 0.1){
 						SetState(STATE_LOCATE_BALL);
 					}
 				}
@@ -386,7 +428,7 @@ void Robot::Run()
 		*/
 		else if (STATE_MANUAL_CONTROL == state) {
 			START_DIALOG
-				createButton("Move Left", [this, &movements] {movements = this->wheels->Drive(20, 90); });
+				createButton("Move Left", [this, &speed] {speed = this->wheels->Drive(20, 90); });
 				createButton("Move Right", [this]{this->wheels->Drive(20, 270); });
 				createButton("Move Forward", [this]{this->wheels->Drive(20, 0); });
 				createButton("Move Back", [this]{this->wheels->Drive(-20, 0); });
@@ -399,7 +441,7 @@ void Robot::Run()
 		else if (STATE_DANCE == state) {
 			float move1, move2;
 			dance_step(((float)(time - epoch).total_milliseconds()), move1, move2);
-			movements = wheels->Drive(move1, move2);
+			speed = wheels->Drive(move1, move2);
 			cv::putText(frameBGR, "move1:" + std::to_string(move1), cv::Point(frameHSV.cols - 140, 120), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 			cv::putText(frameBGR, "move2:" + std::to_string(move2), cv::Point(frameHSV.cols - 140, 140), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		}

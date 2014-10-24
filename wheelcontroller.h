@@ -13,14 +13,14 @@ private:
 
 public:
 	
-	WheelController(boost::asio::io_service &io);
+	WheelController(boost::asio::io_service &io, bool useDummyPorts = false);
 	void Forward(int speed);
     void MoveTo(const CvPoint &);
-	cv::Point3f Rotate(bool direction, int speed);
-	cv::Point3f Drive(int velocity, double direction);
-	cv::Point3f DriveRotate(int velocity, double direction, int rotate);
-	cv::Point3f DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance);
-	cv::Point3f Stop();
+	cv::Point2f Rotate(bool direction, int speed);
+	cv::Point2f Drive(int velocity, double direction);
+	cv::Point2f DriveRotate(int velocity, double direction, int rotate);
+	cv::Point2f DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance);
+	cv::Point2f Stop();
 
 	bool CheckStall();
     ~WheelController(){
