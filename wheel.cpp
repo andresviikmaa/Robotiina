@@ -58,7 +58,7 @@ void Wheel::StallCheck(){
 	
 	while (!stop_thread){
 		time = boost::posix_time::microsec_clock::local_time();
-		std::string line= Speed();
+		std::string line = Speed();
 		//std::cout<< "line: " << line << std::endl ;
  		actual_speed = atoi(line.substr(3).c_str());
 		int diff = abs(actual_speed - speed);

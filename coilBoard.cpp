@@ -5,16 +5,29 @@ void CoilBoard::Kick(){
 	return;
 }
 
-void CoilBoard::StartTribbler(){
+void CoilBoard::ToggleTribbler(){
+	writeString("m\n");
 	return;
 }
 
-void CoilBoard::StopTribbler(){
-	return;
-}
 
 bool CoilBoard::BallInTribbler(){
-	return false;
+	try{
+		writeString("b\n");
+		std::string line = readLine();
+		if (line == "true"){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cout << "Error: " << e.what() << std::endl;
+		return 0;
+	}
+
 }
 
 void CoilBoard::Ping(){

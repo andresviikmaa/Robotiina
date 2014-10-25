@@ -31,8 +31,7 @@ public:
 		writeString("d\n");//discharge
 	}
 	void Kick();
-	void StartTribbler();
-	void StopTribbler();
+	void ToggleTribbler();
 	bool BallInTribbler();
 
 };
