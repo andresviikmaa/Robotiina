@@ -22,8 +22,8 @@ class Wheel : public DummyWheel, SimpleSerial
 {
 private:
 	boost::atomic<int> speed;
-        boost::atomic<bool> update_speed;
-        int actual_speed;
+	boost::atomic<bool> update_speed;
+	int actual_speed;
 	int id = 0;
 	void StallCheck();
 	boost::atomic<bool> stop_thread;
@@ -45,5 +45,4 @@ public:
 	void Run(int given_speed);
 	void Stop();
 	std::string Speed();
-	
 };
