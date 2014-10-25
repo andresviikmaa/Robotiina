@@ -4,6 +4,7 @@
 #include "camera.h"
 #include "stillcamera.h"
 #include "wheelcontroller.h"
+#include "coilBoard.h"
 #include "objectfinder.h"
 #include "MouseFinder.h"
 #include "dialog.h"
@@ -70,7 +71,7 @@ void dance_step(float time, float &move1, float &move2) {
 
 /* END DANCE MOVES */
 
-Robot::Robot(boost::asio::io_service &io) : Dialog("Robotiina"), io(io), camera(0), wheels(0), finder(0)
+Robot::Robot(boost::asio::io_service &io) : Dialog("Robotiina"), io(io), camera(0), wheels(0), finder(0), coilBoard(0)
 {
 	
 	last_state = STATE_END_OF_GAME;
@@ -177,6 +178,7 @@ bool Robot::Launch(int argc, char* argv[])
 		std::cout << "Initializing Wheels... " << std::endl;
 		try {
 			wheels = new WheelController(io, config.count("skip-ports") > 0);
+			coilBoard = new CoilBoard(io);
 		}
 		catch (...) {
                 throw;
@@ -396,7 +398,10 @@ void Robot::Run()
 		else if (STATE_LOCATE_GATE == state)
 		{
 			//finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
-			bool ballInTribbler = true; // fix me
+			/*
+			bool ballInTribbler = coilBoard->BallInTribbler();
+			*/
+			bool ballInTribbler = true;
 			if (!ballInTribbler) {
 				SetState(STATE_LOCATE_BALL);
 			}
@@ -404,14 +409,18 @@ void Robot::Run()
 				cv::Point3d location = finder->Locate(objectThresholds[targetGate], frameHSV, frameBGR, true);
 				//If not found
 				if (location.x == -1 && location.y == -1 && location.z == -1){
-					wheels->Rotate(1, 10);
+					wheels->Rotate(1, 15);
 				}
 				else{
 					//TODO: kick ball
+					/*
+					coilBoard->Kick();
+					*/
 					speed = wheels->DriveToBall(location.x, //distance
 						location.y,	//horizontal dev
 						location.z, //angle
-						210);//desired distance
+						500,//desired distance
+						coilBoard);
 					if (sqrt(pow(speed.x, 2) + pow(speed.y, 2)) < 0.1){
 						SetState(STATE_LOCATE_BALL);
 					}

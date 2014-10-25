@@ -15,6 +15,7 @@ private:
     ICamera *camera;
     WheelController * wheels;
 	ObjectFinder *finder;
+	CoilBoard *coilBoard;
 
 	int speed;
     std::map<OBJECT, HSVColorRange> objectThresholds;

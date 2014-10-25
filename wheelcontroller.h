@@ -2,6 +2,7 @@
 
 #include "wheel.h"
 #include "types.h"
+#include "coilBoard.h"
 
 class WheelController {
 private:
@@ -19,7 +20,7 @@ public:
 	cv::Point2f Rotate(bool direction, int speed);
 	cv::Point2f Drive(int velocity, double direction);
 	cv::Point2f DriveRotate(int velocity, double direction, int rotate);
-	cv::Point2f DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance);
+	cv::Point2f DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance, CoilBoard *coilBoard);
 	cv::Point2f Stop();
 
 	bool CheckStall();

@@ -17,7 +17,7 @@ private:
 	boost::posix_time::ptime waitTime = time;
 	boost::posix_time::time_duration waitDuration;
 public:
-	CoilBoard(boost::asio::io_service &io_service, std::string port, unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
+	CoilBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
 		using boost::property_tree::ptree;
 		ptree pt;
 		read_ini("conf/ports.ini", pt);

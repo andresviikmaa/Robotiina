@@ -2,6 +2,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
+
 WheelController::WheelController(boost::asio::io_service &io, bool useDummyPorts)
 {
     using boost::property_tree::ptree;
@@ -28,12 +29,10 @@ void WheelController::Forward(int speed){
 
 }
 cv::Point2f WheelController::Rotate(bool direction, int speed){
-
 	return DriveRotate(0,0, direction ? speed : -speed);
 }
 cv::Point2f WheelController::Drive(int velocity, double direction){
 	return DriveRotate(velocity, direction, 0);
-
 }
 
 cv::Point2f WheelController::DriveRotate(int velocity, double direction, int rotate){
@@ -77,7 +76,7 @@ cv::Point2f WheelController::DriveRotate(int velocity, double direction, int rot
 	
 }
 
-cv::Point2f WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance){
+cv::Point2f WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance, CoilBoard *coilBoard){
 	int speed;
 	int rotate;
 	//rotate calculation
@@ -89,7 +88,13 @@ cv::Point2f WheelController::DriveToBall(double distance, double horizontalDev, 
 	}
 	//if ball is close and center
 	if (distance < desiredDistance && (horizontalDev > -10 && horizontalDev < 10)){
-		//TODO: start catching the ball with tribbler
+		/* if (coilBoard->BallInTribbler()){
+			return Stop();
+		}
+		else{
+			Drive(15, horizontalAngle);
+		}
+		*/
 		return Stop();
 	}
 	//if ball is close but not center
