@@ -36,6 +36,7 @@ void CoilBoard::Ping(){
 		boost::posix_time::time_duration::tick_type waitDuration = (time - waitTime).total_milliseconds();
 		if (waitDuration > 300){
 			writeString("p\n");
+			waitTime = time;
 		}
 	}
 }

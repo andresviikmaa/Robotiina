@@ -87,6 +87,7 @@
     <ClInclude Include="blockingreader.h" />
     <ClInclude Include="calibrationconfreader.h" />
     <ClInclude Include="camera.h" />
+    <ClInclude Include="coilBoard.h" />
     <ClInclude Include="colorcalibrator.h" />
     <ClInclude Include="ComPortScanner.h" />
     <ClInclude Include="dialog.h" />
@@ -104,6 +105,7 @@
     <ClCompile Include="autocalibrator.cpp" />
     <ClCompile Include="calibrationconfreader.cpp" />
     <ClCompile Include="camera.cpp" />
+    <ClCompile Include="coilBoard.cpp" />
     <ClCompile Include="colorcalibrator.cpp" />
     <ClCompile Include="ComPortScanner.cpp" />
     <ClCompile Include="dialog.cpp" />

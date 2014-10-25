@@ -388,7 +388,8 @@ void Robot::Run()
 				speed = wheels->DriveToBall(location.x, //distance
 														location.y,	//horizontal dev
 														location.z, //angle
-														210); //desired distance
+														210,
+														coilBoard); //desired distance
 				if (sqrt(pow(speed.x, 2) + pow(speed.y, 2)) < 0.1){
 					SetState(STATE_LOCATE_GATE);
 				}
