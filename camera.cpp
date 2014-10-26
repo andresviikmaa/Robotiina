@@ -1,4 +1,5 @@
-#include "camera.h"#include <opencv2/opencv.hpp>
+#include "camera.h"
+#include <opencv2/opencv.hpp>
 
 Camera::Camera(const std::string &device)
 {

@@ -27,7 +27,7 @@ public:
 	};
 	virtual ~CoilBoard(){
 		stop_thread = true;
-		threads.join_all;
+		threads.join_all();
 		writeString("d\n");//discharge
 	}
 	void Kick();
