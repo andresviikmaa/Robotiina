@@ -18,16 +18,12 @@ private:
 	boost::posix_time::time_duration waitDuration;
 public:
 	CoilBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
-		using boost::property_tree::ptree;
-		ptree pt;
-		read_ini("conf/ports.ini", pt);
-		port = pt.get<std::string>(std::to_string(ID_COILGUN));
 		stop_thread = false;
 		threads.create_thread(boost::bind(&CoilBoard::Ping, this));
 	};
 	virtual ~CoilBoard(){
 		stop_thread = true;
-		threads.join_all;
+		threads.join_all();
 		writeString("d\n");//discharge
 	}
 	void Kick();

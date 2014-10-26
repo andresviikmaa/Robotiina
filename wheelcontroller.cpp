@@ -15,9 +15,14 @@ WheelController::WheelController(boost::asio::io_service &io, bool useDummyPorts
 	}
 	else {
 		read_ini("conf/ports.ini", pt);
+std::cout << "left wheel" << std::endl;
 		w_left = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200);
+std::cout << "right wheel" << std::endl;
 		w_right = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200);
+std::cout << "back wheel" << std::endl;
 		w_back = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_BACK)), 115200);
+std::cout << "wheels done" << std::endl;
+
 	}
 };
 
@@ -28,14 +33,14 @@ void WheelController::Forward(int speed){
 	w_back->Run(0);
 
 }
-cv::Point2f WheelController::Rotate(bool direction, int speed){
+cv::Point3f WheelController::Rotate(bool direction, int speed){
 	return DriveRotate(0,0, direction ? speed : -speed);
 }
-cv::Point2f WheelController::Drive(int velocity, double direction){
+cv::Point3f WheelController::Drive(int velocity, double direction){
 	return DriveRotate(velocity, direction, 0);
 }
 
-cv::Point2f WheelController::DriveRotate(int velocity, double direction, int rotate){
+cv::Point3f WheelController::DriveRotate(int velocity, double direction, int rotate){
 	if (abs(velocity) > 190){
 		if (velocity > 0){
 			velocity = 190;
@@ -59,24 +64,23 @@ cv::Point2f WheelController::DriveRotate(int velocity, double direction, int rot
 	cv::namedWindow("wheels");
 	cv::Point2i c(200, 200);
 	cv::Mat infoWindow(c.x * 2, c.y * 2, CV_8UC3, cv::Scalar::all(0));
-	/*
-	pygame.draw.line(self.screen, self.WHITE, (305, 314), (
-		305 + np.sin(self.logic.motors.direction)*self.logic.motors.speed,
-		314 - np.cos(self.logic.motors.direction)*self.logic.motors.speed), 1)
-	*/
-	cv::Point2i e(sin(direction* PI / 180.0)* velocity + rotate, cos(direction* PI / 180.0)*velocity + rotate);
-	cv::line(infoWindow, c, c + e, cv::Scalar(255, 255, 255), 1, 8, 0);
+	
+	lastSpeed.x = sin(direction* PI / 180.0)* velocity + rotate;
+	lastSpeed.y = cos(direction* PI / 180.0)* velocity + rotate, 
+	lastSpeed.z = rotate;	
+	
+	cv::line(infoWindow, c, c + cv::Point2i(lastSpeed.x, lastSpeed.y), cv::Scalar(255, 255, 255), 1, 8, 0);
 	cv::imshow("wheels", infoWindow);
 
 	w_left->Run((velocity*cos((150 - direction) * PI / 180.0)) + rotate);
 	w_right->Run((velocity*cos((30 - direction)  * PI / 180.0)) + rotate);
 	w_back->Run((velocity*cos((270 - direction)  * PI / 180.0)) + rotate);
 
-	return e;
+	return lastSpeed;
 	
 }
 
-cv::Point2f WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance, CoilBoard *coilBoard){
+cv::Point3f WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance, CoilBoard *coilBoard){
 	int speed;
 	int rotate;
 	//rotate calculation
@@ -134,11 +138,11 @@ cv::Point2f WheelController::DriveToBall(double distance, double horizontalDev, 
 
 }
 
-cv::Point2f WheelController::Stop(){
+cv::Point3f WheelController::Stop(){
 	w_left->Stop();
 	w_right->Stop();
 	w_back->Stop();
-	return cv::Point2f(0, 0);
+	return cv::Point3f(0, 0, 0);
 }
 
 bool WheelController::CheckStall(){

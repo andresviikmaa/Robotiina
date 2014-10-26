@@ -1,4 +1,5 @@
-#include "camera.h"#include <opencv2/opencv.hpp>
+#include "camera.h"
+#include <opencv2/opencv.hpp>
 
 Camera::Camera(const std::string &device)
 {
@@ -8,6 +9,7 @@ Camera::Camera(const std::string &device)
     {
 		throw std::runtime_error("Camera not found");
     }
+	cap->set(CV_CAP_PROP_FPS, 60);
 	/*
 	cap->set(CV_CAP_PROP_EXPOSURE, -5);
 	cap->set(CV_CAP_PROP_BRIGHTNESS, 0);

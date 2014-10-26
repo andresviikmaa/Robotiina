@@ -178,7 +178,15 @@ bool Robot::Launch(int argc, char* argv[])
 		std::cout << "Initializing Wheels... " << std::endl;
 		try {
 			wheels = new WheelController(io, config.count("skip-ports") > 0);
-			coilBoard = new CoilBoard(io);
+			std::cout << "Initializing Coilgun... " << std::endl;
+			{
+				using boost::property_tree::ptree;
+				ptree pt;
+				read_ini("conf/ports.ini", pt);
+				std::string port = pt.get<std::string>(std::to_string(ID_COILGUN));
+
+				coilBoard = new CoilBoard(io, port);
+			}
 		}
 		catch (...) {
                 throw;
@@ -213,9 +221,8 @@ void Robot::Run()
 	if (captureFrames) {
 		boost::filesystem::create_directories(captureDir);
 	}
-	cv::Point2f speed; // speed
-	cv::Point2f pos(0, 0); // robot position
-	double heading =0.0;
+	cv::Point3f speed; // speed, x, y and w
+	cv::Point3f pos(0, 0, 0); // robot position and heading in 2D
 
 	cv::Mat track, track_rotated;
 	cv::Point2f tc(300, 300);
@@ -241,23 +248,29 @@ void Robot::Run()
 		*/
 		
 		//cv::line(track, tc, new_pos + tc, cv::Scalar(255, 0, 0));
+		/*
+		telliskivi2:
+		orientation = Math::floatModulus(orientation + omega * dt, Math::TWO_PI);
+		x += (velocityX * Math::cos(orientation) - velocityY * Math::sin(orientation)) * dt;
+		y += (velocityX * Math::sin(orientation) + velocityY * Math::cos(orientation)) * dt;
+		*/
+		float _dt = dt / 1000; 
+		cv::Point3f old_pos(pos);
+		pos.z = fmod(pos.z + (speed.z * _dt), 360);
+		
+		pos.x += (speed.x * cos(pos.z / (2*PI)) - speed.y * sin(pos.z / (2*PI))) * dt;
+		pos.y += (speed.z * sin(pos.z / (2*PI)) + speed.y * cos(pos.z / (2*PI))) * dt;
 
+/*	same as above, but with matrix operation	
 		cv::Mat rot_mat = cv::getRotationMatrix2D(cv::Point2f(0, 0), heading, 1.0);
-		heading = (int)speed.y == 0 ? (int)speed.x == 0 ? 0 : 90 : atan(speed.x / speed.y) * (180 / PI);
-		if (heading > 360) heading -= 360;
-		if (heading < -360) heading += 360;
-		cv::Point2f new_pos = speed * ((float)dt / 3000.0);
-
-
 		double data[3] = { new_pos.x, new_pos.y, 0 };
 		cv::Mat pos_mat = cv::Mat(3, 1, CV_64FC1, data);
 		cv::Mat new_pos2 = rot_mat * pos_mat;
-
 		new_pos = cv::Point2f(new_pos2.at<double>(cv::Point(0, 0)), new_pos2.at<double>(cv::Point(0, 1)));
+*/
 
-		cv::line(track, tc + pos, tc + pos + new_pos, cv::Scalar(255, 255, 255));
+		//cv::line(track, tc + cv::Point2i(old_pos.x,old_pos.y), tc + cv::Point2i(pos.x,pos.y), cv::Scalar(255, 255, 255));
 		cv::imshow("track", track);
-		pos = new_pos;
 		
 		frameBGR = camera->Capture();
 		if (captureFrames) {
@@ -459,7 +472,7 @@ void Robot::Run()
 			break;
 		}
 
-		if (wheels->CheckStall() &&
+		if (false && wheels->CheckStall() &&
 			(state == STATE_LOCATE_BALL ||
 			state == STATE_LOCATE_GATE))
 		{

@@ -1,5 +1,6 @@
 #include "types.h"
 #include "objectfinder.h"
+#include "coilBoard.h"
 #include "dialog.h"
 #include <boost/atomic.hpp>
 #include <boost/program_options.hpp>
