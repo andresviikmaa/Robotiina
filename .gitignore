@@ -47,3 +47,7 @@ CMakeCache.txt
 Makefile
 robotiina
 videos/*
+
+# backup
+*.cpp~
+*.h~

@@ -15,9 +15,14 @@ WheelController::WheelController(boost::asio::io_service &io, bool useDummyPorts
 	}
 	else {
 		read_ini("conf/ports.ini", pt);
+std::cout << "left wheel" << std::endl;
 		w_left = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200);
+std::cout << "right wheel" << std::endl;
 		w_right = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200);
+std::cout << "back wheel" << std::endl;
 		w_back = new Wheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_BACK)), 115200);
+std::cout << "wheels done" << std::endl;
+
 	}
 };
 
