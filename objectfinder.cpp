@@ -19,15 +19,21 @@ ObjectFinder::ObjectFinder()
 		pt.put("Height", CamHeight);
 		pt.put("AngleDev", CamAngleDev);
 		pt.put("Vfov", Vfov);
-
-
-
 		write_ini("conf/camera.ini", pt);
 	};
 }
-cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate) {
+
+cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate,const HSVColorRange &inner, const HSVColorRange &outer) {
 	cv::Point2f point = LocateOnScreen(r, frameHSV, frameBGR, gate);
-	cv::Point3d info = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
+	bool valid = true;
+	cv::Point3d info = cv::Point3d(-1,-1,-1);
+	if (!gate){
+		valid = validateBall(inner, outer, point, frameHSV, frameBGR);
+	}
+	if (valid){
+		info = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
+	}
+	
 	WriteInfoOnScreen(info);
 	return info;
 }
@@ -86,6 +92,21 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameH
 	//Draw circle
 	cv::circle(frameBGR, center, 10, colorCircle, 3);
 	return center;
+}
+
+bool ObjectFinder::validateBall(const HSVColorRange &inner, const HSVColorRange &outer,cv::Point2f endPoint, cv::Mat &frameHSV, cv::Mat &frameBGR)
+{
+	cv::Point startPoint;
+	startPoint.x = frameHSV.cols / 2;
+	startPoint.y = frameHSV.rows;
+	cv::LineIterator iterator(frameHSV, startPoint, endPoint, 1);
+
+	for (int i = 0; i < iterator.count; i++, ++iterator)
+	{
+		(*iterator)[0] = 200;
+	}
+
+	return true;
 }
 
 void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickness, CvScalar color)
@@ -265,8 +286,6 @@ cv::Point3d ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, cons
 	if (point.y < 1 && point.x < 1 || (point.y != point.y) || (point.x != point.x)){ //If there is no object found
 		return cv::Point3d(-1, -1, -1);
 	}
-
-
 	const cv::Point2d center (frame_size.x / 2.0, frame_size.y / 2.0);
 	//Calculating distance
 	double angle = (Vfov * (point.y - center.y) / center.y) + CamAngleDev;

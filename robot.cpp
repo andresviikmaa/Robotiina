@@ -368,7 +368,7 @@ void Robot::Run()
 			if (detectBorders) {
 				finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
 			}
-			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false);
+			cv::Point3d location = finder->Locate(objectThresholds[BALL], frameHSV, frameBGR, false, objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER]);
 			time = boost::posix_time::microsec_clock::local_time();
 			if (location.x == -1 && location.y == -1 && location.z == -1) /* Ball not found */
             {
@@ -407,7 +407,7 @@ void Robot::Run()
 				SetState(STATE_LOCATE_BALL);
 			}
 			else {
-				cv::Point3d location = finder->Locate(objectThresholds[targetGate], frameHSV, frameBGR, true);
+				cv::Point3d location = finder->Locate(objectThresholds[targetGate], frameHSV, frameBGR, true, objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER]);
 				//If not found
 				if (location.x == -1 && location.y == -1 && location.z == -1){
 					wheels->Rotate(1, 15);

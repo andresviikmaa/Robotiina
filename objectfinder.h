@@ -7,6 +7,7 @@ class ObjectFinder {
 protected:
 	virtual cv::Point2f LocateOnScreen(const HSVColorRange &HSVRange, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate);
 	cv::Point3d ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size);
+	bool validateBall(const HSVColorRange &inner, const HSVColorRange &outer, cv::Point2f point, cv::Mat &frameHSV, cv::Mat &frameBGR);
 private:
 	void WriteInfoOnScreen(const cv::Point3d &info);
 	//Vars
@@ -14,10 +15,10 @@ private:
 	float Vfov = 21.65; //half of cameras vertical field of view (degrees)
 	float CamHeight = 345; //cameras height from ground (mm)
 	float CamAngleDev = 26; //deviation from 90* between ground
-
+	
 public:
-    ObjectFinder();
-	virtual cv::Point3d Locate(const HSVColorRange &HSVRange, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate);
+	ObjectFinder();
+	virtual cv::Point3d Locate(const HSVColorRange &HSVRange, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate, const HSVColorRange &inner, const HSVColorRange &outer);
 	virtual void IsolateField(const HSVColorRange &inner, const HSVColorRange &outer, const HSVColorRange &gate1, const HSVColorRange &gate2, cv::Mat &frameHSV, cv::Mat &frameBGR);
     virtual ~ObjectFinder(){ }
 
