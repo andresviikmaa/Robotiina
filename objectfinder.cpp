@@ -134,7 +134,6 @@ bool ObjectFinder::validateBall(const HSVColorRange &inner, const HSVColorRange 
 			}
 		}
 		else if (state == "outer"){
-			
 			cv::Vec3b pixel = frameHSV.ptr<cv::Vec3b>(iterator.pos().y)[iterator.pos().x];
 			//Outer border last pixel
 			Hinrange = (pixel[0] <= outer.hue.high && pixel[0] >= outer.hue.low);
@@ -157,14 +156,6 @@ bool ObjectFinder::validateBall(const HSVColorRange &inner, const HSVColorRange 
 
 		}
 	}//lineiterator end
-		
-
-	cv::circle(frameBGR, lastInner, 5, cv::Scalar(200, 0, 0), 3);
-	cv::circle(frameBGR, firstOuter, 5, cv::Scalar(0, 200, 0), 3);
-
-	cv::circle(frameBGR, firstInner, 5, cv::Scalar(0, 0, 200), 3);
-	cv::circle(frameBGR, lastOuter, 5, cv::Scalar(0, 200, 200), 3);
-	
 	if (!firstFound){
 		return true;
 	}

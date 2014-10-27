@@ -185,7 +185,7 @@ bool Robot::Launch(int argc, char* argv[])
 				read_ini("conf/ports.ini", pt);
 				std::string port = pt.get<std::string>(std::to_string(ID_COILGUN));
 
-				/*coilBoard = new CoilBoard(io, port);*/
+				coilBoard = new CoilBoard(io, port);
 			}
 		}
 		catch (...) {
@@ -402,7 +402,7 @@ void Robot::Run()
 														location.y,	//horizontal dev
 														location.z, //angle
 														210
-														/*,coilBoard*/); //desired distance
+														,coilBoard); //desired distance
 				if (sqrt(pow(speed.x, 2) + pow(speed.y, 2)) < 0.1){
 					SetState(STATE_LOCATE_GATE);
 				}
@@ -434,7 +434,7 @@ void Robot::Run()
 						location.y,	//horizontal dev
 						location.z, //angle
 						500//desired distance
-						/*,coilBoard*/);
+						,coilBoard);
 					if (sqrt(pow(speed.x, 2) + pow(speed.y, 2)) < 0.1){
 						SetState(STATE_LOCATE_BALL);
 					}

@@ -20,7 +20,7 @@ public:
 	cv::Point3f Rotate(bool direction, int speed);
 	cv::Point3f Drive(int velocity, double direction);
 	cv::Point3f DriveRotate(int velocity, double direction, int rotate);
-	cv::Point3f DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance/*, CoilBoard *coilBoard*/);
+	cv::Point3f DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance, CoilBoard *coilBoard);
 	cv::Point3f Stop();
 
 	bool CheckStall();
