@@ -24,21 +24,13 @@ ObjectFinder::ObjectFinder()
 }
 
 cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate,const HSVColorRange &inner, const HSVColorRange &outer) {
-	cv::Point2f point = LocateOnScreen(r, frameHSV, frameBGR, gate);
-	bool valid = true;
-	cv::Point3d info = cv::Point3d(-1,-1,-1);
-	if (!gate){
-		valid = validateBall(inner, outer, point, frameHSV, frameBGR);
-	}
-	if (valid){
-		info = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
-	}
-	
+	cv::Point2f point = LocateOnScreen(r, frameHSV, frameBGR, gate, inner, outer);
+	cv::Point3d info = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
 	WriteInfoOnScreen(info);
 	return info;
 }
 
-cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate) {
+cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate, const HSVColorRange &inner, const HSVColorRange &outer) {
 
 	cv::Point2f center;
 	cv::Mat imgThresholded;
@@ -56,7 +48,7 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameH
 
 	findContours(imgThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); // Find the contours in the image
 	
-	cv::Scalar color(255, 255, 255);
+	cv::Scalar color(0, 0, 0);
 	cv::Scalar color2(0, 0, 255);
 
 	for (int i = 0; i < contours.size(); i++) // iterate through each contour.
@@ -65,17 +57,20 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameH
 		if (a > largest_area){
 			largest_area = a;
 			largest_contour_index = i;                //Store the index of largest contour
-			bounding_rect = cv::boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
 		}
-		bounding_rect = cv::boundingRect(contours[i]);
-		cv::rectangle(frameBGR, bounding_rect, color2);
-		drawContours(frameBGR, contours, i, color, 1, 8, hierarchy); // Draw the largest contour using previously stored index.
+	}	
+	int thickness = 0;
+	if (largest_area < 1000){
+		thickness = 12;
 	}
-
+	else{
+		thickness = largest_area / 60;
+	}
+	//For ball validation, drawed contour should cover balls shadow.
+	drawContours(frameHSV, contours, largest_contour_index, color, thickness, 8, hierarchy);
+	drawContours(frameHSV, contours, largest_contour_index, color, -5, 8, hierarchy);
 
 	//find center
-	cv::Scalar colorCircle(133, 33, 55);
-
 	if (contours.size() > largest_contour_index){
 		cv::Moments M = cv::moments(contours[largest_contour_index]);
 		if (gate){
@@ -86,27 +81,100 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameH
 		else{
 			center = cv::Point2f(M.m10 / M.m00, M.m01 / M.m00);
 		}
-		
 	}
 
-	//Draw circle
-	cv::circle(frameBGR, center, 10, colorCircle, 3);
-	return center;
+	//validate ball
+	bool valid = true;
+	if (!gate){
+		valid = validateBall(inner, outer, center, frameHSV, frameBGR);
+	}
+	if (valid){
+		cv::circle(frameBGR, center, 5, cv::Scalar(0, 200, 220), -1);
+		return center;
+	}
+	else{//not valid
+		return cv::Point2f(-1, -1);
+	}
 }
 
 bool ObjectFinder::validateBall(const HSVColorRange &inner, const HSVColorRange &outer,cv::Point2f endPoint, cv::Mat &frameHSV, cv::Mat &frameBGR)
 {
+	cv::Mat innerThresholded;
+	inRange(frameHSV, cv::Scalar(inner.hue.low, inner.sat.low, inner.val.low), cv::Scalar(inner.hue.high, inner.sat.high, inner.val.high), innerThresholded); //Threshold the image
+	cv::Mat outerThresholded;
+	inRange(frameHSV, cv::Scalar(outer.hue.low, outer.sat.low, outer.val.low), cv::Scalar(outer.hue.high, outer.sat.high, outer.val.high), outerThresholded); //Threshold the image
+
 	cv::Point startPoint;
 	startPoint.x = frameHSV.cols / 2;
 	startPoint.y = frameHSV.rows;
-	cv::LineIterator iterator(frameHSV, startPoint, endPoint, 1);
 
+	cv::Point2f lastInner;
+	cv::Point2f firstInner;
+	cv::Point2f lastOuter;
+	cv::Point2f firstOuter;
+	
+
+	std::string state = "inner";
+	bool Hinrange = false;
+	bool Sinrange = false;
+	bool Vinrange = false;
+	bool firstFound = false;
+	cv::LineIterator iterator(frameHSV, startPoint, endPoint, 8);
 	for (int i = 0; i < iterator.count; i++, ++iterator)
 	{
-		(*iterator)[0] = 200;
-	}
+		if (state == "inner"){
+			cv::Vec3b pixel = frameHSV.ptr<cv::Vec3b>(iterator.pos().y)[iterator.pos().x];
+			//searching for inner border
+			Hinrange = (pixel[0] <= inner.hue.high && pixel[0] >= inner.hue.low);
+			Sinrange = (pixel[1] <= inner.sat.high && pixel[1] >= inner.sat.low);
+			Vinrange = (pixel[2] <= inner.val.high && pixel[2] >= inner.val.low);
+			if (Hinrange && Sinrange && Vinrange){
+				firstInner = iterator.pos();
+				state = "outer";
+			}
+		}
+		else if (state == "outer"){
+			
+			cv::Vec3b pixel = frameHSV.ptr<cv::Vec3b>(iterator.pos().y)[iterator.pos().x];
+			//Outer border last pixel
+			Hinrange = (pixel[0] <= outer.hue.high && pixel[0] >= outer.hue.low);
+			Sinrange = (pixel[1] <= outer.sat.high && pixel[1] >= outer.sat.low);
+			Vinrange = (pixel[2] <= outer.val.high && pixel[2] >= outer.val.low);
+			if (Hinrange && Sinrange && Vinrange && !firstFound){
+				firstFound = true;
+				firstOuter = iterator.pos();
+			}
+			else if (Hinrange && Sinrange && Vinrange){
+				lastOuter = iterator.pos();
+			}
+			//Inner border last pixel
+			Hinrange = (pixel[0] <= inner.hue.high && pixel[0] >= inner.hue.low);
+			Sinrange = (pixel[1] <= inner.sat.high && pixel[1] >= inner.sat.low);
+			Vinrange = (pixel[2] <= inner.val.high && pixel[2] >= inner.val.low);
+			if (Hinrange && Sinrange && Vinrange){
+				lastInner = iterator.pos();
+			}
 
-	return true;
+		}
+	}//lineiterator end
+		
+
+	cv::circle(frameBGR, lastInner, 5, cv::Scalar(200, 0, 0), 3);
+	cv::circle(frameBGR, firstOuter, 5, cv::Scalar(0, 200, 0), 3);
+
+	cv::circle(frameBGR, firstInner, 5, cv::Scalar(0, 0, 200), 3);
+	cv::circle(frameBGR, lastOuter, 5, cv::Scalar(0, 200, 200), 3);
+	
+	if (!firstFound){
+		return true;
+	}
+	double distLiFo = cv::norm(lastInner - firstOuter);
+	if (distLiFo < 20){
+		return false;
+	}
+	else{
+		return true;
+	}
 }
 
 void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickness, CvScalar color)

@@ -5,7 +5,7 @@
 
 class ObjectFinder {
 protected:
-	virtual cv::Point2f LocateOnScreen(const HSVColorRange &HSVRange, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate);
+	virtual cv::Point2f LocateOnScreen(const HSVColorRange &HSVRange, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate, const HSVColorRange &inner, const HSVColorRange &outer);
 	cv::Point3d ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size);
 	bool validateBall(const HSVColorRange &inner, const HSVColorRange &outer, cv::Point2f point, cv::Mat &frameHSV, cv::Mat &frameBGR);
 private:
