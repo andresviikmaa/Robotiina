@@ -477,7 +477,7 @@ void Robot::Run()
 			break;
 		}
 
-		if (false && wheels->CheckStall() &&
+		if (wheels->CheckStall() &&
 			(state == STATE_LOCATE_BALL ||
 			state == STATE_LOCATE_GATE))
 		{

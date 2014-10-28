@@ -1,83 +1,79 @@
 #include "wheel.h"
+#include <chrono>
+#include <thread>
 
+BasicWheel::BasicWheel()
+{
+	stall = false;
+	stop_thread = false;
+	threads.create_thread(boost::bind(&BasicWheel::Run, this));
+};
 
-void Wheel::Stop(){
-	try {
-		writeString("sd0\n");
-		/* std::cout << readLine() << std::endl;*/
-
-	}
-	catch (boost::system::system_error& e)
-	{
-		std::cout << "Error: " << e.what() << std::endl;
-		return;
-	}
-}
-
-void Wheel::Run(int given_speed){
-	speed = given_speed;
-	update_speed = true;
-        return;
-	try {
-		speed = given_speed;
-		std::ostringstream oss;
-		oss << "sd" << speed << "\n";
-		writeString(oss.str());
-		//std::cout << "WheelSpeed " << id << " " << speed << std::endl;
-		
-		return;
-
-	}
-	catch (boost::system::system_error& e)
-	{
-		std::cout << "Error: " << e.what() << std::endl;
-		return;
-	}
-}
-
-std::string Wheel::Speed(){
-	try {
-		if(update_speed){
-			std::ostringstream oss;
-			oss << "sd" << speed << "\n";
-			writeString(oss.str());
-			update_speed = false;
-		}
-		writeString("s\n");
-		return readLine();
-	}
-	catch (boost::system::system_error& e)
-	{
-		std::cout << "Error: " << e.what() << std::endl;
-		return 0;
-	}
-	
-}
-
-void Wheel::StallCheck(){
-	
+void BasicWheel::Run()
+{
 	while (!stop_thread){
 		time = boost::posix_time::microsec_clock::local_time();
-		std::string line = Speed();
-		//std::cout<< "line: " << line << std::endl ;
- 		actual_speed = atoi(line.substr(3).c_str());
-		int diff = abs(actual_speed - speed);
-		boost::posix_time::time_duration::tick_type stallDuration = (time - stallTime).total_milliseconds();
-		if (diff > 10){
-			std::cout<< "diff: " << diff << std::endl;
+		UpdateSpeed();
+		CheckStall();
+		lastStep = time;
+		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // do not poll serial to fast
 
-			if (stallDuration > 400){stall=true;}
-		}
-		else{
-			stallTime = time;
-			stall = false;
-		}
-		
-		/*if (line == "<stall:1>" || line == "<stall:2>"){
-			stall = true;
-		}
-		else{
-			stall = false;
-		}*/
 	}
 }
+
+void BasicWheel::CheckStall()
+{
+	int diff = abs(actual_speed - target_speed);
+	boost::posix_time::time_duration::tick_type stallDuration = (time - stallTime).total_milliseconds();
+	if (diff > 10){
+		std::cout << "diff: " << diff << std::endl;
+
+		if (stallDuration > 400){ stall = true; }
+	}
+	else{
+		stallTime = time;
+		stall = false;
+	}
+
+}
+
+
+BasicWheel::~BasicWheel()
+{
+	stop_thread = true;
+	threads.join_all();
+}
+
+void SoftwareWheel::UpdateSpeed()
+{
+	double dt = (double)(time - lastStep).total_milliseconds() / 1000.0;
+	if (dt < 0.0000001) return;
+
+	double dv = target_speed - actual_speed;
+	double sign = (dv > 0) - (dv < 0);
+	double acc = dv / dt;
+	acc = sign * std::min(abs(acc), max_acceleration);
+
+	if (false && rand() % 1000 > 995) { // 0.5% probability to stall
+		actual_speed = 0;
+	}
+	else {
+		assert(actual_speed > -1000);
+		actual_speed += acc * dt;
+		assert(actual_speed > -1000);
+	}
+};
+
+void SerialWheel::UpdateSpeed()
+{
+	boost::mutex::scoped_lock lock(mutex);
+	if (update_speed){
+		std::ostringstream oss;
+		oss << "sd" << target_speed << "\n";
+		writeString(oss.str());
+		update_speed = false;
+	}
+	writeString("s\n");
+	actual_speed = atoi(readLine().substr(3).c_str());
+
+};

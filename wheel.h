@@ -4,45 +4,58 @@
 #include <boost/thread/thread.hpp>
 #include <boost/atomic.hpp>
 #include <boost/timer/timer.hpp>
+#include <boost/thread/mutex.hpp>
 
-//TODO: rename
-class DummyWheel
+
+class BasicWheel
 {
 public:
-	DummyWheel(){ stall = false; };
-	virtual ~DummyWheel(){};
-	virtual void Run(int given_speed){};
-	virtual void Stop(){};
-	virtual std::string Speed(){ return 0; };
-	bool stall;
+	BasicWheel();
+	virtual ~BasicWheel();
+	void SetSpeed(int given_speed) {
+		target_speed = given_speed; 
+	};
+	int GetSpeed() { 
+		return actual_speed; 
+	};
+	bool IsStalled() {
+		return stall;
+	}
 
-};
-
-class Wheel : public DummyWheel, SimpleSerial
-{
-private:
-	boost::atomic<int> speed;
-	boost::atomic<bool> update_speed;
-	int actual_speed;
+protected:
+	bool stall = false;
+	boost::mutex mutex;
+	int target_speed = 0;
+	int actual_speed = 0;
+	bool update_speed = false;
 	int id = 0;
-	void StallCheck();
+
 	boost::atomic<bool> stop_thread;
 	boost::thread_group threads;
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
+	boost::posix_time::ptime lastStep = time;
 	boost::posix_time::ptime stallTime = time;
 	boost::posix_time::time_duration stallDuration;
+	void CheckStall();
+	virtual void UpdateSpeed() = 0;
+	void Run();
+
+};
+
+class SoftwareWheel : public BasicWheel
+{
+protected:
+	double max_acceleration = 500.0;
+	void UpdateSpeed();
+};
+
+
+class SerialWheel : public BasicWheel, SimpleSerial
+{
+protected:
+	void UpdateSpeed();
+
 public:
-	Wheel(boost::asio::io_service &io_service, std::string port = "port", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
-               stop_thread = false;
-               speed = actual_speed = 0;
-               update_speed = false;
-		threads.create_thread(boost::bind(&Wheel::StallCheck, this));
+	SerialWheel(boost::asio::io_service &io_service, std::string port = "port", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
 	};
-	virtual ~Wheel(){
-		stop_thread = true;
-		threads.join_all();
-	}
-	void Run(int given_speed);
-	void Stop();
-	std::string Speed();
 };

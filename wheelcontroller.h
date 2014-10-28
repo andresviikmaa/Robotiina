@@ -7,9 +7,10 @@
 class WheelController {
 private:
     cv::Point3f lastSpeed; // x, y, heading
-	DummyWheel * w_left;
-	DummyWheel * w_right;
-	DummyWheel * w_back;
+	cv::Point3f actualSpeed;
+	BasicWheel * w_left;
+	BasicWheel * w_right;
+	BasicWheel * w_back;
 	
 
 public:
