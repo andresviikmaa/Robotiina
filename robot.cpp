@@ -245,12 +245,12 @@ void Robot::Run()
 			lastStepTime = time;
 			frames = 0;
 		}
-		/*
+		
 		if (pos.x < -tc.x) { pos.x += tc.x; track_empty.copyTo(track); };
 		if (pos.y < -tc.y) { pos.y += tc.y; track_empty.copyTo(track); };
 		if (pos.x > tc.x) { pos.x -= tc.x; track_empty.copyTo(track); };
 		if (pos.y > tc.y) { pos.y -= tc.y; track_empty.copyTo(track); };
-		*/
+		
 		
 		//cv::line(track, tc, new_pos + tc, cv::Scalar(255, 0, 0));
 		/*
@@ -259,12 +259,12 @@ void Robot::Run()
 		x += (velocityX * Math::cos(orientation) - velocityY * Math::sin(orientation)) * dt;
 		y += (velocityX * Math::sin(orientation) + velocityY * Math::cos(orientation)) * dt;
 		*/
-		float _dt = dt / 1000; 
+		float _dt = (float)dt / 1000; 
 		cv::Point3f old_pos(pos);
 		pos.z = fmod(pos.z + (speed.z * _dt), 360);
 		
-		pos.x += (speed.x * cos(pos.z / (2*PI)) - speed.y * sin(pos.z / (2*PI))) * dt;
-		pos.y += (speed.z * sin(pos.z / (2*PI)) + speed.y * cos(pos.z / (2*PI))) * dt;
+		pos.x += (speed.x * cos(pos.z / (2*PI)) - speed.y * sin(pos.z / (2*PI))) * _dt;
+		pos.y += (speed.y * sin(pos.z / (2*PI)) + speed.y * cos(pos.z / (2*PI))) * _dt;
 
 /*	same as above, but with matrix operation	
 		cv::Mat rot_mat = cv::getRotationMatrix2D(cv::Point2f(0, 0), heading, 1.0);
@@ -274,7 +274,7 @@ void Robot::Run()
 		new_pos = cv::Point2f(new_pos2.at<double>(cv::Point(0, 0)), new_pos2.at<double>(cv::Point(0, 1)));
 */
 
-		//cv::line(track, tc + cv::Point2i(old_pos.x,old_pos.y), tc + cv::Point2i(pos.x,pos.y), cv::Scalar(255, 255, 255));
+		cv::line(track, tc + cv::Point2f(old_pos.x,old_pos.y), tc + cv::Point2f(pos.x,pos.y), cv::Scalar(255, 255, 255));
 		cv::imshow("track", track);
 		
 		frameBGR = camera->Capture();
