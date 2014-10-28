@@ -180,12 +180,17 @@ bool Robot::Launch(int argc, char* argv[])
 			wheels = new WheelController(io, config.count("skip-ports") > 0);
 			std::cout << "Initializing Coilgun... " << std::endl;
 			{
-				using boost::property_tree::ptree;
-				ptree pt;
-				read_ini("conf/ports.ini", pt);
-				std::string port = pt.get<std::string>(std::to_string(ID_COILGUN));
+				if (config.count("skip-ports") == 0) {
+					using boost::property_tree::ptree;
+					ptree pt;
+					read_ini("conf/ports.ini", pt);
+					std::string port = pt.get<std::string>(std::to_string(ID_COILGUN));
 
-				coilBoard = new CoilBoard(io, port);
+					coilBoard = new CoilBoard(io, port);
+				}
+				else {
+					coilBoard = new DummyCoilBoard();
+				}
 			}
 		}
 		catch (...) {

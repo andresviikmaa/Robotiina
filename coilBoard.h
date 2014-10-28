@@ -7,7 +7,18 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
-class CoilBoard : SimpleSerial
+class DummyCoilBoard
+{
+public:
+	DummyCoilBoard(){};
+	virtual void Ping() {};
+	virtual ~DummyCoilBoard(){};
+	virtual void ToggleTribbler(){};
+	virtual bool BallInTribbler(){ return rand() % 100 > 95 ; };
+
+};
+
+class CoilBoard : public DummyCoilBoard, SimpleSerial
 {
 private:
 	void Ping();

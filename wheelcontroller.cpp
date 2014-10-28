@@ -80,7 +80,7 @@ cv::Point3f WheelController::DriveRotate(int velocity, double direction, int rot
 	
 }
 
-cv::Point3f WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance, CoilBoard *coilBoard){
+cv::Point3f WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance, DummyCoilBoard *coilBoard){
 	int speed;
 	int rotate;
 	//rotate calculation
