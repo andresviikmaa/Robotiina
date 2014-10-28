@@ -61,16 +61,9 @@ cv::Point3f WheelController::DriveRotate(int velocity, double direction, int rot
 			
 	}
 
-	cv::namedWindow("wheels");
-	cv::Point2i c(200, 200);
-	cv::Mat infoWindow(c.x * 2, c.y * 2, CV_8UC3, cv::Scalar::all(0));
-	
 	lastSpeed.x = sin(direction* PI / 180.0)* velocity + rotate;
-	lastSpeed.y = cos(direction* PI / 180.0)* velocity + rotate, 
-	lastSpeed.z = rotate;	
-	
-	cv::line(infoWindow, c, c + cv::Point2i(lastSpeed.x, lastSpeed.y), cv::Scalar(255, 255, 255), 1, 8, 0);
-	cv::imshow("wheels", infoWindow);
+	lastSpeed.y = cos(direction* PI / 180.0)* velocity + rotate,
+	lastSpeed.z = rotate;
 
 	w_left->Run((velocity*cos((150 - direction) * PI / 180.0)) + rotate);
 	w_right->Run((velocity*cos((30 - direction)  * PI / 180.0)) + rotate);

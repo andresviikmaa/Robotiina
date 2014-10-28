@@ -259,12 +259,12 @@ void Robot::Run()
 		x += (velocityX * Math::cos(orientation) - velocityY * Math::sin(orientation)) * dt;
 		y += (velocityX * Math::sin(orientation) + velocityY * Math::cos(orientation)) * dt;
 		*/
-		float _dt = (float)dt / 1000; 
+		float _dt = (float)dt / 10000; 
 		cv::Point3f old_pos(pos);
 		pos.z = fmod(pos.z + (speed.z * _dt), 360);
 		
 		pos.x += (speed.x * cos(pos.z / (2*PI)) - speed.y * sin(pos.z / (2*PI))) * _dt;
-		pos.y += (speed.y * sin(pos.z / (2*PI)) + speed.y * cos(pos.z / (2*PI))) * _dt;
+		pos.y += (speed.y * sin(pos.z / (2*PI)) + speed.x * cos(pos.z / (2*PI))) * _dt;
 
 /*	same as above, but with matrix operation	
 		cv::Mat rot_mat = cv::getRotationMatrix2D(cv::Point2f(0, 0), heading, 1.0);
@@ -488,6 +488,20 @@ void Robot::Run()
 		assert(STATE_END_OF_GAME != state);
 		cv::putText(frameBGR, "state:" + STATE_LABELS[state], cv::Point(frameHSV.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		show(frameBGR);
+
+		cv::namedWindow("wheels");
+		cv::Point2i c(200, 200);
+		cv::Mat infoWindow(c.x * 2, c.y * 2, CV_8UC3, cv::Scalar::all(0));
+
+		cv::line(infoWindow, c, c + cv::Point2i(speed.x, speed.y), cv::Scalar(255, 255, 255), 1, 8, 0);
+		cv::Point2d orientation;
+		orientation.x += (50 * cos(pos.z / (2 * PI)) - 50 * sin(pos.z / (2 * PI)));
+		orientation.y += (50 * sin(pos.z / (2 * PI)) + 50 * cos(pos.z / (2 * PI)));
+
+		cv::line(infoWindow, c, c + cv::Point2i(orientation.x, orientation.y), cv::Scalar(0, 0, 255), 1, 8, 0);
+		cv::imshow("wheels", infoWindow);
+
+
 		if (cv::waitKey(1) == 27) {
 			std::cout << "exiting program" << std::endl;
 			break;

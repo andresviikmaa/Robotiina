@@ -2,7 +2,7 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-
+#include <math.h>
 ObjectFinder::ObjectFinder()
 {
 	using boost::property_tree::ptree;
@@ -59,13 +59,9 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameH
 			largest_contour_index = i;                //Store the index of largest contour
 		}
 	}	
-	int thickness = 0;
-	if (largest_area < 1000){
-		thickness = 12;
-	}
-	else{
-		thickness = largest_area / 60;
-	}
+	int thickness = largest_area / 60;
+		
+	thickness = std::min(100, std::max(thickness, 12));
 	//For ball validation, drawed contour should cover balls shadow.
 	drawContours(frameHSV, contours, largest_contour_index, color, thickness, 8, hierarchy);
 	drawContours(frameHSV, contours, largest_contour_index, color, -5, 8, hierarchy);
