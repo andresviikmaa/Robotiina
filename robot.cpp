@@ -56,6 +56,7 @@ std::pair<STATE, std::string> states[] = {
 //	std::pair<STATE, std::string>(STATE_CRASH, "Crash"),
 	std::pair<STATE, std::string>(STATE_RUN, "Autopilot"),
 	std::pair<STATE, std::string>(STATE_MANUAL_CONTROL, "Manual Control"),
+	std::pair<STATE, std::string>(STATE_TEST_COILGUN, "Test CoilGun"),
 	std::pair<STATE, std::string>(STATE_SELECT_GATE, "Select Gate"),
 	std::pair<STATE, std::string>(STATE_DANCE, "Dance"),
 	//	std::pair<STATE, std::string>(STATE_END_OF_GAME, "End of Game") // this is intentionally left out
@@ -299,6 +300,7 @@ void Robot::Run()
 				//STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
 				STATE_BUTTON("Manual (C)ontrol", STATE_MANUAL_CONTROL)
+				STATE_BUTTON("(T)est CoilGun", STATE_TEST_COILGUN)
 				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
 			END_DIALOG
 		}
@@ -368,26 +370,26 @@ void Robot::Run()
 		else if (STATE_RUN == state) {
 			START_DIALOG
 				createButton(std::string("Save video: ") + (captureFrames ? "on" : "off"), [this, &captureDir, &time]{
-				this->captureFrames = !this->captureFrames;
-				if (this->captureFrames) {
-					captureDir = "videos/" + boost::posix_time::to_simple_string(time) + "/";
-					std::replace(captureDir.begin(), captureDir.end(), ':', '.');
-					boost::filesystem::create_directories(captureDir);
-				}
-				this->last_state = STATE_NONE; // force dialog redraw
-			});
-			createButton(std::string("Border detection: ") + (detectBorders ? "on" : "off"), [this]{
-				this->detectBorders = !this->detectBorders;
-				this->last_state = STATE_NONE; // force dialog redraw
-			});
-			createButton(std::string("Mouse control: ") + (dynamic_cast<MouseFinder*>(finder) == NULL ? "off" : "on"), [this]{
-				bool isMouse = dynamic_cast<MouseFinder*>(finder) != NULL;
-				delete this->finder;
-				this->finder = isMouse ? new ObjectFinder() : new MouseFinder();
-				this->last_state = STATE_NONE;
-			});
-			STATE_BUTTON("(B)ack", STATE_NONE)
-			STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
+					this->captureFrames = !this->captureFrames;
+					if (this->captureFrames) {
+						captureDir = "videos/" + boost::posix_time::to_simple_string(time) + "/";
+						std::replace(captureDir.begin(), captureDir.end(), ':', '.');
+						boost::filesystem::create_directories(captureDir);
+					}
+					this->last_state = STATE_NONE; // force dialog redraw
+				});
+				createButton(std::string("Border detection: ") + (detectBorders ? "on" : "off"), [this]{
+					this->detectBorders = !this->detectBorders;
+					this->last_state = STATE_NONE; // force dialog redraw
+				});
+				createButton(std::string("Mouse control: ") + (dynamic_cast<MouseFinder*>(finder) == NULL ? "off" : "on"), [this]{
+					bool isMouse = dynamic_cast<MouseFinder*>(finder) != NULL;
+					delete this->finder;
+					this->finder = isMouse ? new ObjectFinder() : new MouseFinder();
+					this->last_state = STATE_NONE;
+				});
+				STATE_BUTTON("(B)ack", STATE_NONE)
+				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
 			END_DIALOG
 
 			ObjectPosition ballPos, gatePos;
@@ -459,6 +461,15 @@ void Robot::Run()
 				STATE_BUTTON("Back", STATE_NONE)
 			END_DIALOG
 		}
+		else if (STATE_TEST_COILGUN == state) {
+			START_DIALOG
+				createButton("Kick", [this] {this->coilBoard->Kick(); });
+				createButton("Start tribbler", [this]{this->coilBoard->ToggleTribbler(true); });
+				createButton("Stop tribbler", [this]{this->coilBoard->ToggleTribbler(false); });
+				STATE_BUTTON("Back", STATE_NONE)
+			END_DIALOG
+		}
+
 
 		else if (STATE_DANCE == state) {
 			float move1, move2;

@@ -348,9 +348,8 @@ void ObjectFinder::IsolateField(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, 
 
 ObjectPosition ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size)
 {
-	if (point.y < 1 && point.x < 1 || (point.y != point.y) || (point.x != point.x)){ //If there is no object found
-		return { -1, -1, -1 };
-	}
+	assert(point.y >= 0 && point.x >= 0 && point.y < frame_size.y && point.x < frame_size.x); //If there is no object found
+
 	const cv::Point2d center (frame_size.x / 2.0, frame_size.y / 2.0);
 	//Calculating distance
 	double angle = (Vfov * (point.y - center.y) / center.y) + CamAngleDev;

@@ -31,14 +31,15 @@ private:
 	boost::mutex mutex;
 
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
-	boost::posix_time::ptime lastStep = time; 
-	DriveMode driveMode = LOCATE_BALL;
+	boost::posix_time::ptime lastUpdate = time; 
+	DriveMode driveMode = IDLE;
 protected:
 	DriveMode DriveToBall();
 	DriveMode LocateBall();
 	DriveMode LocateGate();
 	DriveMode RecoverCrash();
 	void Step();
+	void WriteInfoOnScreen();
 public:
 	AutoPilot(WheelController *wheels, CoilGun *coilgun);
 	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation);

@@ -17,6 +17,8 @@ void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLo
 	gateInSight = gateLocation != NULL;
 	if (ballInSight) lastBallLocation = *ballLocation;
 	if (gateInSight) lastGateLocation = *gateLocation;
+	lastUpdate = boost::posix_time::microsec_clock::local_time();
+	if (driveMode == IDLE) driveMode = LOCATE_BALL;
 }
 
 DriveMode AutoPilot::DriveToBall()
@@ -25,6 +27,8 @@ DriveMode AutoPilot::DriveToBall()
 	int rotate;
 	int desiredDistance = 210;
 	while (!coilgun->BallInTribbler()) {
+		if (stop_thread) return EXIT;
+		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
 		if (!ballInSight) return LOCATE_BALL;
 		if (wheels->IsStalled()) return RECOVER_CRASH;
 
@@ -90,6 +94,8 @@ DriveMode AutoPilot::LocateBall() {
 	boost::posix_time::ptime rotateTime = time;
 	while (!ballInSight) {
 		if (stop_thread) return EXIT;
+		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
+
 		if (wheels->IsStalled()) return RECOVER_CRASH;
 
 		time = boost::posix_time::microsec_clock::local_time();
@@ -119,6 +125,8 @@ DriveMode AutoPilot::LocateGate() {
 	boost::posix_time::ptime rotateTime = time;
 	while (!gateInSight) {
 		if (stop_thread) return EXIT;
+		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
+
 		if (!coilgun->BallInTribbler()) return DRIVE_TO_BALL;
 		if (wheels->IsStalled()) return RECOVER_CRASH;
 
@@ -161,7 +169,9 @@ DriveMode AutoPilot::RecoverCrash()
 
 void AutoPilot::Run()
 {
+
 	while (!stop_thread){
+		WriteInfoOnScreen();
 		switch (driveMode){
 		case IDLE:
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -183,6 +193,23 @@ void AutoPilot::Run()
 		}
 	}
 }
+
+void AutoPilot::WriteInfoOnScreen(){
+	cv::Mat infoWindow(100, 250, CV_8UC3, cv::Scalar::all(0));
+	std::ostringstream oss;
+	oss << "State :" << driveMode;
+	cv::putText(infoWindow, oss.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	oss.str("");
+	oss << "Ball visible :" << (ballInSight ? "yes" : "no");
+	cv::putText(infoWindow, oss.str(), cv::Point(20, 50), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	oss.str("");
+	oss << "Gate Visible :" << (gateInSight ? "yes" : "no");
+	cv::putText(infoWindow, oss.str(), cv::Point(20, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	cv::imshow("AutoPilot", infoWindow);
+	cv::waitKey(1);
+	return;
+}
+
 
 
 AutoPilot::~AutoPilot()
