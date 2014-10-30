@@ -23,8 +23,8 @@ void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLo
 
 DriveMode AutoPilot::DriveToBall()
 {
-	int speed;
-	int rotate;
+	double speed;
+	double rotate;
 	int desiredDistance = 210;
 	while (!coilgun->BallInTribbler()) {
 		if (stop_thread) return EXIT;

@@ -22,7 +22,6 @@ private:
     //STATE state = STATE_NONE;
     boost::atomic<STATE> state;
 	boost::atomic<STATE> last_state;
-	void CalibrateObject(const cv::Mat &image, bool autoCalibrate = false);
 	bool ParseOptions(int argc, char* argv[]);
 
 	void Run();

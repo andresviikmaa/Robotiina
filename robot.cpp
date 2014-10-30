@@ -92,59 +92,9 @@ Robot::~Robot()
 		delete finder;
 
 }
-void Robot::CalibrateObject(const cv::Mat &image, bool autoCalibrate/* = false*/)
-{
-	/*
-    ColorCalibrator* calibrator = autoCalibrate ? new AutoCalibrator() : new ColorCalibrator();
-    calibrator->LoadImage(image);
-		return calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT) i]);
-            //BUTTON(OBJECT_LABELS[(OBJECT) i], i )
-
-    }
-
-    STATE_BUTTON("Back", STATE_NONE)
-    delete calibrator;
-	*/
-}
 
 bool Robot::Launch(int argc, char* argv[])
 {
-	/* Experiment by Andres
-	cv::Point2f speed; // speed
-	//cv::Point2f pos(0, 0); // robot position
-	cv::Point2f tc(300, 300);
-
-	cv::Mat track, track2, track3, track_rotated;
-	cv::Mat track_empty(tc.x * 2, tc.y * 2, CV_8UC3, cv::Scalar::all(0));
-	track_empty.copyTo(track);
-	track_empty.copyTo(track2);
-
-
-
-	cv::Point2f pos(90, 0);
-	cv::Point2f new_pos(60, 0);
-
-	//cv::line(track, tc, pos + tc, cv::Scalar(0, 0, 255));
-	float angle = atan(pos.x / pos.y) * (180 / PI);
-	//cv::line(track, tc, new_pos + tc, cv::Scalar(255, 0, 0));
-
-	cv::Mat rot_mat = cv::getRotationMatrix2D(cv::Point2f(0, 0), angle, 1.0);
-
-	double data[3] = { new_pos.x, new_pos.y, 0 };
-	cv::Mat pos_mat = cv::Mat(3, 1, CV_64FC1, data);
-	cv::Mat new_pos2 = rot_mat * pos_mat;
-
-	new_pos = cv::Point2f(new_pos2.at<double>(cv::Point(0, 0)), new_pos2.at<double>(cv::Point(0, 1)));
-
-	cv::line(track, tc + pos, tc + pos + new_pos, cv::Scalar(0, 255, 0));
-	cv::imshow("track", track);
-
-
-	cv::imshow("track2", track3);
-
-	cv::waitKey();
-	return false;
-	*/
 	if (!ParseOptions(argc, argv)) return false;
 
 	std::cout << "Initializing camera... " << std::endl;
@@ -231,16 +181,6 @@ void Robot::Run()
 		boost::filesystem::create_directories(captureDir);
 	}
 
-	cv::Point3f robotSpeed; // speed, x, y and w
-	cv::Point3f robotPos(0, 0, 0); // robot position and heading in 2D
-	cv::Point3f ballPos; // relative to robot
-	cv::Point3f gatePos; // relative to robot
-
-	cv::Mat track, track_rotated;
-	cv::Point2f tc(300, 300);
-	cv::Mat track_empty(tc.x * 2, tc.y * 2, CV_8UC1, cv::Scalar::all(0));
-	track_empty.copyTo(track);
-	
 	AutoPilot autoPilot(wheels, coilBoard);
 
 	while (true)
@@ -256,32 +196,6 @@ void Robot::Run()
 			frames = 0;
 		}
 		
-		
-		
-		//cv::line(track, tc, new_pos + tc, cv::Scalar(255, 0, 0));
-		/*
-		telliskivi2:
-		orientation = Math::floatModulus(orientation + omega * dt, Math::TWO_PI);
-		x += (velocityX * Math::cos(orientation) - velocityY * Math::sin(orientation)) * dt;
-		y += (velocityX * Math::sin(orientation) + velocityY * Math::cos(orientation)) * dt;
-		*/
-		float _dt = (float)dt / 10000; 
-		cv::Point3f old_pos(robotPos);
-		robotPos.z = fmod(robotPos.z + (robotSpeed.z * _dt), 360);
-		
-		robotPos.x += (robotSpeed.x * cos(robotPos.z / (2 * PI)) - robotSpeed.y * sin(robotPos.z / (2 * PI))) * _dt;
-		robotPos.y += (robotSpeed.y * sin(robotPos.z / (2 * PI)) + robotSpeed.x * cos(robotPos.z / (2 * PI))) * _dt;
-
-		{
-			cv::Point2i pos(robotPos.x, robotPos.y);
-			if (pos.x < -tc.x) { pos.x += tc.x; track_empty.copyTo(track); };
-			if (pos.y < -tc.y) { pos.y += tc.y; track_empty.copyTo(track); };
-			if (pos.x > tc.x) { pos.x -= tc.x; track_empty.copyTo(track); };
-			if (pos.y > tc.y) { pos.y -= tc.y; track_empty.copyTo(track); };
-
-			cv::line(track, tc + cv::Point2f(old_pos.x, old_pos.y), tc + cv::Point2f(pos.x, pos.y), cv::Scalar(255, 255, 255));
-			cv::imshow("track", track);
-		}
 		frameBGR = camera->Capture();
 
 		if (captureFrames) {
@@ -350,23 +264,6 @@ void Robot::Run()
 				}
 			}
 		}
-		/* moved to autopilot
-		else if(STATE_CRASH == state){
-			//Backwards
-			robotSpeed = wheels->Drive(50, 180);
-		        std::chrono::milliseconds dura(1000);
-			std::this_thread::sleep_for(dura);
-			wheels->Stop();
-			//Turn a littlebit
-			wheels->Rotate(1, 20);
-			std::this_thread::sleep_for(dura);
-			wheels->Stop();
-			//Check again
-			if (!wheels->CheckStall()){
-				SetState(STATE_LOCATE_BALL);
-			}            
-		}
-		*/
 		else if (STATE_RUN == state) {
 			START_DIALOG
 				createButton(std::string("Save video: ") + (captureFrames ? "on" : "off"), [this, &captureDir, &time]{
@@ -392,72 +289,24 @@ void Robot::Run()
 				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
 			END_DIALOG
 
+			if (detectBorders) {
+				finder->IsolateField(objectThresholds, frameHSV, frameBGR);
+			}
+				
 			ObjectPosition ballPos, gatePos;
 			bool ballFound = finder->Locate(objectThresholds, frameHSV, frameBGR, BALL, ballPos);
 			bool gateFound = finder->Locate(objectThresholds, frameHSV, frameBGR, targetGate, gatePos);
 
 			autoPilot.UpdateState(ballFound ? &ballPos : NULL, gateFound ? &gatePos : NULL);
-			/*
-			if (detectBorders) {
-				finder->IsolateField(objectThresholds, frameHSV, frameBGR);
-			}
-			ObjectPosition ballPos;
-			if (finder->Locate(objectThresholds, frameHSV, frameBGR, BALL, ballPos)){
-				autopilot.DriveToObject(ballPos, 210, coilBoard);
-			} else {
-				autopilot.LocateBall();
-				//TODO: add stop condition
-			}
-			*/
-            
         }
-		/*
-		else if (STATE_LOCATE_GATE == state)
-		{
-			//finder->IsolateField(objectThresholds[INNER_BORDER], objectThresholds[OUTER_BORDER], objectThresholds[GATE1], objectThresholds[GATE2], frameHSV, frameBGR);
-			/*
-			bool ballInTribbler = coilBoard->BallInTribbler();
-			* /
-			bool ballInTribbler = true;
-			if (!ballInTribbler) {
-				SetState(STATE_LOCATE_BALL);
-			}
-			else {
-				ObjectPosition gatePos;
-				if (finder->Locate(objectThresholds, frameHSV, frameBGR, targetGate, gatePos))
-				{
-					coilBoard->Kick();
-					SetState(STATE_LOCATE_BALL);
-					/*
-					robotSpeed = wheels->DriveToBall(location.x, //distance
-						location.y,	//horizontal dev
-						location.z, //angle
-						500//desired distance
-						, coilBoard);
-					* /
-				}
-				else {
-					wheels->Rotate(1, 15);
-				}
-			}
-		}
-		*/
-		/*
-        else if(STATE_REMOTE_CONTROL == state) {
-			Dialog launchWindow("Remote Control Mode Enabed", CV_WINDOW_AUTOSIZE);
-			STATE_BUTTON(launchWindow, "Back", STATE_NONE)
-			launchWindow.show();
-
-        }
-		*/
 		else if (STATE_MANUAL_CONTROL == state) {
 			START_DIALOG
-				createButton("Move Left", [this, &robotSpeed] {robotSpeed = this->wheels->Drive(20, 90); });
-				createButton("Move Right", [this, &robotSpeed]{robotSpeed = this->wheels->Drive(20, 270); });
-				createButton("Move Forward", [this, &robotSpeed]{robotSpeed = this->wheels->Drive(20, 0); });
-				createButton("Move Back", [this, &robotSpeed]{robotSpeed = this->wheels->Drive(-20, 0); });
-				createButton("Rotate Right", [this, &robotSpeed]{robotSpeed = this->wheels->Rotate(0, 10); });
-				createButton("Rotate Left", [this, &robotSpeed]{robotSpeed = this->wheels->Rotate(1, 10); });
+				createButton("Move Left", [this] {this->wheels->Drive(20, 90); });
+				createButton("Move Right", [this]{this->wheels->Drive(20, 270); });
+				createButton("Move Forward", [this]{this->wheels->Drive(20, 0); });
+				createButton("Move Back", [this]{this->wheels->Drive(-20, 0); });
+				createButton("Rotate Right", [this]{this->wheels->Rotate(0, 10); });
+				createButton("Rotate Left", [this]{this->wheels->Rotate(1, 10); });
 				STATE_BUTTON("Back", STATE_NONE)
 			END_DIALOG
 		}
@@ -474,38 +323,18 @@ void Robot::Run()
 		else if (STATE_DANCE == state) {
 			float move1, move2;
 			dance_step(((float)(time - epoch).total_milliseconds()), move1, move2);
-			robotSpeed = wheels->Drive(move1, move2);
+			wheels->Drive(move1, move2);
 			cv::putText(frameBGR, "move1:" + std::to_string(move1), cv::Point(frameHSV.cols - 140, 120), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 			cv::putText(frameBGR, "move2:" + std::to_string(move2), cv::Point(frameHSV.cols - 140, 140), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		}
 		else if (STATE_END_OF_GAME == state) {
 			break;
 		}
-		/*
-		if (wheels->CheckStall() &&
-			(state == STATE_LOCATE_BALL ||
-			state == STATE_LOCATE_GATE))
-		{
-			SetState(STATE_CRASH);
-		}
-		*/
+
 		cv::putText(frameBGR, "fps:" + std::to_string(fps), cv::Point(frameHSV.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		assert(STATE_END_OF_GAME != state);
 		cv::putText(frameBGR, "state:" + STATE_LABELS[state], cv::Point(frameHSV.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		show(frameBGR);
-
-		cv::namedWindow("wheels");
-		cv::Point2i c(200, 200);
-		cv::Mat infoWindow(c.x * 2, c.y * 2, CV_8UC3, cv::Scalar::all(0));
-
-		cv::line(infoWindow, c, c + cv::Point2i(robotSpeed.x, robotSpeed.y), cv::Scalar(255, 255, 255), 1, 8, 0);
-		cv::Point2d orientation;
-		orientation.x += (50 * cos(robotPos.z / (2 * PI)) - 50 * sin(robotPos.z / (2 * PI)));
-		orientation.y += (50 * sin(robotPos.z / (2 * PI)) + 50 * cos(robotPos.z / (2 * PI)));
-
-		cv::line(infoWindow, c, c + cv::Point2i(orientation.x, orientation.y), cv::Scalar(0, 0, 255), 1, 8, 0);
-		cv::imshow("wheels", infoWindow);
-
 
 		if (cv::waitKey(1) == 27) {
 			std::cout << "exiting program" << std::endl;
@@ -530,12 +359,12 @@ std::string Robot::ExecuteRemoteCommand(const std::string &command){
     else if (STATE_REMOTE_CONTROL == s) {
         if (query == "drive" && tokens.size() == 3) {
             int speed = atoi(tokens[1].c_str());
-            float direction = atof(tokens[2].c_str());
+			double direction = atof(tokens[2].c_str());
             wheels->Drive(speed, direction);
 		}
 		else if (query == "rdrive" && tokens.size() == 4) {
 			int speed = atoi(tokens[1].c_str());
-			float direction = atof(tokens[2].c_str());
+			double direction = atof(tokens[2].c_str());
 			int rotate = atoi(tokens[3].c_str());
 			wheels->DriveRotate(speed, direction, rotate);
 		}

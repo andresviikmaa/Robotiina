@@ -24,16 +24,16 @@ ObjectFinder::ObjectFinder()
 }
 
 bool ObjectFinder::Locate(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos) {
-	cv::Point2f point = LocateOnScreen(HSVRanges, frameHSV, frameBGR, target);
+	cv::Point2d point = LocateOnScreen(HSVRanges, frameHSV, frameBGR, target);
 	if (point.x == -1) return false;
 	targetPos = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
 	WriteInfoOnScreen(targetPos);
 	return true;
 }
 
-cv::Point2f ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
+cv::Point2i ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
 
-	cv::Point2f center;
+	cv::Point2d center;
 	cv::Mat imgThresholded;
 	auto r = HSVRanges[BALL];
 	bool gate = target == GATE1 || target == GATE2;
@@ -45,8 +45,8 @@ cv::Point2f ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &f
 	//biggest area
 	std::vector<std::vector<cv::Point> > contours; // Vector for storing contour
 	std::vector<cv::Vec4i> hierarchy;
-	int largest_area = 0;
-	int largest_contour_index = 0;
+	double largest_area = 0;
+	size_t largest_contour_index = 0;
 	cv::Rect bounding_rect;
 
 	findContours(imgThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); // Find the contours in the image
@@ -54,7 +54,7 @@ cv::Point2f ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &f
 	cv::Scalar color(0, 0, 0);
 	cv::Scalar color2(0, 0, 255);
 
-	for (int i = 0; i < contours.size(); i++) // iterate through each contour.
+	for (size_t i = 0; i < contours.size(); i++) // iterate through each contour.
 	{
 		double a = cv::contourArea(contours[i], false);  //  Find the area of contour
 		if (a > largest_area){
@@ -62,7 +62,7 @@ cv::Point2f ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &f
 			largest_contour_index = i;                //Store the index of largest contour
 		}
 	}	
-	int thickness = largest_area / 60;
+	int thickness = (int)ceil(largest_area / 60);
 		
 	thickness = std::min(100, std::max(thickness, 12));
 	//For ball validation, drawed contour should cover balls shadow.
@@ -75,10 +75,10 @@ cv::Point2f ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &f
 		if (gate){
 			bounding_rect = cv::boundingRect(contours[largest_contour_index]);
 			double y = bounding_rect.y + bounding_rect.height;
-			center = cv::Point2f(M.m10 / M.m00, y);
+			center = cv::Point2i(M.m10 / M.m00, y);
 		}
 		else{
-			center = cv::Point2f(M.m10 / M.m00, M.m01 / M.m00);
+			center = cv::Point2i(M.m10 / M.m00, M.m01 / M.m00);
 		}
 	}
 
@@ -92,11 +92,11 @@ cv::Point2f ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &f
 		return center;
 	}
 	else{//not valid
-		return cv::Point2f(-1, -1);
+		return cv::Point2i(-1, -1);
 	}
 }
 
-bool ObjectFinder::validateBall(HSVColorRangeMap &HSVRanges, cv::Point2f endPoint, cv::Mat &frameHSV, cv::Mat &frameBGR)
+bool ObjectFinder::validateBall(HSVColorRangeMap &HSVRanges, cv::Point2d endPoint, cv::Mat &frameHSV, cv::Mat &frameBGR)
 {
 
 	const HSVColorRange &inner = HSVRanges[INNER_BORDER];
@@ -111,10 +111,10 @@ bool ObjectFinder::validateBall(HSVColorRangeMap &HSVRanges, cv::Point2f endPoin
 	startPoint.x = frameHSV.cols / 2;
 	startPoint.y = frameHSV.rows;
 
-	cv::Point2f lastInner;
-	cv::Point2f firstInner;
-	cv::Point2f lastOuter;
-	cv::Point2f firstOuter;
+	cv::Point2d lastInner;
+	cv::Point2d firstInner;
+	cv::Point2d lastOuter;
+	cv::Point2d firstOuter;
 	
 
 	std::string state = "inner";
@@ -346,7 +346,7 @@ void ObjectFinder::IsolateField(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, 
 
 }
 
-ObjectPosition ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size)
+ObjectPosition ObjectFinder::ConvertPixelToRealWorld(const cv::Point2i &point, const cv::Point2i &frame_size)
 {
 	assert(point.y >= 0 && point.x >= 0 && point.y < frame_size.y && point.x < frame_size.x); //If there is no object found
 

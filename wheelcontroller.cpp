@@ -31,14 +31,14 @@ void WheelController::Forward(int speed){
 	DriveRotate(speed * 1.1547, 0, 0);
 
 }
-cv::Point3f WheelController::Rotate(bool direction, int speed){
+cv::Point3d WheelController::Rotate(bool direction, double speed){
 	return DriveRotate(0,0, direction ? speed : -speed);
 }
-cv::Point3f WheelController::Drive(int velocity, double direction){
+cv::Point3d WheelController::Drive(double velocity, double direction){
 	return DriveRotate(velocity, direction, 0);
 }
 
-cv::Point3f WheelController::DriveRotate(int velocity, double direction, int rotate){
+cv::Point3d WheelController::DriveRotate(double velocity, double direction, double rotate){
 	if (abs(velocity) > 190){
 		if (velocity > 0){
 			velocity = 190;
@@ -71,7 +71,7 @@ cv::Point3f WheelController::DriveRotate(int velocity, double direction, int rot
 	
 }
 
-cv::Point3f WheelController::Stop(){
+cv::Point3d WheelController::Stop(){
 	return Drive(0,0);
 }
 

@@ -5,8 +5,8 @@
 
 class WheelController {
 private:
-    cv::Point3f lastSpeed; // x, y, heading
-	cv::Point3f actualSpeed;
+    cv::Point3d lastSpeed; // x, y, heading
+	cv::Point3d actualSpeed;
 	BasicWheel * w_left;
 	BasicWheel * w_right;
 	BasicWheel * w_back;
@@ -17,10 +17,10 @@ public:
 	WheelController(boost::asio::io_service &io, bool useDummyPorts = false);
 	void Forward(int speed);
     void MoveTo(const CvPoint &);
-	cv::Point3f Rotate(bool direction, int speed);
-	cv::Point3f Drive(int velocity, double direction);
-	cv::Point3f DriveRotate(int velocity, double direction, int rotate);
-	cv::Point3f Stop();
+	cv::Point3d Rotate(bool direction, double speed);
+	cv::Point3d Drive(double velocity, double direction);
+	cv::Point3d DriveRotate(double velocity, double direction, double rotate);
+	cv::Point3d Stop();
 
 	bool IsStalled();
     ~WheelController(){

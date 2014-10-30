@@ -20,7 +20,6 @@ public:
 		//Reading data char by char, code is optimized for simplicity, not speed
 		using namespace boost;
 		char c;
-		int len;
 		std::string result;
 		for (;;)
 		{
@@ -43,7 +42,6 @@ public:
 		//Reading data char by char, code is optimized for simplicity, not speed
 		using namespace boost;
 		char c;
-		int len;
 		std::string result;
 		for (;;)
 		{
