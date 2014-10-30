@@ -50,7 +50,7 @@ protected:
 class SoftwareWheel : public BasicWheel
 {
 protected:
-	double max_acceleration = 500.0;
+	int max_acceleration = 500;
 	double stop_time = 1600;
 	void UpdateSpeed();
 };
