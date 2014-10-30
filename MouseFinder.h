@@ -4,7 +4,7 @@ class MouseFinder :
 	public ObjectFinder
 {
 protected:
-	virtual cv::Point2f LocateOnScreen(const HSVColorRange &HSVRange, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate, const HSVColorRange &inner, const HSVColorRange &outer);
+	virtual cv::Point2f LocateOnScreen( HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target);
 public:
 	MouseFinder();
 	~MouseFinder();

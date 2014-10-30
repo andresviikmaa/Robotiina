@@ -71,73 +71,10 @@ cv::Point3f WheelController::DriveRotate(int velocity, double direction, int rot
 	
 }
 
-cv::Point3f WheelController::DriveToBall(double distance, double horizontalDev, double horizontalAngle, int desiredDistance, DummyCoilBoard *coilBoard){
-	int speed;
-	int rotate;
-	//rotate calculation
-	if (horizontalAngle > 200){
-		rotate = (360 - horizontalAngle) * 2.5;
-	}
-	else{
-		rotate = horizontalAngle * 2.5;
-	}
-	//if ball is close and center
-	if (distance < desiredDistance && (horizontalDev > -10 && horizontalDev < 10)){
-		/* if (coilBoard->BallInTribbler()){
-			return Stop();
-		}
-		else{
-			Drive(15, horizontalAngle);
-		}
-		*/
-		return Stop();
-	}
-	//if ball is close but not center
-	else if (distance < desiredDistance){
-		//TODO: start tribbler
-		if (horizontalDev < -10){
-			return Rotate(0, rotate);
-		}
-		else if (horizontalDev > 10){
-			return Rotate(1, rotate);
-		}
-		else{
-			return Stop();
-		}
-	}
-	//if ball is not close 
-	else{
-		//speed calculation
-		if (distance > 700){
-			speed = 150;
-		}
-		else{
-			speed = distance * 0.26 - 32;
-		}
-		//driving commands
-		if (horizontalDev > -20 && horizontalDev < 20){
-			return Drive(speed, horizontalAngle);
-		}
-		else if (horizontalDev >= 20){
-			return DriveRotate(speed, horizontalAngle, rotate);
-		}
-		else{
-			return DriveRotate(speed, horizontalAngle, -(rotate));
-		}
-		
-	}
-
-}
-
 cv::Point3f WheelController::Stop(){
 	return Drive(0,0);
 }
 
-bool WheelController::CheckStall(){
-	if (w_left->IsStalled() || w_right->IsStalled() || w_back->IsStalled()){
-		return true;
-	}
-	else{
-		return false;
-	}
+bool WheelController::IsStalled(){
+	return w_left->IsStalled() || w_right->IsStalled() || w_back->IsStalled();
 }

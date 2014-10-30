@@ -16,10 +16,9 @@ private:
     ICamera *camera;
     WheelController * wheels;
 	ObjectFinder *finder;
-	DummyCoilBoard *coilBoard;
+	CoilGun *coilBoard;
 
-	int speed;
-    std::map<OBJECT, HSVColorRange> objectThresholds;
+	HSVColorRangeMap objectThresholds;
     //STATE state = STATE_NONE;
     boost::atomic<STATE> state;
 	boost::atomic<STATE> last_state;
@@ -33,6 +32,7 @@ protected:
 	OBJECT targetGate= NUMBER_OF_OBJECTS; //uselected
 	bool detectBorders = false;
 	bool captureFrames = false;
+
 public:
     Robot(boost::asio::io_service &io);
 	bool Launch(int argc, char* argv[]);

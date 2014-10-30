@@ -12,12 +12,14 @@ class BasicWheel
 public:
 	BasicWheel();
 	virtual ~BasicWheel();
-	void SetSpeed(int given_speed) {
-		target_speed = given_speed; 
+	void SetSpeed(int given_speed);
+	int GetSpeed() {
+		return actual_speed;
 	};
-	int GetSpeed() { 
-		return actual_speed; 
+	double GetSpeedInRPM() {
+		return actual_speed * 62.5 / (18.75 * 45) * 60;
 	};
+	int GetDistanceTraveled(bool reset = true);
 	bool IsStalled() {
 		return stall;
 	}
@@ -27,6 +29,7 @@ protected:
 	boost::mutex mutex;
 	int target_speed = 0;
 	int actual_speed = 0;
+	int last_speed = 0;
 	bool update_speed = false;
 	int id = 0;
 
@@ -34,8 +37,10 @@ protected:
 	boost::thread_group threads;
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime lastStep = time;
+	boost::posix_time::ptime lastUpdate = time;
 	boost::posix_time::ptime stallTime = time;
 	boost::posix_time::time_duration stallDuration;
+	long distance_traveled = 0;
 	void CheckStall();
 	virtual void UpdateSpeed() = 0;
 	void Run();
@@ -46,6 +51,7 @@ class SoftwareWheel : public BasicWheel
 {
 protected:
 	double max_acceleration = 500.0;
+	double stop_time = 1600;
 	void UpdateSpeed();
 };
 

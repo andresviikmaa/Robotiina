@@ -5,7 +5,7 @@ void CoilBoard::Kick(){
 	return;
 }
 
-void CoilBoard::ToggleTribbler(){
+void CoilBoard::ToggleTribbler(bool start){
 	writeString("m\n");
 	return;
 }

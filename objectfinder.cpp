@@ -23,17 +23,20 @@ ObjectFinder::ObjectFinder()
 	};
 }
 
-cv::Point3d ObjectFinder::Locate(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate,const HSVColorRange &inner, const HSVColorRange &outer) {
-	cv::Point2f point = LocateOnScreen(r, frameHSV, frameBGR, gate, inner, outer);
-	cv::Point3d info = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
-	WriteInfoOnScreen(info);
-	return info;
+bool ObjectFinder::Locate(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos) {
+	cv::Point2f point = LocateOnScreen(HSVRanges, frameHSV, frameBGR, target);
+	if (point.x == -1) return false;
+	targetPos = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
+	WriteInfoOnScreen(targetPos);
+	return true;
 }
 
-cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameHSV, cv::Mat &frameBGR, bool gate, const HSVColorRange &inner, const HSVColorRange &outer) {
+cv::Point2f ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
 
 	cv::Point2f center;
 	cv::Mat imgThresholded;
+	auto r = HSVRanges[BALL];
+	bool gate = target == GATE1 || target == GATE2;
 
 	inRange(frameHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), imgThresholded); //Threshold the image
 
@@ -82,7 +85,7 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameH
 	//validate ball
 	bool valid = true;
 	if (!gate){
-		valid = validateBall(inner, outer, center, frameHSV, frameBGR);
+		valid = validateBall(HSVRanges, center, frameHSV, frameBGR);
 	}
 	if (valid){
 		cv::circle(frameBGR, center, 5, cv::Scalar(0, 200, 220), -1);
@@ -93,8 +96,12 @@ cv::Point2f ObjectFinder::LocateOnScreen(const HSVColorRange &r, cv::Mat &frameH
 	}
 }
 
-bool ObjectFinder::validateBall(const HSVColorRange &inner, const HSVColorRange &outer,cv::Point2f endPoint, cv::Mat &frameHSV, cv::Mat &frameBGR)
+bool ObjectFinder::validateBall(HSVColorRangeMap &HSVRanges, cv::Point2f endPoint, cv::Mat &frameHSV, cv::Mat &frameBGR)
 {
+
+	const HSVColorRange &inner = HSVRanges[INNER_BORDER];
+	const HSVColorRange &outer = HSVRanges[OUTER_BORDER];
+
 	cv::Mat innerThresholded;
 	inRange(frameHSV, cv::Scalar(inner.hue.low, inner.sat.low, inner.val.low), cv::Scalar(inner.hue.high, inner.sat.high, inner.val.high), innerThresholded); //Threshold the image
 	cv::Mat outerThresholded;
@@ -206,7 +213,10 @@ void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickn
 
 }
 
-void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange &outer, const HSVColorRange &gate1, const HSVColorRange &gate2, cv::Mat &frameHSV, cv::Mat &frameBGR) {
+void ObjectFinder::IsolateField(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR) {
+
+	const HSVColorRange &inner = HSVRanges[INNER_BORDER];
+	const HSVColorRange &outer = HSVRanges[OUTER_BORDER];
 
 	//	cv::imshow("Thresholded Image 3", imgHSV); //show the thresholded image
 	cv::Mat innerThresholded;
@@ -336,10 +346,10 @@ void ObjectFinder::IsolateField(const HSVColorRange &inner, const HSVColorRange 
 
 }
 
-cv::Point3d ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size)
+ObjectPosition ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, const cv::Point2i &frame_size)
 {
 	if (point.y < 1 && point.x < 1 || (point.y != point.y) || (point.x != point.x)){ //If there is no object found
-		return cv::Point3d(-1, -1, -1);
+		return { -1, -1, -1 };
 	}
 	const cv::Point2d center (frame_size.x / 2.0, frame_size.y / 2.0);
 	//Calculating distance
@@ -352,20 +362,20 @@ cv::Point3d ObjectFinder::ConvertPixelToRealWorld(const cv::Point2f &point, cons
 	if (Hor_angle < 0){
 		Hor_angle = 360 + Hor_angle;
 	}
-	return cv::Point3d(distance, HorizontalDev, Hor_angle);
+	return{ distance, HorizontalDev, Hor_angle };
 }
 
 
-void ObjectFinder::WriteInfoOnScreen(const cv::Point3d &info){
+void ObjectFinder::WriteInfoOnScreen(const ObjectPosition &info){
 	cv::Mat infoWindow(100, 250, CV_8UC3, cv::Scalar::all(0));
 	std::ostringstream oss;
-	oss << "Distance :" << info.x;
+	oss << "Distance :" << info.distance;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 	oss.str("");
-	oss << "Horizontal Dev :" << info.y;
+	oss << "Horizontal Dev :" << info.horizontalDev;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 50), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 	oss.str("");
-	oss << "Horizontal angle :" << info.z;
+	oss << "Horizontal angle :" << info.horizontalAngle;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 	cv::namedWindow("Info Window");
 	cv::imshow("Info Window", infoWindow);

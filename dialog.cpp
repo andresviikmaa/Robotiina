@@ -24,6 +24,11 @@ int Dialog::createButton(const std::string& bar_name, std::function<void()> cons
 	return 0;
 };
 
+void Dialog::clearButtons() {
+	boost::mutex::scoped_lock lock(mutex); //allow one command at a time
+	m_buttons.clear();
+}
+
 int Dialog::show(const cv::Mat background) {
 	cv::Mat image;
 	background.copyTo(image);

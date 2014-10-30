@@ -22,6 +22,20 @@ struct HSVColorRange
     ColorRange val;
 };
 
+struct Speed
+{
+	double velocity;
+	double heading;
+	double rotation;
+};
+
+struct ObjectPosition
+{
+	double distance;
+	double horizontalDev;
+	double horizontalAngle;
+};
+
 enum OBJECT_ID {
 	ID_WHEEL_LEFT = 1,
 	ID_WHEEL_RIGHT = 2,
@@ -42,10 +56,13 @@ enum STATE
     STATE_CALIBRATE,
     STATE_LAUNCH,
 	STATE_SELECT_GATE,
+	STATE_RUN,
+	/* autopilot states
 	STATE_LOCATE_BALL,
     STATE_LOCATE_GATE,
-	STATE_REMOTE_CONTROL,
 	STATE_CRASH,
+	*/
+	STATE_REMOTE_CONTROL,
 	STATE_MANUAL_CONTROL,
 	STATE_DANCE,
 	STATE_END_OF_GAME /* leave this last*/
@@ -58,4 +75,4 @@ public:
 };
 
 extern std::map<OBJECT, std::string> OBJECT_LABELS;
-
+typedef std::map<OBJECT, HSVColorRange> HSVColorRangeMap;

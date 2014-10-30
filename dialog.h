@@ -12,9 +12,7 @@ public:
     Dialog(const std::string &m_Title, int flags = CV_WINDOW_AUTOSIZE);
 	int createButton(const std::string& bar_name, std::function<void()> const &);
     int show(const cv::Mat background);
-	void clearButtons() {
-		m_buttons.clear();
-	}
+	void clearButtons();
 protected:
     void mouseClicked(int x, int y);
 private:

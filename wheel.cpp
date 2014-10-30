@@ -9,13 +9,25 @@ BasicWheel::BasicWheel()
 	threads.create_thread(boost::bind(&BasicWheel::Run, this));
 };
 
+void BasicWheel::SetSpeed(int given_speed) {
+	boost::mutex::scoped_lock lock(mutex);
+	target_speed = given_speed;
+	lastUpdate = boost::posix_time::microsec_clock::local_time();
+	update_speed = true;
+};
+
 void BasicWheel::Run()
 {
 	while (!stop_thread){
 		time = boost::posix_time::microsec_clock::local_time();
-		UpdateSpeed();
-		CheckStall();
+		{ // new scope for locking
+			boost::mutex::scoped_lock lock(mutex);
+			UpdateSpeed();
+			CheckStall();
+			//CalculateDistanceTraveled();
+		}
 		lastStep = time;
+		// speed update interval is 62.5Hz
 		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // do not poll serial to fast
 
 	}
@@ -37,6 +49,15 @@ void BasicWheel::CheckStall()
 
 }
 
+int BasicWheel::GetDistanceTraveled(bool reset) 
+{
+	{ // new scope for locking
+		boost::mutex::scoped_lock lock(mutex);
+		return distance_traveled;
+		if (reset) distance_traveled = 0;
+	}
+
+}
 
 BasicWheel::~BasicWheel()
 {
@@ -46,27 +67,32 @@ BasicWheel::~BasicWheel()
 
 void SoftwareWheel::UpdateSpeed()
 {
+	last_speed = actual_speed;
 	double dt = (double)(time - lastStep).total_milliseconds() / 1000.0;
 	if (dt < 0.0000001) return;
+
+	if ((time - lastUpdate).total_milliseconds() > stop_time) { // die out if no update
+		actual_speed = 0;
+		return;
+	}
 
 	double dv = target_speed - actual_speed;
 	double sign = (dv > 0) - (dv < 0);
 	double acc = dv / dt;
 	acc = sign * std::min(abs(acc), max_acceleration);
 
-	if (false && rand() % 1000 > 995) { // 0.5% probability to stall
+	if (rand() % 1000 > 995) { // 0.5% probability to stall
 		actual_speed = 0;
 	}
 	else {
-		assert(actual_speed > -1000);
 		actual_speed += acc * dt;
-		assert(actual_speed > -1000);
 	}
 };
 
 void SerialWheel::UpdateSpeed()
 {
-	boost::mutex::scoped_lock lock(mutex);
+	last_speed = actual_speed;
+
 	if (update_speed){
 		std::ostringstream oss;
 		oss << "sd" << target_speed << "\n";
