@@ -96,6 +96,7 @@
     <ClInclude Include="objectfinder.h" />
     <ClInclude Include="remotecontrol.h" />
     <ClInclude Include="robot.h" />
+    <ClInclude Include="RobotTracker.h" />
     <ClInclude Include="simpleserial.h" />
     <ClInclude Include="stillcamera.h" />
     <ClInclude Include="types.h" />
@@ -116,6 +117,7 @@
     <ClCompile Include="remotecontrol.cpp" />
     <ClCompile Include="robot.cpp" />
     <ClCompile Include="Robotiina.cpp" />
+    <ClCompile Include="RobotTracker.cpp" />
     <ClCompile Include="stillcamera.cpp" />
     <ClCompile Include="wheel.cpp" />
     <ClCompile Include="wheelcontroller.cpp" />

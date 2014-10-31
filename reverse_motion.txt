@@ -123,3 +123,46 @@ why negaitve speed?
 =========================================================
 
 z = ...
+
+
+++++++++++++++++++++++++++++++++++++++++++
+when c - a == 0
+
+a = x * [cu * cy + su * sy] + z
+b = x * [cv * cy + sv * sy] + z
+c = x * [cw * cy + sw * sy] + z
+
+z = b - x * [cv * cy + sv * sy]
+
+a = x * [cu * cy + su * sy] + b - x * [cv * cy + sv * sy]
+c = x * [cw * cy + sw * sy] + b - x * [cv * cy + sv * sy]
+
+a - b    [cu * cy + su * sy] - [cv * cy + sv * sy]
+----- = -------------------------------------------
+c - b    [cw * cy + sw * sy] - [cv * cy + sv * sy]
+
+ty = tan(y)
+
+     cu + su * ty - cv - sv * ty
+s = -----------------------------------
+     cw + sw * ty - cv - sv * ty
+
+     cuv + suv * ty
+s = -----------------
+     cwv + swv * ty
+
+#cvu + svu * tan(y) = s * [cwu + swu * tan(y)]
+#cvu - s * cwu = s * swu * tan(y) - svu * tan(y)
+
+#cvu - s * cwu
+#------------- = tan(y)
+#s * swu - svu
+
+cuv + suv * ty = s * (cwv + swv * ty)
+
+cuv - s * cwv
+------------- = tan(y)
+s * swv - suv
+
+s
+

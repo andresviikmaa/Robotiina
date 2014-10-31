@@ -79,10 +79,14 @@ void SoftwareWheel::UpdateSpeed()
 	double dv = target_speed - actual_speed;
 	double sign = (dv > 0) - (dv < 0);
 	double acc = dv / dt;
-	acc = sign * std::min(abs(acc), max_acceleration);
+	acc = sign * std::min((int)abs(acc), max_acceleration);
 
-	if (rand() % 1000 > 995) { // 0.5% probability to stall
+	if (false && rand() % 1000 > 995) { // 0.5% probability to stall
+		stallStart = time;
 		actual_speed = 0;
+	}
+	else if ((time - stallStart).total_milliseconds() < 600) {
+		;// still stalled
 	}
 	else {
 		actual_speed += acc * dt;

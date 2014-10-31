@@ -2,9 +2,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
-#define deg150 (150 * PI / 180.0)
-#define deg30 (30 * PI / 180.0)
-#define deg270 (270 * PI / 180.0)
+#define deg150 (150.0 * PI / 180.0)
+#define deg30 (30.0 * PI / 180.0)
+#define deg270 (270.0 * PI / 180.0)
 
 WheelController::WheelController(boost::asio::io_service &io, bool useDummyPorts)
 {
@@ -65,8 +65,8 @@ cv::Point3d WheelController::DriveRotate(double velocity, double direction, doub
 			
 	}
 
-	lastSpeed.x = sin(direction* PI / 180.0)* velocity + rotate;
-	lastSpeed.y = cos(direction* PI / 180.0)* velocity + rotate,
+	lastSpeed.x = velocity; // sin(direction* PI / 180.0)* velocity + rotate;
+	lastSpeed.y = direction; //cos(direction* PI / 180.0)* velocity + rotate,
 	lastSpeed.z = rotate;
 
 	auto speeds = CalculateWheelSpeeds(velocity, direction, rotate);
@@ -103,11 +103,43 @@ cv::Point3d WheelController::GetWheelSpeeds()
 void WheelController::GetRobotSpeed(double &velocity, double &direction, double &rotate)
 {
 	cv::Point3d speeds = GetWheelSpeeds();
-	
-	double s = (speeds.y - speeds.x) / (speeds.z - speeds.x);
+	velocity = direction = rotate = 0;
+	double a, b, c, u, v, w;
+	/*
+	a = x *[cos(u) * cos(y) + sin(u) * sin(y)] + z
+	b = x *[cos(v) * cos(y) + sin(v) * sin(y)] + z
+	c = x *[cos(w) * cos(y) + sin(w) * sin(y)] + z
+	*/
+	if (abs(speeds.z - speeds.x) > 0.0000001) { // c - a == 0
+		a = speeds.x; b = speeds.y; c = speeds.z;
+		u = deg150; v = deg30; w = deg270;
+	}
+	else if (abs(speeds.x - speeds.y) > 0.0000001) {
+		a = speeds.y; b = speeds.z; c = speeds.x;
+		u = deg30; v = deg270; w = deg30;
+	}
+	else if (abs(speeds.z - speeds.y) > 0.0000001) {
+		a = speeds.z; b = speeds.x; c = speeds.y;
+		u = deg270; v = deg30; w = deg150;
+	}
+	else {
+		// all equal, rotation only
+		rotate = speeds.x;
+		return;
 
-	double directionInRad = atan(((cos(deg30) - cos(deg150)) - s * (cos(deg270) - cos(deg150))) / (s * (sin(deg270) - sin(deg150)) - (sin(deg30) - sin(deg150))));
+	}
+	double s = (b - a) / (c - a);
+	double directionInRad = atan(((cos(v) - cos(u)) - s * (cos(w) - cos(u))) / (s * (sin(w) - sin(u)) - (sin(v) - sin(u))));
+	if (directionInRad < 0) directionInRad += 2 * PI;
 	direction = directionInRad / PI * 180;
-	velocity = (speeds.y - speeds.x) / ((cos(deg150) - cos(deg30)) * cos(directionInRad) + (sin(deg150) - sin(deg30)) * sin(directionInRad));
-	rotate = speeds.z - (velocity * cos(deg270 - directionInRad));
+	velocity = (a - c) / ((cos(u) - cos(w)) * cos(directionInRad) + (sin(u) - sin(w)) * sin(directionInRad));
+	rotate = c - (velocity * cos(w - directionInRad));
+
+}
+
+void WheelController::GetTargetSpeed(double &velocity, double &direction, double &rotate) 
+{
+	velocity = lastSpeed.x;
+	direction = lastSpeed.y;
+	rotate = lastSpeed.z;
 }

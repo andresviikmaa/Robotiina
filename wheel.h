@@ -52,6 +52,7 @@ class SoftwareWheel : public BasicWheel
 protected:
 	int max_acceleration = 500;
 	double stop_time = 1600;
+	boost::posix_time::ptime stallStart;
 	void UpdateSpeed();
 };
 

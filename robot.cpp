@@ -22,6 +22,7 @@
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/filesystem.hpp>
 #include "AutoPilot.h"
+#include "RobotTracker.h"
 
 
 #define STATE_BUTTON(name, new_state) \
@@ -182,6 +183,7 @@ void Robot::Run()
 	}
 
 	AutoPilot autoPilot(wheels, coilBoard);
+	RobotTracker tracker(wheels);
 
 	while (true)
     {

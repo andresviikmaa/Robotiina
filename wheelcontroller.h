@@ -23,7 +23,7 @@ public:
 	cv::Point3d Stop();
 	cv::Point3d GetWheelSpeeds();
 	void GetRobotSpeed(double &velocity, double &direction, double &rotate);
-
+	void GetTargetSpeed(double &velocity, double &direction, double &rotate);
 	bool IsStalled();
     ~WheelController(){
 		if (w_left)
