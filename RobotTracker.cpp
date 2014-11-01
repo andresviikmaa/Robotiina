@@ -20,8 +20,25 @@ void RobotTracker::Run()
 		double dt = (time - lastStep).total_milliseconds();
 		wheels->GetRobotSpeed(velocity, direction, rotate);
 		wheels->GetTargetSpeed(velocity2, direction2, rotate2);
-		WriteInfoOnScreen(cv::Point3d(velocity, direction, rotate), cv::Point3d(velocity2, direction2, rotate2), dt);
+
+		cv::Point3d acceleration = { (velocity - lastSpeed.x) / dt, (direction - lastSpeed.y) / dt, (rotate - lastSpeed.z) / dt };
+		cv::Point3d current_speed = { velocity, direction, rotate };
+		cv::Point3d target_speed = { velocity2, direction2, rotate2 };
+		cv::Point3d position;
+
+		position.x = lastPosition.x + velocity * dt + 0.5 * (acceleration.x) * pow(dt, 2);
+		/*
+		positoion.y = lastPosition.x
+		// from polar coordinates to ...
+		lastSpeed.x = sin(direction* PI / 180.0)* velocity + rotate;
+		lastSpeed.y = cos(direction* PI / 180.0)* velocity + rotate,
+		lastSpeed.z = rotate;
+		*/
+		WriteInfoOnScreen(current_speed, target_speed, acceleration, dt);
+
 		lastStep = time;
+		lastSpeed = current_speed;
+
 		// speed update interval is 62.5Hz
 		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // do not poll serial to fast
 
@@ -35,7 +52,7 @@ RobotTracker::~RobotTracker()
 	threads.join_all();
 }
 
-void RobotTracker::WriteInfoOnScreen(cv::Point3d acutual_speed, cv::Point3d target_speed, double dt){
+void RobotTracker::WriteInfoOnScreen(cv::Point3d acutual_speed, cv::Point3d target_speed, cv::Point3d acceleration, double dt){
 	cv::Mat infoWindow(150, 450, CV_8UC3, cv::Scalar::all(0));
 	std::ostringstream oss;
 	oss << "velocity :" << target_speed.x;
@@ -57,6 +74,15 @@ void RobotTracker::WriteInfoOnScreen(cv::Point3d acutual_speed, cv::Point3d targ
 	oss << "" << acutual_speed.z;
 	cv::putText(infoWindow, oss.str(), cv::Point(220, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 
+	oss.str("");
+	oss << "" << acceleration.x;
+	cv::putText(infoWindow, oss.str(), cv::Point(320, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	oss.str("");
+	oss << "" << acceleration.y;
+	cv::putText(infoWindow, oss.str(), cv::Point(320, 50), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	oss.str("");
+	oss << "" << acceleration.z;
+	cv::putText(infoWindow, oss.str(), cv::Point(320, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 
 	oss.str("");
 	oss << "dt :" << dt;
