@@ -23,6 +23,7 @@ public:
 	bool IsStalled() {
 		return stall;
 	}
+        void Start();
 
 protected:
 	bool stall = false;

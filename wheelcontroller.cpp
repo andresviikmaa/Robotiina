@@ -27,6 +27,10 @@ WheelController::WheelController(boost::asio::io_service &io, bool useDummyPorts
 		std::cout << "wheels done" << std::endl;
 
 	}
+	w_left->Start();
+	w_right->Start();
+	w_back->Start();
+
 };
 
 void WheelController::Forward(int speed) {

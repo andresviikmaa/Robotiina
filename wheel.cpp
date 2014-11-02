@@ -6,6 +6,9 @@ BasicWheel::BasicWheel()
 {
 	stall = false;
 	stop_thread = false;
+}
+void BasicWheel::Start()
+{
 	threads.create_thread(boost::bind(&BasicWheel::Run, this));
 };
 
