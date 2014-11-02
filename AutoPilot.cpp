@@ -33,13 +33,6 @@ DriveMode AutoPilot::DriveToBall()
 		if (!ballInSight) return LOCATE_BALL;
 		if (wheels->IsStalled()) return RECOVER_CRASH;
 
-		/* END remove when IR sensor is working */
-		//if ball is close and center i.e. Ball in tribbler
-		if (lastBallLocation.distance < desiredDistance && (lastBallLocation.horizontalDev > -10 && lastBallLocation.horizontalDev < 10)){
-			break; // ballInTribbler
-		}
-		/* END remove when IR sensor is working */
-
 		//rotate calculation
 		if (lastBallLocation.horizontalAngle > 200){
 			rotate = (360 - lastBallLocation.horizontalAngle) * 2.5;

@@ -25,7 +25,7 @@ ObjectFinder::ObjectFinder()
 
 bool ObjectFinder::Locate(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos) {
 	cv::Point2d point = LocateOnScreen(HSVRanges, frameHSV, frameBGR, target);
-	if (point.x == -1) return false;
+	if (point.x < 0 || point.y < 0) return false;
 	targetPos = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
 	WriteInfoOnScreen(targetPos);
 	return true;
@@ -33,7 +33,7 @@ bool ObjectFinder::Locate(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Ma
 
 cv::Point2i ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
 
-	cv::Point2d center;
+	cv::Point2d center(-1,-1);
 	cv::Mat imgThresholded;
 	auto r = HSVRanges[BALL];
 	bool gate = target == GATE1 || target == GATE2;
@@ -50,7 +50,9 @@ cv::Point2i ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &f
 	cv::Rect bounding_rect;
 
 	findContours(imgThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); // Find the contours in the image
-	
+	if (contours.size() == 0){
+		return center;
+	}
 	cv::Scalar color(0, 0, 0);
 	cv::Scalar color2(0, 0, 255);
 
@@ -68,7 +70,7 @@ cv::Point2i ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &f
 	//For ball validation, drawed contour should cover balls shadow.
 	drawContours(frameHSV, contours, largest_contour_index, color, thickness, 8, hierarchy);
 	drawContours(frameHSV, contours, largest_contour_index, color, -5, 8, hierarchy);
-
+	
 	//find center
 	if (contours.size() > largest_contour_index){
 		cv::Moments M = cv::moments(contours[largest_contour_index]);
@@ -80,6 +82,9 @@ cv::Point2i ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &f
 		else{
 			center = cv::Point2i(M.m10 / M.m00, M.m01 / M.m00);
 		}
+	}
+	else {
+		assert(false);
 	}
 
 	//validate ball

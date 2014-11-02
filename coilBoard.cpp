@@ -6,26 +6,39 @@ void CoilBoard::Kick(){
 }
 
 void CoilBoard::ToggleTribbler(bool start){
-	writeString("m\n");
+	if (start) {
+		writeString("m1\n");
+	}
+	else{
+		writeString("m0\n");
+	}
+	
 	return;
 }
 
 
 bool CoilBoard::BallInTribbler(){
+	int result = 0;
 	try{
-		writeString("b\n");
-		std::string line = readLine();
-		if (line == "true"){
-			return true;
+		for (int i = 0; i < 10; i++){
+			writeString("b\n");
+			std::string line = readLine();
+			if (line == "true"){
+				result ++;
+			}
 		}
-		else{
-			return false;
-		}
+		
 	}
 	catch (boost::system::system_error& e)
 	{
 		std::cout << "Error: " << e.what() << std::endl;
 		return 0;
+	}
+	if (result >= 8){
+		return true;
+	}
+	else{
+		return false;
 	}
 
 }
