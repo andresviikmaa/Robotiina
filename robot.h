@@ -41,11 +41,11 @@ public:
         return state;
     }
 	int GetLastState() {
-		return state;
+		return last_state;
 	}
-    void SetState(STATE state) {
-		this->last_state = (STATE)this->state;
-        this->state = state;
+    void SetState(STATE new_state) {
+		last_state = (STATE)state;
+        state = new_state;
     }
     std::string ExecuteRemoteCommand(const std::string &command);
 };

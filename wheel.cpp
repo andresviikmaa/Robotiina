@@ -14,7 +14,11 @@ void BasicWheel::Start()
 {
 	threads.create_thread(boost::bind(&BasicWheel::Run, this));
 };
-
+void BasicWheel::Stop()
+{
+	stop_thread = true;
+	threads.join_all();
+};
 void BasicWheel::SetSpeed(int given_speed) {
 	//boost::mutex::scoped_lock lock(mutex);
 	target_speed = given_speed;
@@ -66,8 +70,7 @@ int BasicWheel::GetDistanceTraveled(bool reset)
 
 BasicWheel::~BasicWheel()
 {
-	stop_thread = true;
-	threads.join_all();
+	assert(stop_thread);
 }
 
 void SoftwareWheel::UpdateSpeed()

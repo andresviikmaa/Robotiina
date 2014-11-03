@@ -23,7 +23,8 @@ public:
 	bool IsStalled() {
 		return stall;
 	}
-        void Start();
+	void Start();
+	void Stop();
 
 protected:
 	boost::atomic<bool> stall;

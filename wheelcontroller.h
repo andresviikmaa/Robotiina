@@ -26,11 +26,17 @@ public:
 	void GetTargetSpeed(double &velocity, double &direction, double &rotate);
 	bool IsStalled();
     ~WheelController(){
-		if (w_left)
+		if (w_left) {
+			w_left->Stop();
 			delete w_left;
-		if (w_right)
+		}
+		if (w_right) {
+			w_right->Stop();
 			delete w_right;
-		if (w_back)
+		}
+		if (w_back) {
+			w_back->Stop();
 			delete w_back;
+		}
 	};
 };
