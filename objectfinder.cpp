@@ -35,7 +35,7 @@ cv::Point2i ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &f
 
 	cv::Point2d center(-1,-1);
 	cv::Mat imgThresholded;
-	auto r = HSVRanges[BALL];
+	auto r = HSVRanges[target];
 	bool gate = target == GATE1 || target == GATE2;
 
 	inRange(frameHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), imgThresholded); //Threshold the image

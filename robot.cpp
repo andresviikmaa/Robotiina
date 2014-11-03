@@ -297,6 +297,8 @@ void Robot::Run()
 			ObjectPosition ballPos, gatePos;
 			bool ballFound = finder->Locate(objectThresholds, frameHSV, frameBGR, BALL, ballPos);
 			bool gateFound = finder->Locate(objectThresholds, frameHSV, frameBGR, targetGate, gatePos);
+				
+			
 
 			autoPilot.UpdateState(ballFound ? &ballPos : NULL, gateFound ? &gatePos : NULL);
         }

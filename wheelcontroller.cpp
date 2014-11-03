@@ -96,6 +96,7 @@ cv::Point3d WheelController::Stop()
 
 bool WheelController::IsStalled()
 {
+	return false;
 	return w_left->IsStalled() || w_right->IsStalled() || w_back->IsStalled();
 }
 

@@ -46,8 +46,8 @@ void BasicWheel::CheckStall()
 {
 	int diff = abs(actual_speed - target_speed);
 	boost::posix_time::time_duration::tick_type stallDuration = (time - stallTime).total_milliseconds();
-	if (diff > 20){
-		if (!stall && stallDuration > 400){ 
+	if (diff > 30){
+		if (!stall && stallDuration > 500){ 
 			std::cout << "stalled, diff: " << diff << " = " << actual_speed  << " != " << target_speed << std::endl;
 			stall = true; 
 		}
@@ -71,6 +71,7 @@ int BasicWheel::GetDistanceTraveled(bool reset)
 
 BasicWheel::~BasicWheel()
 {
+	Stop();
 	assert(stop_thread);
 }
 
