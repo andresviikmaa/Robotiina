@@ -4,6 +4,19 @@
 #include "wheelcontroller.h"
 #include <thread>
 
+std::pair<DriveMode, std::string> DriveModes[] = {
+	std::pair<DriveMode, std::string>(IDLE, "IDLE"),
+	std::pair<DriveMode, std::string>(LOCATE_BALL, "LOCATE_BALL"),
+	std::pair<DriveMode, std::string>(DRIVE_TO_BALL, "DRIVE_TO_BALL"),
+	std::pair<DriveMode, std::string>(LOCATE_GATE, "LOCATE_GATE"),
+	std::pair<DriveMode, std::string>(RECOVER_CRASH, "RECOVER_CRASH"),
+
+	//	std::pair<STATE, std::string>(STATE_END_OF_GAME, "End of Game") // this is intentionally left out
+
+};
+
+std::map<DriveMode, std::string> DRIVEMODE_LABELS(DriveModes, DriveModes + sizeof(DriveModes) / sizeof(DriveModes[0]));
+
 AutoPilot::AutoPilot(WheelController *wheels, CoilGun *coilgun) :wheels(wheels), coilgun(coilgun)
 {
 	stop_thread = false;
@@ -26,7 +39,7 @@ DriveMode AutoPilot::DriveToBall()
 	double speed;
 	double rotate;
 	int desiredDistance = 210;
-	while (!coilgun->BallInTribbler()) {
+	while (!(lastBallLocation.distance < desiredDistance && coilgun->BallInTribbler())) {
 		boost::mutex::scoped_lock lock(mutex);
 		if (stop_thread) return EXIT;
 		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
@@ -147,7 +160,7 @@ DriveMode AutoPilot::LocateGate() {
 
 DriveMode AutoPilot::RecoverCrash() 
 {
-	while (!wheels->IsStalled()) {
+	while (wheels->IsStalled()) {
 		//Backwards
 		wheels->Drive(50, 180);
 		std::chrono::milliseconds dura(1000);
@@ -191,7 +204,7 @@ void AutoPilot::Run()
 void AutoPilot::WriteInfoOnScreen(){
 	cv::Mat infoWindow(100, 250, CV_8UC3, cv::Scalar::all(0));
 	std::ostringstream oss;
-	oss << "State :" << driveMode;
+	oss << "State :" << DRIVEMODE_LABELS[driveMode];
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 	oss.str("");
 	oss << "Ball visible :" << (ballInSight ? "yes" : "no");

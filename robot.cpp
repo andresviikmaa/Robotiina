@@ -183,8 +183,7 @@ void Robot::Run()
 	}
 
 	AutoPilot autoPilot(wheels, coilBoard);
-	RobotTracker tracker(wheels);
-
+	//RobotTracker tracker(wheels);
 	while (true)
     {
 		

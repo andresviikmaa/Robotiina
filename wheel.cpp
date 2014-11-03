@@ -46,10 +46,11 @@ void BasicWheel::CheckStall()
 {
 	int diff = abs(actual_speed - target_speed);
 	boost::posix_time::time_duration::tick_type stallDuration = (time - stallTime).total_milliseconds();
-	if (diff > 10){
-		std::cout << "diff: " << diff << std::endl;
-
-		if (stallDuration > 400){ stall = true; }
+	if (diff > 20){
+		if (!stall && stallDuration > 400){ 
+			std::cout << "stalled, diff: " << diff << " = " << actual_speed  << " != " << target_speed << std::endl;
+			stall = true; 
+		}
 	}
 	else{
 		stallTime = time;
@@ -113,6 +114,10 @@ void SerialWheel::UpdateSpeed()
 		update_speed = false;
 	}
 	writeString("s\n");
-	actual_speed = atoi(readLine().substr(3).c_str());
+	std::string line = readLine();
+	if( line.length() > 0 )
+		actual_speed = atoi(line.substr(3).c_str());
+	else
+		actual_speed = 0;
 
 };
