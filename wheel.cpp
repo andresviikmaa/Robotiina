@@ -6,6 +6,9 @@ BasicWheel::BasicWheel()
 {
 	stall = false;
 	stop_thread = false;
+	update_speed = false;
+	target_speed = 0;
+	actual_speed = 0;
 }
 void BasicWheel::Start()
 {
@@ -13,9 +16,8 @@ void BasicWheel::Start()
 };
 
 void BasicWheel::SetSpeed(int given_speed) {
-	boost::mutex::scoped_lock lock(mutex);
+	//boost::mutex::scoped_lock lock(mutex);
 	target_speed = given_speed;
-	lastUpdate = boost::posix_time::microsec_clock::local_time();
 	update_speed = true;
 };
 
@@ -24,7 +26,7 @@ void BasicWheel::Run()
 	while (!stop_thread){
 		time = boost::posix_time::microsec_clock::local_time();
 		{ // new scope for locking
-			boost::mutex::scoped_lock lock(mutex);
+			//boost::mutex::scoped_lock lock(mutex);
 			UpdateSpeed();
 			CheckStall();
 			//CalculateDistanceTraveled();
@@ -55,7 +57,7 @@ void BasicWheel::CheckStall()
 int BasicWheel::GetDistanceTraveled(bool reset) 
 {
 	{ // new scope for locking
-		boost::mutex::scoped_lock lock(mutex);
+		//boost::mutex::scoped_lock lock(mutex);
 		return distance_traveled;
 		if (reset) distance_traveled = 0;
 	}
@@ -101,6 +103,7 @@ void SerialWheel::UpdateSpeed()
 	last_speed = actual_speed;
 
 	if (update_speed){
+		lastUpdate = boost::posix_time::microsec_clock::local_time();
 		std::ostringstream oss;
 		oss << "sd" << target_speed << "\n";
 		writeString(oss.str());

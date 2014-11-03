@@ -9,7 +9,9 @@ public:
 	SimpleSerial(boost::asio::io_service &io_service, const std::string & port, unsigned int baud_rate) : io(io_service), serial(io, port) {
 		serial.set_option(boost::asio::serial_port_base::baud_rate(baud_rate));
 	}
-
+	~SimpleSerial(){
+		serial.close();
+	}
 
 	void writeString(std::string s)	{
 		boost::asio::write(serial, boost::asio::buffer(s.c_str(), s.size()));

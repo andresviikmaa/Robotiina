@@ -15,6 +15,7 @@ public:
 	ComPortScanner();
 	bool Verify(boost::asio::io_service &io_service, const std::string &conf_file = "conf/ports.ini");
 	bool Scan(boost::asio::io_service &io_service);
+	std::string CheckPort(boost::asio::io_service &io_service, const std::string &port);
 	~ComPortScanner();
 };
 

@@ -8,6 +8,32 @@
 ComPortScanner::ComPortScanner()
 {
 }
+std::string ComPortScanner::CheckPort(boost::asio::io_service &io_service, const std::string &portNum)
+{
+	try {
+		std::string id = "";
+		SimpleSerial port = SimpleSerial(io_service, portNum, 115200);
+		for (int i = 0; i < 10; i++){
+			port.writeString("?\n");
+			id = port.readLineAsync(1000);
+
+			std::cout << "Check result: " << portNum<< " -> " << id << std::endl;
+			if (id == "discharged") continue;
+			if (id.empty()) continue;
+			if (id == "<id:0>") throw std::runtime_error(("ID not set in port " + portNum).c_str());
+			if (id.substr(0, 4) != "<id:") throw std::runtime_error(("Invalid ID " + id + " received from port " + portNum).c_str());
+
+			id = id.substr(4, 1);
+			std::cout << "Found port " << portNum << ", id: " << id << std::endl;
+			return id;
+		}
+		if (id.empty()) throw std::runtime_error(("No ID received from port " + portNum).c_str());
+	}
+	catch (std::runtime_error const&e){
+		std::cout << "Port not accessible: " << portNum << ", error: " << e.what() << std::endl;
+	}
+	return "";
+}
 
 bool ComPortScanner::Verify(boost::asio::io_service &io_service, const std::string &conf_file) 
 {
@@ -36,25 +62,10 @@ bool ComPortScanner::Verify(boost::asio::io_service &io_service, const std::stri
 			ok = false;
 			continue;
 		}
-		try {
-			SimpleSerial port = SimpleSerial(io_service, portNum.str(), 115200);
-			port.writeString("?\n");
-			std::string id = port.readLineAsync(500);
-			if (id.empty()) throw std::runtime_error(("No ID received from port " + portNum.str()).c_str());
-			if (id == "<id:0>") throw std::runtime_error(("ID not set in port " + portNum.str()).c_str());
-			if (id.substr(0, 4) != "<id:") throw std::runtime_error(("Invalid ID " + id + " received from port " + portNum.str()).c_str());
-
-			id = id.substr(4, 1);
-			if (id != _id) throw std::runtime_error((std::string("ID mismatch (old)'") + _id + "' != '" + id + "' (new) for port " + portNum.str()).c_str());
-			std::cout << "Found port " << portNum.str() << ", id: " << id << std::endl;
-			//portMap[atoi(id.c_str())] = portNum.str();
-			ports.put(id, portNum.str());
-		}
-		catch (std::runtime_error const&e){
-			std::cout << "Port not accessible: " << portNum.str() << ", error: " << e.what() << std::endl;
+		std::string id = CheckPort(io_service, portNum.str());
+		if (id.empty()) {
 			ok = false;
 		}
-
 	}
 	return ok;
 }
@@ -69,22 +80,9 @@ bool ComPortScanner::Scan(boost::asio::io_service &io_service)
 	for (int i = 0; i < 20; i++) {
 		std::stringstream portNum;
 		portNum << prefix << i;
-		try {
-			SimpleSerial port = SimpleSerial(io_service, portNum.str(), 115200);
-			port.writeString("?\n");
-			std::string id = port.readLineAsync(500);
-			if (id.empty()) throw std::runtime_error(("No ID received from port " + portNum.str()).c_str());
-			if (id == "<id:0>") throw std::runtime_error(("ID not set in port " + portNum.str()).c_str());
-			if (id.substr(0, 4) != "<id:") throw std::runtime_error(("Invalid ID " + id + " received from port " + portNum.str()).c_str());
-			
-			id = id.substr(4, 1);
-			std::cout << "Found port " << portNum.str() << ", id: " << id << std::endl;
-			//portMap[atoi(id.c_str())] = portNum.str();
+		std::string id = CheckPort(io_service, portNum.str());
+		if (!id.empty()) {
 			ports.put(id, portNum.str());
-		}
-		catch (std::runtime_error const&e){
-			std::cout << "Port not accessible: " << portNum.str() << ", error: " << e.what() << std::endl;
-			ok = false;
 		}
 	}
 	if (true){

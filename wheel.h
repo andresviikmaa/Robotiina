@@ -26,12 +26,12 @@ public:
         void Start();
 
 protected:
-	bool stall = false;
-	boost::mutex mutex;
-	int target_speed = 0;
-	int actual_speed = 0;
+	boost::atomic<bool> stall;
+	//boost::mutex mutex;
+	boost::atomic<int> target_speed;
+	boost::atomic<int> actual_speed;
 	int last_speed = 0;
-	bool update_speed = false;
+	boost::atomic<bool> update_speed;
 	int id = 0;
 
 	boost::atomic<bool> stop_thread;
