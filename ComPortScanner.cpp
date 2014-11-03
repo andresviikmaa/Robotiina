@@ -19,6 +19,7 @@ std::string ComPortScanner::CheckPort(boost::asio::io_service &io_service, const
 
 			std::cout << "Check result: " << portNum<< " -> " << id << std::endl;
 			if (id == "discharged") continue;
+			if (id == "~x~~x~?") continue;
 			if (id.empty()) continue;
 			if (id == "<id:0>") throw std::runtime_error(("ID not set in port " + portNum).c_str());
 			if (id.substr(0, 4) != "<id:") throw std::runtime_error(("Invalid ID " + id + " received from port " + portNum).c_str());
