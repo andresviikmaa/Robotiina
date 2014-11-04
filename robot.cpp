@@ -312,9 +312,15 @@ void Robot::Run()
 			//tmp = thresholdedImages[INNER_BORDER] - 
 			*/
 			ObjectPosition ballPos, gatePos;
-
-			bool ballFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos);
+			//Gate is cut out from image
+			if (targetGate == GATE1){
+				finder->Locate(thresholdedImages, frameHSV, frameBGR, GATE2, gatePos);
+			}
+			else{
+				finder->Locate(thresholdedImages, frameHSV, frameBGR, GATE1, gatePos);
+			}
 			bool gateFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, targetGate, gatePos);
+			bool ballFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos);
 
 			autoPilot.UpdateState(ballFound ? &ballPos : NULL, gateFound ? &gatePos : NULL);
 			

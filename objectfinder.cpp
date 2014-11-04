@@ -41,7 +41,7 @@ cv::Point2i ObjectFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &
 	cv::Mat dst(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));
 
 	//biggest area
-	std::vector<std::vector<cv::Point> > contours; // Vector for storing contour
+	std::vector<std::vector<cv::Point>> contours; // Vector for storing contour
 	std::vector<cv::Vec4i> hierarchy;
 	double largest_area = 0;
 	size_t largest_contour_index = 0;
@@ -61,24 +61,26 @@ cv::Point2i ObjectFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &
 			largest_area = a;
 			largest_contour_index = i;                //Store the index of largest contour
 		}
-	}	
+	}
+
 	int thickness = (int)ceil(largest_area / 60);
-		
 	thickness = std::min(100, std::max(thickness, 12));
 	//For ball validation, drawed contour should cover balls shadow.
-	drawContours(frameHSV, contours, largest_contour_index, color, thickness, 8, hierarchy);
-	drawContours(frameHSV, contours, largest_contour_index, color, -5, 8, hierarchy);
+	drawContours(HSVRanges[INNER_BORDER], contours, largest_contour_index, color, thickness, 8, hierarchy);
+	drawContours(HSVRanges[INNER_BORDER], contours, largest_contour_index, color, -5, 8, hierarchy);
+	drawContours(HSVRanges[OUTER_BORDER], contours, largest_contour_index, color, thickness, 8, hierarchy);
+	drawContours(HSVRanges[OUTER_BORDER], contours, largest_contour_index, color, -5, 8, hierarchy);
 	
 	//find center
 	if (contours.size() > largest_contour_index){
 		cv::Moments M = cv::moments(contours[largest_contour_index]);
+		center = cv::Point2i(M.m10 / M.m00, M.m01 / M.m00);
+
 		if (gate){
 			bounding_rect = cv::boundingRect(contours[largest_contour_index]);
-			double y = bounding_rect.y + bounding_rect.height;
-			center = cv::Point2i(M.m10 / M.m00, y);
-		}
-		else{
-			center = cv::Point2i(M.m10 / M.m00, M.m01 / M.m00);
+			rectangle(HSVRanges[BALL], bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
+			//for clear visual:
+			rectangle(frameBGR, bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
 		}
 	}
 	else {
@@ -91,7 +93,7 @@ cv::Point2i ObjectFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &
 		valid = validateBall(HSVRanges, center, frameHSV, frameBGR);
 	}
 	if (valid){
-		cv::circle(frameBGR, center, 5, cv::Scalar(0, 200, 220), -1);
+		cv::circle(frameBGR, center, 10, cv::Scalar(220, 220, 220), -1);
 		return center;
 	}
 	else{//not valid
@@ -102,7 +104,6 @@ cv::Point2i ObjectFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &
 bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoint, cv::Mat &frameHSV, cv::Mat &frameBGR)
 {
 
-	
 	cv::Mat innerThresholded = HSVRanges[INNER_BORDER];
 	cv::Mat outerThresholded = HSVRanges[OUTER_BORDER];
 
@@ -148,7 +149,7 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 			Vinrange = (pixel[2] <= outer.val.high && pixel[2] >= outer.val.low);
 			bool inRange = Hinrange && Sinrange && Vinrange;
 			*/
-			bool inRange = innerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
+			bool inRange = outerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
 			if (inRange && !firstFound){
 				firstFound = true;
 				firstOuter = iterator.pos();
@@ -163,17 +164,23 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 			Vinrange = (pixel[2] <= inner.val.high && pixel[2] >= inner.val.low);
 			inRange = Hinrange && Sinrange && Vinrange;
 			*/
-			inRange = outerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
+			inRange = innerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
 			if (inRange){
 				lastInner = iterator.pos();
 			}
 
 		}
 	}//lineiterator end
+	/*cv::circle(frameBGR, lastOuter, 5, cv::Scalar(0, 0, 220), -1);
+	cv::circle(frameBGR, firstInner, 5, cv::Scalar(200, 0, 220), -1);
+	cv::circle(frameBGR, firstOuter, 5, cv::Scalar(0, 0, 0), -1);
+	cv::circle(frameBGR, lastInner, 5, cv::Scalar(200, 200, 200), -1);*/
+
 	if (!firstFound){
 		return true;
 	}
 	double distLiFo = cv::norm(lastInner - firstOuter);
+
 	if (distLiFo < 20){
 		return false;
 	}

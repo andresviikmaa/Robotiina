@@ -41,7 +41,6 @@ DriveMode AutoPilot::DriveToBall()
 	int desiredDistance = 250;
 	
 	while (true) {
-		//boost::mutex::scoped_lock lock(mutex);
 		if (stop_thread) return EXIT;
 		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
 		if (!ballInSight && !coilgun->BallInTribbler()){
