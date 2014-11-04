@@ -10,6 +10,13 @@ BasicWheel::BasicWheel()
 	actual_speed = 0;
 }
 
+void BasicWheel::Stop()
+{
+	__super::Stop();
+	SetSpeed(0);
+	UpdateSpeed();
+};
+
 void BasicWheel::SetSpeed(int given_speed) {
 	//boost::mutex::scoped_lock lock(mutex);
 	target_speed = given_speed;
@@ -37,8 +44,8 @@ void BasicWheel::CheckStall()
 {
 	int diff = abs(actual_speed - target_speed);
 	boost::posix_time::time_duration::tick_type stallDuration = (time - stallTime).total_milliseconds();
-	if (diff > 20){
-		if (!stall && stallDuration > 400){ 
+	if (diff > 30){
+		if (!stall && stallDuration > 500){ 
 			std::cout << "stalled, diff: " << diff << " = " << actual_speed  << " != " << target_speed << std::endl;
 			stall = true; 
 		}

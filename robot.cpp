@@ -312,6 +312,7 @@ void Robot::Run()
 			//tmp = thresholdedImages[INNER_BORDER] - 
 			*/
 			ObjectPosition ballPos, gatePos;
+
 			bool ballFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos);
 			bool gateFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, targetGate, gatePos);
 

@@ -23,10 +23,14 @@ bool CoilBoard::BallInTribbler(){
 		for (int i = 0; i < 10; i++){
 			writeString("b\n");
 			std::string line = readLine();
+			
 			if (line == "true"){
 				result ++;
+				
 			}
 		}
+		
+		
 		
 	}
 	catch (boost::system::system_error& e)
@@ -34,10 +38,12 @@ bool CoilBoard::BallInTribbler(){
 		std::cout << "Error: " << e.what() << std::endl;
 		return 0;
 	}
-	if (result >= 8){
+	if (result >= 2){
+		
 		return true;
 	}
 	else{
+		
 		return false;
 	}
 

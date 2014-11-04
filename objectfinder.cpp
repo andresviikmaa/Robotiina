@@ -34,8 +34,8 @@ bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::M
 cv::Point2i ObjectFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
 
 	cv::Point2d center(-1,-1);
-	cv::Mat imgThresholded = HSVRanges[BALL]; // reference counted, I think
 
+	cv::Mat imgThresholded = HSVRanges[target]; // reference counted, I think
 	bool gate = target == GATE1 || target == GATE2;
 
 	cv::Mat dst(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));

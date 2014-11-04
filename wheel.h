@@ -21,7 +21,7 @@ public:
 	bool IsStalled() {
 		return stall;
 	}
-
+	void Stop();
 
 protected:
 	boost::atomic<bool> stall;
