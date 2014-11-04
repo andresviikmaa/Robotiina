@@ -38,29 +38,34 @@ DriveMode AutoPilot::DriveToBall()
 {
 	double speed;
 	double rotate;
-	int desiredDistance = 250;
+	double rotateGate;
+	int desiredDistance = 50;
 	
 	while (true) {
 		if (stop_thread) return EXIT;
 		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
 		if (!ballInSight && !coilgun->BallInTribbler()){
-			wheels->Forward(50);
-			
+			wheels->Forward(20);
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
 			if (!coilgun->BallInTribbler()){
 				return LOCATE_BALL;
 			}
-			
 		}
 		if (wheels->IsStalled()) return RECOVER_CRASH;
 
-		//rotate calculation
+		//rotate calculation for ball
 		if (lastBallLocation.horizontalAngle > 200){
 			rotate = (360 - lastBallLocation.horizontalAngle) *0.5;
 		}
 		else{
 			rotate = lastBallLocation.horizontalAngle * 0.5;
+		}
+		//rotate calculation for gate
+		if (lastGateLocation.horizontalAngle > 200){
+			rotateGate = (360 - lastGateLocation.horizontalAngle) *0.5;
+		}
+		else{
+			rotateGate = lastGateLocation.horizontalAngle * 0.5;
 		}
 
 		if (lastBallLocation.distance < desiredDistance &&
@@ -96,19 +101,21 @@ DriveMode AutoPilot::DriveToBall()
 				speed = 150;
 			}
 			else{
-				speed = lastBallLocation.distance * 0.3 - 15;
+				speed = lastBallLocation.distance * 0.19 + 20;
 			}
-			
 
 			//driving commands
-			if (lastBallLocation.horizontalDev > -20 && lastBallLocation.horizontalDev < 20){
-				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, 0);
+			if (lastGateLocation.horizontalDev > -20 && lastGateLocation.horizontalDev < 20){
+				wheels->Drive(speed, lastBallLocation.horizontalAngle);
 			}
-			else if (lastBallLocation.horizontalDev >= 20){
-				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle,  10);
+			else if (lastBallLocation.horizontalAngle > 345 || lastBallLocation.horizontalAngle < 15){
+				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, rotate);
+			}
+			else if (lastGateLocation.horizontalDev >= 20){
+				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle,  rotateGate);
 			}
 			else{
-				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle,  -10);
+				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle,  -rotateGate);
 			}
 
 		}
@@ -156,7 +163,7 @@ DriveMode AutoPilot::LocateBall() {
 			wheels->Rotate(1, 30);
 		}
 	
-		std::chrono::milliseconds dura(8);
+		std::chrono::milliseconds dura(10);
 		std::this_thread::sleep_for(dura);	
 	}
 	return DRIVE_TO_BALL;
