@@ -35,7 +35,5 @@ public:
 	void ToggleTribbler(bool start);
 	bool BallInTribbler();
 	void Run();
-	virtual void Start(){}
-	virtual void Stop(){}
 
 };
