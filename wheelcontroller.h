@@ -14,7 +14,8 @@ private:
 protected:
 	cv::Point3d CalculateWheelSpeeds(double velocity, double direction, double rotate);
 public:
-	WheelController(boost::asio::io_service &io, bool useDummyPorts = false);
+	WheelController();
+	void InitWheels(boost::asio::io_service &io, bool useDummyPorts = false);
 	void Forward(int speed);
     void MoveTo(const CvPoint &);
 	cv::Point3d Rotate(bool direction, double speed);
@@ -25,18 +26,7 @@ public:
 	void GetRobotSpeed(double &velocity, double &direction, double &rotate);
 	void GetTargetSpeed(double &velocity, double &direction, double &rotate);
 	bool IsStalled();
-    ~WheelController(){
-		if (w_left) {
-			w_left->Stop();
-			delete w_left;
-		}
-		if (w_right) {
-			w_right->Stop();
-			delete w_right;
-		}
-		if (w_back) {
-			w_back->Stop();
-			delete w_back;
-		}
-	};
+	bool HasError();
+	~WheelController();
+	void StopWheels();
 };

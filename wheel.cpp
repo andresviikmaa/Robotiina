@@ -5,20 +5,11 @@
 BasicWheel::BasicWheel()
 {
 	stall = false;
-	stop_thread = false;
 	update_speed = false;
 	target_speed = 0;
 	actual_speed = 0;
 }
-void BasicWheel::Start()
-{
-	threads.create_thread(boost::bind(&BasicWheel::Run, this));
-};
-void BasicWheel::Stop()
-{
-	stop_thread = true;
-	threads.join_all();
-};
+
 void BasicWheel::SetSpeed(int given_speed) {
 	//boost::mutex::scoped_lock lock(mutex);
 	target_speed = given_speed;
@@ -71,7 +62,6 @@ int BasicWheel::GetDistanceTraveled(bool reset)
 
 BasicWheel::~BasicWheel()
 {
-	assert(stop_thread);
 }
 
 void SoftwareWheel::UpdateSpeed()
@@ -104,20 +94,26 @@ void SoftwareWheel::UpdateSpeed()
 
 void SerialWheel::UpdateSpeed()
 {
-	last_speed = actual_speed;
+	try
+	{
+		last_speed = actual_speed;
 
-	if (update_speed){
-		lastUpdate = boost::posix_time::microsec_clock::local_time();
-		std::ostringstream oss;
-		oss << "sd" << target_speed << "\n";
-		writeString(oss.str());
-		update_speed = false;
+		if (update_speed){
+			lastUpdate = boost::posix_time::microsec_clock::local_time();
+			std::ostringstream oss;
+			oss << "sd" << target_speed << "\n";
+			writeString(oss.str());
+			update_speed = false;
+		}
+		writeString("s\n");
+		std::string line = readLine();
+		if (line.length() > 0)
+			actual_speed = atoi(line.substr(3).c_str());
+		else
+			actual_speed = 0;
 	}
-	writeString("s\n");
-	std::string line = readLine();
-	if( line.length() > 0 )
-		actual_speed = atoi(line.substr(3).c_str());
-	else
-		actual_speed = 0;
-
+	catch (...){
+		std::cout << "Error writing or reading wheel speed " << std::endl;
+		stop_thread = true;
+	}
 };

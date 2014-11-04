@@ -23,7 +23,7 @@ ObjectFinder::ObjectFinder()
 	};
 }
 
-bool ObjectFinder::Locate(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos) {
+bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos) {
 	cv::Point2d point = LocateOnScreen(HSVRanges, frameHSV, frameBGR, target);
 	if (point.x < 0 || point.y < 0) return false;
 	targetPos = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
@@ -31,14 +31,12 @@ bool ObjectFinder::Locate(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Ma
 	return true;
 }
 
-cv::Point2i ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
+cv::Point2i ObjectFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
 
 	cv::Point2d center(-1,-1);
-	cv::Mat imgThresholded;
-	auto r = HSVRanges[BALL];
-	bool gate = target == GATE1 || target == GATE2;
+	cv::Mat imgThresholded = HSVRanges[BALL]; // reference counted, I think
 
-	inRange(frameHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), imgThresholded); //Threshold the image
+	bool gate = target == GATE1 || target == GATE2;
 
 	cv::Mat dst(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));
 
@@ -101,16 +99,12 @@ cv::Point2i ObjectFinder::LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &f
 	}
 }
 
-bool ObjectFinder::validateBall(HSVColorRangeMap &HSVRanges, cv::Point2d endPoint, cv::Mat &frameHSV, cv::Mat &frameBGR)
+bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoint, cv::Mat &frameHSV, cv::Mat &frameBGR)
 {
 
-	const HSVColorRange &inner = HSVRanges[INNER_BORDER];
-	const HSVColorRange &outer = HSVRanges[OUTER_BORDER];
-
-	cv::Mat innerThresholded;
-	inRange(frameHSV, cv::Scalar(inner.hue.low, inner.sat.low, inner.val.low), cv::Scalar(inner.hue.high, inner.sat.high, inner.val.high), innerThresholded); //Threshold the image
-	cv::Mat outerThresholded;
-	inRange(frameHSV, cv::Scalar(outer.hue.low, outer.sat.low, outer.val.low), cv::Scalar(outer.hue.high, outer.sat.high, outer.val.high), outerThresholded); //Threshold the image
+	
+	cv::Mat innerThresholded = HSVRanges[INNER_BORDER];
+	cv::Mat outerThresholded = HSVRanges[OUTER_BORDER];
 
 	cv::Point startPoint;
 	startPoint.x = frameHSV.cols / 2;
@@ -131,34 +125,46 @@ bool ObjectFinder::validateBall(HSVColorRangeMap &HSVRanges, cv::Point2d endPoin
 	for (int i = 0; i < iterator.count; i++, ++iterator)
 	{
 		if (state == "inner"){
+			/*
 			cv::Vec3b pixel = frameHSV.ptr<cv::Vec3b>(iterator.pos().y)[iterator.pos().x];
 			//searching for inner border
 			Hinrange = (pixel[0] <= inner.hue.high && pixel[0] >= inner.hue.low);
 			Sinrange = (pixel[1] <= inner.sat.high && pixel[1] >= inner.sat.low);
 			Vinrange = (pixel[2] <= inner.val.high && pixel[2] >= inner.val.low);
-			if (Hinrange && Sinrange && Vinrange){
+			bool inRange = Hinrange && Sinrange && Vinrange;
+			*/
+			bool inRange = innerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
+			if (inRange){
 				firstInner = iterator.pos();
 				state = "outer";
 			}
 		}
 		else if (state == "outer"){
+			/*
 			cv::Vec3b pixel = frameHSV.ptr<cv::Vec3b>(iterator.pos().y)[iterator.pos().x];
 			//Outer border last pixel
 			Hinrange = (pixel[0] <= outer.hue.high && pixel[0] >= outer.hue.low);
 			Sinrange = (pixel[1] <= outer.sat.high && pixel[1] >= outer.sat.low);
 			Vinrange = (pixel[2] <= outer.val.high && pixel[2] >= outer.val.low);
-			if (Hinrange && Sinrange && Vinrange && !firstFound){
+			bool inRange = Hinrange && Sinrange && Vinrange;
+			*/
+			bool inRange = innerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
+			if (inRange && !firstFound){
 				firstFound = true;
 				firstOuter = iterator.pos();
 			}
-			else if (Hinrange && Sinrange && Vinrange){
+			else if (inRange){
 				lastOuter = iterator.pos();
 			}
+			/*
 			//Inner border last pixel
 			Hinrange = (pixel[0] <= inner.hue.high && pixel[0] >= inner.hue.low);
 			Sinrange = (pixel[1] <= inner.sat.high && pixel[1] >= inner.sat.low);
 			Vinrange = (pixel[2] <= inner.val.high && pixel[2] >= inner.val.low);
-			if (Hinrange && Sinrange && Vinrange){
+			inRange = Hinrange && Sinrange && Vinrange;
+			*/
+			inRange = outerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
+			if (inRange){
 				lastInner = iterator.pos();
 			}
 
@@ -174,6 +180,8 @@ bool ObjectFinder::validateBall(HSVColorRangeMap &HSVRanges, cv::Point2d endPoin
 	else{
 		return true;
 	}
+	
+	return true;
 }
 
 void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickness, CvScalar color)
@@ -218,16 +226,11 @@ void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickn
 
 }
 
-void ObjectFinder::IsolateField(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR) {
+void ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR) {
 
-	const HSVColorRange &inner = HSVRanges[INNER_BORDER];
-	const HSVColorRange &outer = HSVRanges[OUTER_BORDER];
+	cv::Mat innerThresholded = HSVRanges[INNER_BORDER];
+	cv::Mat outerThresholded = HSVRanges[OUTER_BORDER];
 
-	//	cv::imshow("Thresholded Image 3", imgHSV); //show the thresholded image
-	cv::Mat innerThresholded;
-	inRange(frameHSV, cv::Scalar(inner.hue.low, inner.sat.low, inner.val.low), cv::Scalar(inner.hue.high, inner.sat.high, inner.val.high), innerThresholded); //Threshold the image
-	cv::Mat outerThresholded;
-	inRange(frameHSV, cv::Scalar(outer.hue.low, outer.sat.low, outer.val.low), cv::Scalar(outer.hue.high, outer.sat.high, outer.val.high), outerThresholded); //Threshold the image
 	/*
 	cv::Mat gate1Thresholded;
 	inRange(frameHSV, cv::Scalar(gate1.hue.low, gate1.sat.low, gate1.val.low), cv::Scalar(gate1.hue.high, gate1.sat.high, gate1.val.high), gate1Thresholded); //Threshold the image

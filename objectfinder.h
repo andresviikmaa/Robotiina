@@ -5,9 +5,9 @@
 
 class ObjectFinder {
 protected:
-	virtual cv::Point2i LocateOnScreen(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target);
+	virtual cv::Point2i LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target);
 	ObjectPosition ConvertPixelToRealWorld(const cv::Point2i &point, const cv::Point2i &frame_size);
-	bool validateBall(HSVColorRangeMap &HSVRanges, cv::Point2d point, cv::Mat &frameHSV, cv::Mat &frameBGR);
+	bool validateBall(ThresholdedImages &HSVRanges, cv::Point2d point, cv::Mat &frameHSV, cv::Mat &frameBGR);
 private:
 	void WriteInfoOnScreen(const ObjectPosition &info);
 	//Vars
@@ -18,8 +18,8 @@ private:
 	
 public:
 	ObjectFinder();
-	virtual bool Locate(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos);
-	virtual void IsolateField(HSVColorRangeMap &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR);
+	virtual bool Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos);
+	virtual void IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR);
     virtual ~ObjectFinder(){ }
 
 };

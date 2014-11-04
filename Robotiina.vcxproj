@@ -92,6 +92,7 @@
     <ClInclude Include="colorcalibrator.h" />
     <ClInclude Include="ComPortScanner.h" />
     <ClInclude Include="dialog.h" />
+    <ClInclude Include="ImageThresholder.h" />
     <ClInclude Include="MouseFinder.h" />
     <ClInclude Include="objectfinder.h" />
     <ClInclude Include="remotecontrol.h" />
@@ -99,6 +100,7 @@
     <ClInclude Include="RobotTracker.h" />
     <ClInclude Include="simpleserial.h" />
     <ClInclude Include="stillcamera.h" />
+    <ClInclude Include="ThreadedClass.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="wheel.h" />
     <ClInclude Include="wheelcontroller.h" />
@@ -119,6 +121,7 @@
     <ClCompile Include="Robotiina.cpp" />
     <ClCompile Include="RobotTracker.cpp" />
     <ClCompile Include="stillcamera.cpp" />
+    <ClCompile Include="ThreadedClass.cpp" />
     <ClCompile Include="wheel.cpp" />
     <ClCompile Include="wheelcontroller.cpp" />
   </ItemGroup>

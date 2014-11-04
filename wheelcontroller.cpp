@@ -6,10 +6,17 @@
 #define deg30 (30.0 * PI / 180.0)
 #define deg270 (270.0 * PI / 180.0)
 
-WheelController::WheelController(boost::asio::io_service &io, bool useDummyPorts)
+WheelController::WheelController()
 {
-    using boost::property_tree::ptree;
-    ptree pt;
+	w_left = NULL;
+	w_right = NULL;
+	w_back = NULL;
+};
+
+void WheelController::InitWheels(boost::asio::io_service &io, bool useDummyPorts/* = false*/)
+{
+	using boost::property_tree::ptree;
+	ptree pt;
 	if (useDummyPorts) {
 		w_left = new SoftwareWheel();
 		w_right = new SoftwareWheel();
@@ -31,8 +38,31 @@ WheelController::WheelController(boost::asio::io_service &io, bool useDummyPorts
 	w_right->Start();
 	w_back->Start();
 
-};
+}
 
+void WheelController::StopWheels()
+{
+	if (w_left != NULL) {
+		w_left->Stop();
+		delete w_left;
+		w_left = NULL;
+	}
+	if (w_right != NULL) {
+		w_right->Stop();
+		delete w_right;
+		w_right = NULL;
+	}
+	if (w_back != NULL) {
+		w_back->Stop();
+		delete w_back;
+		w_back = NULL;
+
+	}
+};
+WheelController::~WheelController()
+{
+	StopWheels();
+}
 void WheelController::Forward(int speed) {
 
 	DriveRotate(speed * 1.1547, 0, 0);
@@ -97,6 +127,10 @@ cv::Point3d WheelController::Stop()
 bool WheelController::IsStalled()
 {
 	return w_left->IsStalled() || w_right->IsStalled() || w_back->IsStalled();
+}
+bool WheelController::HasError()
+{
+	return w_left->HasError() || w_right->HasError() || w_back->HasError();
 }
 
 cv::Point3d WheelController::GetWheelSpeeds()

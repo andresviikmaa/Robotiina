@@ -1,13 +1,11 @@
 #pragma  once
 #include "types.h"
 #include "simpleserial.h"
-#include <boost/thread/thread.hpp>
 #include <boost/atomic.hpp>
 #include <boost/timer/timer.hpp>
-#include <boost/thread/mutex.hpp>
+#include "ThreadedClass.h"
 
-
-class BasicWheel
+class BasicWheel : public ThreadedClass
 {
 public:
 	BasicWheel();
@@ -23,8 +21,7 @@ public:
 	bool IsStalled() {
 		return stall;
 	}
-	void Start();
-	void Stop();
+
 
 protected:
 	boost::atomic<bool> stall;
@@ -35,8 +32,7 @@ protected:
 	boost::atomic<bool> update_speed;
 	int id = 0;
 
-	boost::atomic<bool> stop_thread;
-	boost::thread_group threads;
+
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime lastStep = time;
 	boost::posix_time::ptime lastUpdate = time;
@@ -63,8 +59,9 @@ class SerialWheel : public BasicWheel, SimpleSerial
 {
 protected:
 	void UpdateSpeed();
-
 public:
 	SerialWheel(boost::asio::io_service &io_service, std::string port = "port", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
 	};
+
+
 };

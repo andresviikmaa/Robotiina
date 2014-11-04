@@ -43,7 +43,7 @@ bool CoilBoard::BallInTribbler(){
 
 }
 
-void CoilBoard::Ping(){
+void CoilBoard::Run(){
 	while (!stop_thread){
 		time = boost::posix_time::microsec_clock::local_time();
 		boost::posix_time::time_duration::tick_type waitDuration = (time - waitTime).total_milliseconds();

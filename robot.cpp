@@ -23,7 +23,7 @@
 #include <boost/filesystem.hpp>
 #include "AutoPilot.h"
 #include "RobotTracker.h"
-
+#include "ImageThresholder.h"
 
 #define STATE_BUTTON(name, new_state) \
 createButton(name, [&](){ this->SetState(new_state); });
@@ -89,8 +89,10 @@ Robot::~Robot()
 		delete camera;
     if(wheels)
         delete wheels;
-    if (finder)
+	if (finder)
 		delete finder;
+	if (coilBoard)
+		delete coilBoard;
 
 }
 
@@ -110,6 +112,7 @@ bool Robot::Launch(int argc, char* argv[])
 	else
 		finder = new ObjectFinder();
 
+	wheels = new WheelController();
 	captureFrames = config.count("capture-frames") > 0;
 	bool portsOk = false;
 	if (config.count("skip-ports")) {
@@ -130,7 +133,7 @@ bool Robot::Launch(int argc, char* argv[])
 	if (portsOk) {
 		std::cout << "Initializing Wheels... " << std::endl;
 		try {
-			wheels = new WheelController(io, config.count("skip-ports") > 0);
+			wheels->InitWheels(io, config.count("skip-ports") > 0);
 			std::cout << "Initializing Coilgun... " << std::endl;
 			{
 				if (config.count("skip-ports") == 0) {
@@ -181,9 +184,11 @@ void Robot::Run()
 	if (captureFrames) {
 		boost::filesystem::create_directories(captureDir);
 	}
-
+	coilBoard->Start();
 	AutoPilot autoPilot(wheels, coilBoard);
 	//RobotTracker tracker(wheels);
+	ThresholdedImages thresholdedImages;
+	ImageThresholder thresholder(thresholdedImages, objectThresholds);
 	while (true)
     {
 		
@@ -290,15 +295,28 @@ void Robot::Run()
 				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
 			END_DIALOG
 
-			if (detectBorders) {
-				finder->IsolateField(objectThresholds, frameHSV, frameBGR);
-			}
 				
+			// thresholding in parallel
+			thresholder.Start(frameHSV, { BALL, GATE1, GATE2, INNER_BORDER, OUTER_BORDER });
+			thresholder.WaitForStop();
+			
+			if (detectBorders) {
+				finder->IsolateField(thresholdedImages, frameHSV, frameBGR);
+			};
+			/*
+			// cut out gates
+			cv::Mat tmp(frameHSV.rows, frameHSV.cols, CV_8U, cv::Scalar::all(0));
+			thresholdedImages[BALL].copyTo(tmp, 255 - thresholdedImages[GATE1] - thresholdedImages[GATE2]);
+			thresholdedImages[BALL] = tmp;
+			cv::imshow("balls", thresholdedImages[GATE2]);
+			//tmp = thresholdedImages[INNER_BORDER] - 
+			*/
 			ObjectPosition ballPos, gatePos;
-			bool ballFound = finder->Locate(objectThresholds, frameHSV, frameBGR, BALL, ballPos);
-			bool gateFound = finder->Locate(objectThresholds, frameHSV, frameBGR, targetGate, gatePos);
+			bool ballFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos);
+			bool gateFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, targetGate, gatePos);
 
 			autoPilot.UpdateState(ballFound ? &ballPos : NULL, gateFound ? &gatePos : NULL);
+			
         }
 		else if (STATE_MANUAL_CONTROL == state) {
 			START_DIALOG
@@ -344,6 +362,8 @@ void Robot::Run()
 		frames++;
 
     }
+	coilBoard->Stop();
+
 }
 std::string Robot::ExecuteRemoteCommand(const std::string &command){
     std::stringstream response;
