@@ -12,7 +12,7 @@ BasicWheel::BasicWheel()
 
 void BasicWheel::Stop()
 {
-	__super::Stop();
+	ThreadedClass::Stop();
 	SetSpeed(0);
 	UpdateSpeed();
 };
