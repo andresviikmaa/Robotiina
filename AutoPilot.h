@@ -10,6 +10,7 @@ enum DriveMode {
 	IDLE = 0,
 	LOCATE_BALL,
 	DRIVE_TO_BALL,
+	CATCH_BALL,
 	LOCATE_GATE,
 	RECOVER_CRASH,
 	EXIT
@@ -36,6 +37,7 @@ private:
 protected:
 	DriveMode DriveToBall();
 	DriveMode LocateBall();
+	DriveMode CatchBall();
 	DriveMode LocateGate();
 	DriveMode RecoverCrash();
 	void Step();

@@ -312,7 +312,7 @@ void Robot::Run()
 			//tmp = thresholdedImages[INNER_BORDER] - 
 			*/
 			ObjectPosition ballPos, gatePos;
-			//Gate is cut out from image
+			//Cut out gate that
 			if (targetGate == GATE1){
 				finder->Locate(thresholdedImages, frameHSV, frameBGR, GATE2, gatePos);
 			}

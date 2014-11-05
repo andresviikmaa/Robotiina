@@ -34,108 +34,15 @@ void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLo
 	if (driveMode == IDLE) driveMode = LOCATE_BALL;
 }
 
-DriveMode AutoPilot::DriveToBall()
-{
-	double speed;
-	double rotate;
-	double rotateGate;
-	int desiredDistance = 50;
-	
-	while (true) {
-		if (stop_thread) return EXIT;
-		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
-		if (!ballInSight && !coilgun->BallInTribbler()){
-			wheels->Forward(20);
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
-			if (!coilgun->BallInTribbler()){
-				return LOCATE_BALL;
-			}
-		}
-		if (wheels->IsStalled()) return RECOVER_CRASH;
-
-		//rotate calculation for ball
-		if (lastBallLocation.horizontalAngle > 200){
-			rotate = (360 - lastBallLocation.horizontalAngle) *0.5;
-		}
-		else{
-			rotate = lastBallLocation.horizontalAngle * 0.5;
-		}
-		//rotate calculation for gate
-		if (lastGateLocation.horizontalAngle > 200){
-			rotateGate = (360 - lastGateLocation.horizontalAngle) *0.5;
-		}
-		else{
-			rotateGate = lastGateLocation.horizontalAngle * 0.5;
-		}
-
-		if (lastBallLocation.distance < desiredDistance &&
-			lastBallLocation.horizontalDev > -10 &&
-			lastBallLocation.horizontalDev < 10) { //if ball is close and center
-			coilgun->ToggleTribbler(true);//start tribbler
-			//check tribbler
-			wheels->Forward(20);
-			if (coilgun->BallInTribbler()){
-				return LOCATE_GATE;
-			}
-			
-		}
-		else if (lastBallLocation.distance < desiredDistance) //if ball is close and not center
-			{
-				coilgun->ToggleTribbler(true);//start tribbler
-				if (lastBallLocation.horizontalDev < -10) {
-					wheels->DriveRotate(30, 0,-rotate);
-				}
-				else if (lastBallLocation.horizontalDev > 10) {
-					wheels->DriveRotate(30, 0,rotate);
-				}
-				//check tribbler
-				if (coilgun->BallInTribbler()){
-					return LOCATE_GATE;
-				}
-
-			}
-		else { //if ball is not close 
-			coilgun->ToggleTribbler(false);
-			//speed calculation
-			if (lastBallLocation.distance > 700){
-				speed = 150;
-			}
-			else{
-				speed = lastBallLocation.distance * 0.19 + 20;
-			}
-
-			//driving commands
-			if (lastGateLocation.horizontalDev > -20 && lastGateLocation.horizontalDev < 20){
-				wheels->Drive(speed, lastBallLocation.horizontalAngle);
-			}
-			else if (lastBallLocation.horizontalAngle > 345 || lastBallLocation.horizontalAngle < 15){
-				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, rotate);
-			}
-			else if (lastGateLocation.horizontalDev >= 20){
-				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle,  rotateGate);
-			}
-			else{
-				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle,  -rotateGate);
-			}
-
-		}
-		//check tribbler
-		if (coilgun->BallInTribbler()){
-			return LOCATE_GATE;
-		}
-		std::chrono::milliseconds dura(10);
-		std::this_thread::sleep_for(dura);
-	}
-}
 /*
-	No ball in sight
+No ball in sight
 */
-DriveMode AutoPilot::LocateBall() { 
+DriveMode AutoPilot::LocateBall() {
 	if (coilgun->BallInTribbler()){
 		return LOCATE_GATE;
 	}
 	if (ballInSight) return DRIVE_TO_BALL;
-	
+
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime rotateStart = time;
 	boost::posix_time::ptime rotateTime = time;
@@ -162,11 +69,131 @@ DriveMode AutoPilot::LocateBall() {
 		else{
 			wheels->Rotate(1, 30);
 		}
-	
+
 		std::chrono::milliseconds dura(10);
-		std::this_thread::sleep_for(dura);	
+		std::this_thread::sleep_for(dura);
 	}
 	return DRIVE_TO_BALL;
+}
+
+DriveMode AutoPilot::DriveToBall()
+{
+	double speed;
+	double rotate;
+	double rotateGate;
+	int desiredDistance = 50;
+	
+	while (true) {
+		if (stop_thread) return EXIT;
+		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
+		if (!ballInSight && !coilgun->BallInTribbler()){
+			wheels->Forward(20);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+			if (!coilgun->BallInTribbler()){
+				return LOCATE_BALL;
+			}
+		}
+		if (wheels->IsStalled()) return RECOVER_CRASH;
+		
+		//rotate calculation for ball
+		if (lastBallLocation.horizontalAngle > 200){
+			rotate = (360 - lastBallLocation.horizontalAngle) *0.5;
+		}
+		else{
+			rotate = lastBallLocation.horizontalAngle * 0.5;
+		}
+		//rotate calculation for gate
+		if (lastGateLocation.horizontalAngle > 200){
+			rotateGate = (360 - lastGateLocation.horizontalAngle) *0.5;
+		}
+		else{
+			rotateGate = lastGateLocation.horizontalAngle * 0.5;
+		}
+
+
+		//if ball is close and not center
+		if (lastBallLocation.distance < desiredDistance &&
+			lastBallLocation.horizontalDev < -10 &&
+			lastBallLocation.horizontalDev > 10){
+
+				coilgun->ToggleTribbler(true);//start tribbler
+				if (lastBallLocation.horizontalDev < -10) {
+					wheels->Rotate(1,rotate);
+				}
+				else if (lastBallLocation.horizontalDev > 10) {
+					wheels->Rotate(0,rotate);
+				}
+				//check tribbler
+				if (coilgun->BallInTribbler()){
+					return LOCATE_GATE;
+				}
+
+			}
+		//if ball is close and center
+		else if (lastBallLocation.distance <= desiredDistance){
+			return CATCH_BALL;
+		}
+		//if ball is not close 
+		else { 
+			coilgun->ToggleTribbler(false);
+			//speed calculation
+			if (lastBallLocation.distance > 700){
+				speed = 150;
+			}
+			else{
+				speed = lastBallLocation.distance * 0.19 + 20;
+			}
+
+			//driving commands
+			if (lastGateLocation.horizontalDev > -20 && 
+				lastGateLocation.horizontalDev < 20 &&
+				gateInSight){
+
+				wheels->Drive(speed, lastBallLocation.horizontalAngle);
+			}
+			else if (lastBallLocation.horizontalAngle > 345 || lastBallLocation.horizontalAngle < 15){
+				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, rotate);
+			}
+			else if (lastGateLocation.horizontalDev >= 20 && gateInSight){
+				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle,  rotateGate);
+			}
+			else if (lastGateLocation.horizontalDev <= -20 && gateInSight){
+				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle,  -rotateGate);
+			}
+			else{
+				wheels->Drive(speed, lastBallLocation.horizontalAngle);
+			}
+
+		}
+		//check tribbler
+		if (coilgun->BallInTribbler()){
+			return LOCATE_GATE;
+		}
+		std::chrono::milliseconds dura(10);
+		std::this_thread::sleep_for(dura);
+	}
+}
+
+DriveMode AutoPilot::CatchBall(){
+	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
+	boost::posix_time::ptime catchStart = time;
+	boost::posix_time::time_duration::tick_type catchDuration = (time - catchStart).total_milliseconds();
+	bool inTribbler = coilgun->BallInTribbler();
+	//trying to catch ball for 2 seconds
+	while (!inTribbler && catchDuration < 2000){
+		if (stop_thread) return EXIT;
+		catchDuration = (time - catchStart).total_milliseconds();
+		time = boost::posix_time::microsec_clock::local_time();
+		coilgun->ToggleTribbler(true);//start tribbler
+		wheels->Forward(50);
+		inTribbler = coilgun->BallInTribbler();
+	}
+	if (inTribbler){
+		return LOCATE_GATE;
+	}
+	else{
+		return LOCATE_BALL;
+	}
 }
 
 DriveMode AutoPilot::LocateGate() {
@@ -199,7 +226,8 @@ DriveMode AutoPilot::LocateGate() {
 		std::chrono::milliseconds dura(8);
 		std::this_thread::sleep_for(dura);
 	}
-	while(gateInSight){
+	while(gateInSight ){
+		if (stop_thread) return EXIT;
 		if (lastGateLocation.horizontalDev > -50 && lastGateLocation.horizontalDev < 50){
 			coilgun->ToggleTribbler(false);
 			wheels->Stop();
@@ -250,6 +278,8 @@ void AutoPilot::Run()
 		case DRIVE_TO_BALL:
 			driveMode = DriveToBall();
 			break;
+		case CATCH_BALL:
+			driveMode = CatchBall();
 		case LOCATE_GATE:
 			driveMode = LocateGate();
 			break;
