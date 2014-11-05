@@ -50,6 +50,7 @@ bool CoilBoard::BallInTribbler(){
 }
 
 void CoilBoard::Run(){
+	writeString("c\n");
 	while (!stop_thread){
 		time = boost::posix_time::microsec_clock::local_time();
 		boost::posix_time::time_duration::tick_type waitDuration = (time - waitTime).total_milliseconds();
@@ -58,4 +59,5 @@ void CoilBoard::Run(){
 			waitTime = time;
 		}
 	}
+	writeString("d\n");
 }
