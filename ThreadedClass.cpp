@@ -20,5 +20,5 @@ void ThreadedClass::Stop()
 ThreadedClass::~ThreadedClass()
 {
 	// must call stop before desctruction
-	assert(stop_thread);
+	//assert(stop_thread);
 }
