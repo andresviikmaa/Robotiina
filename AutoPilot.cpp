@@ -43,8 +43,8 @@ DriveMode AutoPilot::LocateBall() {
 	if (coilgun->BallInTribbler()){
 		return LOCATE_GATE;
 	}
-	if (ballInSight) return DRIVE_TO_BALL;
 
+	if (ballInSight) return DRIVE_TO_BALL;
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime rotateStart = time;
 	boost::posix_time::ptime rotateTime = time;
@@ -89,13 +89,7 @@ DriveMode AutoPilot::DriveToBall()
 	while (true) {
 		if (stop_thread) return EXIT;
 		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
-		if (!ballInSight && !coilgun->BallInTribbler()){
-			wheels->Forward(20);
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
-			if (!coilgun->BallInTribbler()){
-				return LOCATE_BALL;
-			}
-		}
+
 		if (wheels->IsStalled()) return RECOVER_CRASH;
 		
 		//rotate calculation for ball
@@ -105,36 +99,27 @@ DriveMode AutoPilot::DriveToBall()
 		else{
 			rotate = lastBallLocation.horizontalAngle * 0.5;
 		}
-		//rotate calculation for gate
-		if (lastGateLocation.horizontalAngle > 200){
-			rotateGate = (360 - lastGateLocation.horizontalAngle) *0.5;
-		}
-		else{
-			rotateGate = lastGateLocation.horizontalAngle * 0.5;
-		}
 
+		//driving commands
 
-		//if ball is close and not center
+		//if ball is close and  center
 		if (lastBallLocation.distance < desiredDistance &&
 			lastBallLocation.horizontalDev < -10 &&
 			lastBallLocation.horizontalDev > 10){
 
-				coilgun->ToggleTribbler(true);//start tribbler
-				if (lastBallLocation.horizontalDev < -10) {
-					wheels->Rotate(1,rotate);
-				}
-				else if (lastBallLocation.horizontalDev > 10) {
-					wheels->Rotate(0,rotate);
-				}
-				//check tribbler
-				if (coilgun->BallInTribbler()){
-					return LOCATE_GATE;
-				}
+				coilgun->ToggleTribbler(true);
+				return CATCH_BALL;
 
 			}
-		//if ball is close and center
+		//if ball is close and not center
 		else if (lastBallLocation.distance <= desiredDistance){
-			return CATCH_BALL;
+			coilgun->ToggleTribbler(true);
+			if (lastBallLocation.horizontalDev < -10) {
+				wheels->Rotate(1, rotate);
+			}
+			else if (lastBallLocation.horizontalDev > 10) {
+				wheels->Rotate(0, rotate);
+			}
 		}
 		//if ball is not close 
 		else { 
@@ -146,51 +131,19 @@ DriveMode AutoPilot::DriveToBall()
 			else{
 				speed = lastBallLocation.distance * 0.33 -77;
 			}
-			if(lastBallLocation.horizontalAngle >200){
-					wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, -rotate);
-				}
-				else{
-					wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, rotate);
-				}
-
-			//driving commands
-/*
-			if (lastGateLocation.horizontalDev > -20 && 
-				lastGateLocation.horizontalDev < 20 &&
-				gateInSight){
-				if(lastBallLocation.horizontalAngle >200){
-					wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, -rotate);
-				}
-				else{
-					wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, rotate);
-				}
-				
-			}
-			else if (lastBallLocation.horizontalAngle > 345 || lastBallLocation.horizontalAngle < 15){
-				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, rotate);
-			}
-			else if (lastGateLocation.horizontalDev >= 20 && gateInSight){
-				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle,  rotateGate);
-			}
-			else if (lastGateLocation.horizontalDev <= -20 && gateInSight){
-				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle,  -rotateGate);
+			//Which way to rotate
+			if(lastBallLocation.horizontalAngle > 200){
+				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, -rotate);
 			}
 			else{
-				if(lastBallLocation.horizontalAngle >200){
-					wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, -rotate);
-				}
-				else{
-					wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, rotate);
-				}
-			}*/
-
+				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, rotate);
+			}
 		}
+
 		//check tribbler
 		if (coilgun->BallInTribbler()){
 			return LOCATE_GATE;
 		}
-		std::chrono::milliseconds dura(10);
-		std::this_thread::sleep_for(dura);
 	}
 }
 

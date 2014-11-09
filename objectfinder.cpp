@@ -370,7 +370,7 @@ ObjectPosition ObjectFinder::ConvertPixelToRealWorld(const cv::Point2i &point, c
 	double angle = (Vfov * (point.y - center.y) / center.y) + CamAngleDev;
 	double distance = CamHeight / tan(angle * PI / 180);
 	//Calculating horizontal deviation
-	double hor_space = tan(Vfov)*distance;
+	double hor_space = tan(Hfov)*distance;
 	double HorizontalDev = (hor_space * (point.x - center.x) / center.x);
 	double Hor_angle = atan(HorizontalDev / distance)* 180/PI;
 	if (Hor_angle < 0){
