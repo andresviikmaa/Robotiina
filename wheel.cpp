@@ -38,6 +38,7 @@ void BasicWheel::Run()
 		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // do not poll serial to fast
 
 	}
+	std::cout << "Wheel stoping" << std::endl;
 }
 
 void BasicWheel::CheckStall()

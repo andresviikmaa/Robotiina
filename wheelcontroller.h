@@ -28,5 +28,5 @@ public:
 	bool IsStalled();
 	bool HasError();
 	~WheelController();
-	void StopWheels();
+	void DestroyWheels();
 };

@@ -18,7 +18,7 @@ void RobotTracker::Run()
 	while (!stop_thread) {
 		time = boost::posix_time::microsec_clock::local_time();
 		double dt = (time - lastStep).total_milliseconds();
-		wheels->GetRobotSpeed(velocity, direction, rotate);
+		//wheels->GetRobotSpeed(velocity, direction, rotate);
 		wheels->GetTargetSpeed(velocity2, direction2, rotate2);
 
 		cv::Point3d acceleration = { (velocity - lastSpeed.x) / dt, (direction - lastSpeed.y) / dt, (rotate - lastSpeed.z) / dt };
@@ -57,13 +57,13 @@ void RobotTracker::WriteInfoOnScreen(cv::Point3d acutual_speed, cv::Point3d targ
 	std::ostringstream oss;
 	oss << "velocity :" << target_speed.x;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
-	oss.str("");
+	std::cout<<oss.str()<<std::endl;oss.str("");
 	oss << "direction :" << target_speed.y;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 50), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
-	oss.str("");
+	std::cout<<oss.str()<<std::endl;oss.str("");
 	oss << "rotate :" << target_speed.z;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
-	
+	std::cout<<oss.str()<<std::endl;
 	oss.str("");
 	oss << "" << acutual_speed.x;
 	cv::putText(infoWindow, oss.str(), cv::Point(220, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
@@ -89,8 +89,8 @@ void RobotTracker::WriteInfoOnScreen(cv::Point3d acutual_speed, cv::Point3d targ
 	cv::putText(infoWindow, oss.str(), cv::Point(20,110), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 
 
-	cv::imshow("RobotTracker", infoWindow);
-	cv::waitKey(1);
+	//cv::imshow("RobotTracker", infoWindow);
+	//cv::waitKey(1);
 	return;
 }
 

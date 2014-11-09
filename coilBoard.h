@@ -25,8 +25,8 @@ private:
 	boost::posix_time::ptime waitTime = time;
 	boost::posix_time::time_duration waitDuration;
 	boost::atomic<bool> ballInTribbler;
-	std::deque<bool> ballInTribblerHistory;
-	boost::mutex historyMutex;
+	volatile int ballInTribblerCount = 0;
+
 
 public:
 	CoilBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {

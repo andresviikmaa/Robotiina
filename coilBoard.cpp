@@ -11,7 +11,7 @@ void CoilBoard::Kick(){
 
 void CoilBoard::ToggleTribbler(bool start){
 	if (start) {
-		writeString("m0\n");
+		writeString("m1\n");
 	}
 	else{
 		writeString("m0\n");
@@ -22,54 +22,8 @@ void CoilBoard::ToggleTribbler(bool start){
 
 
 bool CoilBoard::BallInTribbler(){
-        boost::mutex::scoped_lock lock(historyMutex);
-        bool ballInTribblerOld = ballInTribbler;
-int falseCount = 0;
-int maxFalseCount = 0;
-        if (ballInTribbler) {
-// if there is sequence of 4 falses then switch state
-		for (int i=ballInTribblerHistory.size()-1; i>0; i--){
-		   if(!ballInTribblerHistory[i]) falseCount++;
-		   if(ballInTribblerHistory[i]) {
-			maxFalseCount = std::max(falseCount, maxFalseCount);                
-                      falseCount=0;
-		   }
-		}
-		if(maxFalseCount > TRIBBLER_STATE_THRESHOLD) ballInTribbler = false;
-	} else {
-		ballInTribbler = ballInTribblerHistory[ballInTribblerHistory.size()-1];
-        } 
-	std::cout << "bit " << ballInTribbler << ", " << maxFalseCount << std::endl;
-	return ballInTribbler;
-	int result = 0;
-	try{
-		for (int i = 0; i < 10; i++){
-			writeString("b\n");
-			std::string line = readLine();
-			
-			if (line == "true"){
-				result ++;
-				
-			}
-		}
-		
-		
-		
-	}
-	catch (boost::system::system_error& e)
-	{
-		std::cout << "Error: " << e.what() << std::endl;
-		return 0;
-	}
-	if (result >= 2){
-		
-		return true;
-	}
-	else{
-		
-		return false;
-	}
 
+	return ballInTribblerCount > -10;
 }
 
 void CoilBoard::Run(){
@@ -77,11 +31,12 @@ void CoilBoard::Run(){
 	while (!stop_thread){
 		std::string line = readLineAsync(10);
 		if(line == "true" || line == "false"){
-		    boost::mutex::scoped_lock lock(historyMutex);
-
-		   if(ballInTribblerHistory.size()>TRIBBLER_QUEUE_SIZE)
-			ballInTribblerHistory.pop_front();
-		   ballInTribblerHistory.push_back(line == "true");
+			//std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << line << std::endl;
+		   int newcount = ballInTribblerCount + ((line == "true") ? 1 : -1);
+			std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << newcount << " " << line << std::endl;
+		   
+		   ballInTribblerCount = std::min(100, std::max(-100, newcount));
+		   
  		}
 		time = boost::posix_time::microsec_clock::local_time();
 		boost::posix_time::time_duration::tick_type waitDuration = (time - waitTime).total_milliseconds();

@@ -369,6 +369,7 @@ void Robot::Run()
 		frames++;
 
     }
+
 	coilBoard->Stop();
 
 }

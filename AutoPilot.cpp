@@ -40,7 +40,7 @@ void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLo
 No ball in sight
 */
 DriveMode AutoPilot::LocateBall() {
-	if (coilgun->BallInTribbler()){
+	if (ballInTribbler){
 		return LOCATE_GATE;
 	}
 
@@ -49,7 +49,7 @@ DriveMode AutoPilot::LocateBall() {
 	boost::posix_time::ptime rotateStart = time;
 	boost::posix_time::ptime rotateTime = time;
 	while (!ballInSight) {
-		if (coilgun->BallInTribbler()){
+		if (ballInTribbler){
 			return LOCATE_GATE;
 		}
 		if (stop_thread) return EXIT;
@@ -94,20 +94,20 @@ DriveMode AutoPilot::DriveToBall()
 		
 		//rotate calculation for ball
 		if (lastBallLocation.horizontalAngle > 200){
-			rotate = (360 - lastBallLocation.horizontalAngle) * 0.4 + 5;
+			rotate = (360 - lastBallLocation.horizontalAngle) * 0.4 + 3;
 		}
 		else{
-			rotate = lastBallLocation.horizontalAngle  * 0.4 + 5;
+			rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
 		}
 
 		//driving commands
 
 		//if ball is close and  center
 		if (lastBallLocation.distance < desiredDistance &&
-			lastBallLocation.horizontalDev < -10 &&
-			lastBallLocation.horizontalDev > 10){
+			lastBallLocation.horizontalDev > -10 &&
+			lastBallLocation.horizontalDev < 10){
 				
-				wheels->StopWheels();
+				//wheels->Stop();
 				coilgun->ToggleTribbler(true);
 				return CATCH_BALL;
 
@@ -132,6 +132,7 @@ DriveMode AutoPilot::DriveToBall()
 			else{
 				speed = lastBallLocation.distance * 0.33 -77;
 			}
+			speed = 40;
 			//Which way to rotate
 			if(lastBallLocation.horizontalAngle > 200){
 				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, -rotate);
@@ -142,27 +143,28 @@ DriveMode AutoPilot::DriveToBall()
 		}
 
 		//check tribbler
-		if (coilgun->BallInTribbler()){
+		if (ballInTribbler){
 			return LOCATE_GATE;
 		}
 	}
 }
 
 DriveMode AutoPilot::CatchBall(){
+
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime catchStart = time;
 	boost::posix_time::time_duration::tick_type catchDuration = (time - catchStart).total_milliseconds();
-	bool inTribbler = coilgun->BallInTribbler();
 	//trying to catch ball for 2 seconds
-	while (!inTribbler && catchDuration < 2000){
+	while (!ballInTribbler && catchDuration < 2000){
 		if (stop_thread) return EXIT;
 		catchDuration = (time - catchStart).total_milliseconds();
 		time = boost::posix_time::microsec_clock::local_time();
-		coilgun->ToggleTribbler(true);//start tribbler
-		wheels->Forward(15);
-		inTribbler = coilgun->BallInTribbler();
+		//coilgun->ToggleTribbler(true);//start tribbler
+		//wheels->Forward(15);
+		wheels->DriveRotate(15, 0, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
-	if (inTribbler){
+	if (ballInTribbler){
 		return LOCATE_GATE;
 	}
 	else{
@@ -175,7 +177,7 @@ DriveMode AutoPilot::LocateGate() {
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime rotateStart = time;
 	boost::posix_time::ptime rotateTime = time;
-	while (true){
+	//while (true){
 		//Search
 		while (!gateInSight) {
 			coilgun->ToggleTribbler(true);
@@ -205,11 +207,12 @@ DriveMode AutoPilot::LocateGate() {
 		while (gateInSight){
 			if (stop_thread) return EXIT;
 			//rotate calculation for gate
+			int rotate = 0;
 			if (lastGateLocation.horizontalAngle > 200){
-				int rotate = (360 - lastGateLocation.horizontalAngle) * 0.4 + 5;
+				rotate = (360 - lastGateLocation.horizontalAngle) * 0.4 + 3;
 			}
 			else{
-				int rotate = lastGateLocation.horizontalAngle  * 0.4 + 5;
+				rotate = lastGateLocation.horizontalAngle  * 0.4 + 3;
 			}
 			//Turn robot to gate
 			if (lastGateLocation.horizontalDev > -30 && lastGateLocation.horizontalDev < 30){
@@ -221,14 +224,14 @@ DriveMode AutoPilot::LocateGate() {
 				return LOCATE_BALL;
 			}
 			else if (lastGateLocation.horizontalDev < -30){
-				wheels->Rotate(0, 10);
+				wheels->Rotate(1, rotate);
 			}
 			else{
-				wheels->Rotate(1, 10);
+				wheels->Rotate(0, rotate);
 			}
 		}
 
-	}
+	//}
 
 }
 
@@ -265,6 +268,7 @@ void AutoPilot::Run()
 			break;
 		case CATCH_BALL:
 			driveMode = CatchBall();
+			break;
 		case LOCATE_GATE:
 			driveMode = LocateGate();
 			break;
@@ -283,16 +287,21 @@ void AutoPilot::WriteInfoOnScreen(){
 	cv::Mat infoWindow(140, 250, CV_8UC3, cv::Scalar::all(0));
 	std::ostringstream oss;
 	oss << "State :" << DRIVEMODE_LABELS[driveMode];
+	//std::cout << oss.str() << std::endl;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	//std::cout << oss.str() << std::endl;
 	oss.str("");
 	oss << "Ball visible :" << (ballInSight ? "yes" : "no");
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 50), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	//std::cout << oss.str() << std::endl;
 	oss.str("");
 	oss << "Gate Visible :" << (gateInSight ? "yes" : "no");
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	//std::cout << oss.str() << std::endl;
 	oss.str("");
 	oss << "Ball in tribbler :" << (ballInTribbler ? "yes" : "no");
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 110), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+	//std::cout << oss.str() << std::endl;
 	cv::imshow("AutoPilot", infoWindow);
 	cv::waitKey(1);
 	return;

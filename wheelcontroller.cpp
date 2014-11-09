@@ -40,7 +40,7 @@ void WheelController::InitWheels(boost::asio::io_service &io, bool useDummyPorts
 
 }
 
-void WheelController::StopWheels()
+void WheelController::DestroyWheels()
 {
 	if (w_left != NULL) {
 		w_left->Stop();
@@ -61,7 +61,7 @@ void WheelController::StopWheels()
 };
 WheelController::~WheelController()
 {
-	StopWheels();
+	DestroyWheels();
 }
 void WheelController::Forward(int speed) {
 
@@ -104,6 +104,7 @@ cv::Point3d WheelController::DriveRotate(double velocity, double direction, doub
 	lastSpeed.z = rotate;
 
 	auto speeds = CalculateWheelSpeeds(velocity, direction, rotate);
+	std::cout << "wheel speeds, left: " << speeds.x << ", right: " << speeds.y << ", back: " << speeds.z << std::endl;
 	w_left->SetSpeed(speeds.x);
 	w_right->SetSpeed(speeds.y);
 	w_back->SetSpeed(speeds.z);
@@ -126,7 +127,6 @@ cv::Point3d WheelController::Stop()
 
 bool WheelController::IsStalled()
 {
-	return false;
 	return w_left->IsStalled() || w_right->IsStalled() || w_back->IsStalled();
 }
 bool WheelController::HasError()

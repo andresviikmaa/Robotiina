@@ -24,12 +24,12 @@ public:
 	void Stop();
 
 protected:
-	boost::atomic<bool> stall;
+	volatile bool stall;
 	//boost::mutex mutex;
-	boost::atomic<int> target_speed;
-	boost::atomic<int> actual_speed;
+	volatile int target_speed;
+	volatile int actual_speed;
 	int last_speed = 0;
-	boost::atomic<bool> update_speed;
+    volatile bool update_speed;
 	int id = 0;
 
 

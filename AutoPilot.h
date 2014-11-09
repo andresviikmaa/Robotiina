@@ -22,9 +22,9 @@ private:
 	CoilGun *coilgun;
 	ObjectPosition lastBallLocation;
 	ObjectPosition lastGateLocation;
-	bool ballInSight = false;
-	bool gateInSight = false;
-	bool ballInTribbler = false;
+	volatile bool ballInSight = false;
+	volatile bool gateInSight = false;
+	volatile bool ballInTribbler = false;
 
 	boost::atomic<bool> stop_thread;
 	boost::atomic<bool> drive;
