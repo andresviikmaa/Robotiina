@@ -303,22 +303,19 @@ void Robot::Run()
 			if (detectBorders) {
 				finder->IsolateField(thresholdedImages, frameHSV, frameBGR);
 			};
-			/*
-			// cut out gates
-			cv::Mat tmp(frameHSV.rows, frameHSV.cols, CV_8U, cv::Scalar::all(0));
-			thresholdedImages[BALL].copyTo(tmp, 255 - thresholdedImages[GATE1] - thresholdedImages[GATE2]);
-			thresholdedImages[BALL] = tmp;
-			cv::imshow("balls", thresholdedImages[GATE2]);
-			//tmp = thresholdedImages[INNER_BORDER] - 
-			*/
+
+		
+		
 			ObjectPosition ballPos, gatePos;
-			//Cut out gate contour.
+			//Cut out gate contour.	
+			
 			if (targetGate == GATE1){
 				finder->Locate(thresholdedImages, frameHSV, frameBGR, GATE2, gatePos);
 			}
 			else{
 				finder->Locate(thresholdedImages, frameHSV, frameBGR, GATE1, gatePos);
 			}
+
 			bool gateFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, targetGate, gatePos);
 			bool ballFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos);
 

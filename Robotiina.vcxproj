@@ -93,6 +93,7 @@
     <ClInclude Include="ComPortScanner.h" />
     <ClInclude Include="dialog.h" />
     <ClInclude Include="ImageThresholder.h" />
+    <ClInclude Include="kalmanFilter.h" />
     <ClInclude Include="MouseFinder.h" />
     <ClInclude Include="objectfinder.h" />
     <ClInclude Include="remotecontrol.h" />
@@ -114,6 +115,7 @@
     <ClCompile Include="colorcalibrator.cpp" />
     <ClCompile Include="ComPortScanner.cpp" />
     <ClCompile Include="dialog.cpp" />
+    <ClCompile Include="kalmanFilter.cpp" />
     <ClCompile Include="MouseFinder.cpp" />
     <ClCompile Include="objectfinder.cpp" />
     <ClCompile Include="remotecontrol.cpp" />

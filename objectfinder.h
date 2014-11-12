@@ -1,6 +1,7 @@
 #pragma  once
 #include "types.h"
 #include <opencv2/opencv.hpp>
+#include "kalmanFilter.h"
 
 
 class ObjectFinder {
@@ -11,6 +12,7 @@ protected:
 	bool validateBall(ThresholdedImages &HSVRanges, cv::Point2d point, cv::Mat &frameHSV, cv::Mat &frameBGR);
 private:
 	void WriteInfoOnScreen(const ObjectPosition &info);
+	KalmanFilter* filter = new KalmanFilter();
 	//Vars
 	double Hfov = 35.21;
 	double Vfov = 21.65; //half of cameras vertical field of view (degrees)

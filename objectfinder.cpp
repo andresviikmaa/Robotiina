@@ -1,5 +1,4 @@
 #include "objectfinder.h"
-
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <math.h>
@@ -32,6 +31,9 @@ bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::M
 		point = LocateGateOnScreen(HSVRanges, frameHSV, frameBGR, target);
 	}
 	if (point.x < 0 || point.y < 0) return false;
+	point = filter->doFiltering(point);
+	cv::circle(frameBGR, point, 10, cv::Scalar(0, 220, 220), -1);
+	std::cout << point << std::endl;
 	targetPos = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
 	WriteInfoOnScreen(targetPos);
 	return true;
@@ -424,7 +426,10 @@ void ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV,
 
 ObjectPosition ObjectFinder::ConvertPixelToRealWorld(const cv::Point2i &point, const cv::Point2i &frame_size)
 {
-	assert(point.y >= 0 && point.x >= 0 && point.y < frame_size.y && point.x < frame_size.x); //If there is no object found
+	if (point.y >= 0 && point.x >= 0 && point.y < frame_size.y && point.x < frame_size.x){//If there is no object found
+
+	}
+		
 
 	const cv::Point2d center (frame_size.x / 2.0, frame_size.y / 2.0);
 	//Calculating distance

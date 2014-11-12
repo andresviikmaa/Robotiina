@@ -55,6 +55,9 @@
     <ClCompile Include="ThreadedClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="kalmanFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="autocalibrator.h">
@@ -118,6 +121,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ImageThresholder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="kalmanFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
