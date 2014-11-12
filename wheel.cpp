@@ -43,11 +43,15 @@ void BasicWheel::Run()
 
 void BasicWheel::CheckStall()
 {
-	int diff = abs(actual_speed - target_speed);
+	if (target_speed == 0) return;
+	if (actual_speed == 0) return;
+
+	double diff = abs(actual_speed - target_speed);
+	double diff_p = diff * 100 / target_speed;
 	boost::posix_time::time_duration::tick_type stallDuration = (time - stallTime).total_milliseconds();
-	if (diff > 30){
-		if (!stall && stallDuration > 500){ 
-			std::cout << "stalled, diff: " << diff << " = " << actual_speed  << " != " << target_speed << std::endl;
+	if (diff_p > 40){
+		if (!stall && stallDuration > 1000){ 
+			std::cout << "stalled, diff: " << diff_p <<  "%, " << diff << " a = " << actual_speed  << " != t " << target_speed << std::endl;
 			stall = true; 
 		}
 	}
@@ -55,6 +59,7 @@ void BasicWheel::CheckStall()
 		stallTime = time;
 		stall = false;
 	}
+	//std::cout << "check, diff: " << diff << " = " << actual_speed  << " != " << target_speed << std::endl;
 
 }
 

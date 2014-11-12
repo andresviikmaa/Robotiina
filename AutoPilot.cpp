@@ -91,6 +91,7 @@ DriveMode AutoPilot::DriveToBall()
 		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
 
 		if (wheels->IsStalled()) return RECOVER_CRASH;
+		if(!ballInSight) return LOCATE_BALL;
 		
 		//rotate calculation for ball
 		if (lastBallLocation.horizontalAngle > 200){
@@ -132,7 +133,7 @@ DriveMode AutoPilot::DriveToBall()
 			else{
 				speed = lastBallLocation.distance * 0.33 -77;
 			}
-			speed = 40;
+			speed = std::min(100.0, speed); // limit speed to 100 mph
 			//Which way to rotate
 			if(lastBallLocation.horizontalAngle > 200){
 				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, -rotate);
@@ -157,11 +158,13 @@ DriveMode AutoPilot::CatchBall(){
 	//trying to catch ball for 2 seconds
 	while (!ballInTribbler && catchDuration < 2000){
 		if (stop_thread) return EXIT;
+		if (wheels->IsStalled()) return RECOVER_CRASH;
+
 		catchDuration = (time - catchStart).total_milliseconds();
 		time = boost::posix_time::microsec_clock::local_time();
 		//coilgun->ToggleTribbler(true);//start tribbler
 		//wheels->Forward(15);
-		wheels->DriveRotate(15, 0, 0);
+		wheels->DriveRotate(40, 0, 0);
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	if (ballInTribbler){
@@ -182,7 +185,7 @@ DriveMode AutoPilot::LocateGate() {
 		while (!gateInSight) {
 			coilgun->ToggleTribbler(true);
 			if (stop_thread) return EXIT;
-			if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
+			if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 300) return IDLE;
 
 			if (wheels->IsStalled()) return RECOVER_CRASH;
 
@@ -206,6 +209,8 @@ DriveMode AutoPilot::LocateGate() {
 		//Aim
 		while (gateInSight){
 			if (stop_thread) return EXIT;
+			if (wheels->IsStalled()) return RECOVER_CRASH;
+
 			//rotate calculation for gate
 			int rotate = 0;
 			if (lastGateLocation.horizontalAngle > 200){
@@ -214,6 +219,7 @@ DriveMode AutoPilot::LocateGate() {
 			else{
 				rotate = lastGateLocation.horizontalAngle  * 0.4 + 3;
 			}
+			
 			//Turn robot to gate
 			if (lastGateLocation.horizontalDev > -30 && lastGateLocation.horizontalDev < 30){
 				coilgun->ToggleTribbler(false);
@@ -238,6 +244,7 @@ DriveMode AutoPilot::LocateGate() {
 DriveMode AutoPilot::RecoverCrash() 
 {
 	while (wheels->IsStalled()) {
+		if (stop_thread) return EXIT;
 		//Backwards
 		wheels->Drive(50, 180);
 		std::chrono::milliseconds dura(1000);
@@ -259,6 +266,8 @@ void AutoPilot::Run()
 		switch (driveMode){
 		case IDLE:
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			wheels->Stop();
+			coilgun->ToggleTribbler(false);
 			break;
 		case LOCATE_BALL:
 			driveMode = LocateBall();

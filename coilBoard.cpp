@@ -23,7 +23,7 @@ void CoilBoard::ToggleTribbler(bool start){
 
 bool CoilBoard::BallInTribbler(){
 
-	return ballInTribblerCount > -10;
+	return ballInTribblerCount > 0;
 }
 
 void CoilBoard::Run(){
@@ -33,9 +33,9 @@ void CoilBoard::Run(){
 		if(line == "true" || line == "false"){
 			//std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << line << std::endl;
 		   int newcount = ballInTribblerCount + ((line == "true") ? 1 : -1);
-			std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << newcount << " " << line << std::endl;
+		//	std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << newcount << " " << line << std::endl;
 		   
-		   ballInTribblerCount = std::min(100, std::max(-100, newcount));
+		   ballInTribblerCount = std::min(2, std::max(-2, newcount));
 		   
  		}
 		time = boost::posix_time::microsec_clock::local_time();

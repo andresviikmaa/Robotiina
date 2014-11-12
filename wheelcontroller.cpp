@@ -104,7 +104,7 @@ cv::Point3d WheelController::DriveRotate(double velocity, double direction, doub
 	lastSpeed.z = rotate;
 
 	auto speeds = CalculateWheelSpeeds(velocity, direction, rotate);
-	std::cout << "wheel speeds, left: " << speeds.x << ", right: " << speeds.y << ", back: " << speeds.z << std::endl;
+	//std::cout << "wheel speeds, left: " << speeds.x << ", right: " << speeds.y << ", back: " << speeds.z << std::endl;
 	w_left->SetSpeed(speeds.x);
 	w_right->SetSpeed(speeds.y);
 	w_back->SetSpeed(speeds.z);

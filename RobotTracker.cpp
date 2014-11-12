@@ -18,7 +18,7 @@ void RobotTracker::Run()
 	while (!stop_thread) {
 		time = boost::posix_time::microsec_clock::local_time();
 		double dt = (time - lastStep).total_milliseconds();
-		//wheels->GetRobotSpeed(velocity, direction, rotate);
+		wheels->GetRobotSpeed(velocity, direction, rotate);
 		wheels->GetTargetSpeed(velocity2, direction2, rotate2);
 
 		cv::Point3d acceleration = { (velocity - lastSpeed.x) / dt, (direction - lastSpeed.y) / dt, (rotate - lastSpeed.z) / dt };
