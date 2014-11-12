@@ -24,9 +24,11 @@ private:
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime waitTime = time;
 	boost::posix_time::time_duration waitDuration;
+	boost::posix_time::ptime afterKickTime = time;
+	boost::posix_time::time_duration afterKickDuration;
 	boost::atomic<bool> ballInTribbler;
 	volatile int ballInTribblerCount = 0;
-
+	bool forcedNotInTribbler = false;
 
 public:
 	CoilBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {

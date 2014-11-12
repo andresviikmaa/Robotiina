@@ -6,6 +6,8 @@
 
 void CoilBoard::Kick(){
 	writeString("k1000\n");
+	forcedNotInTribbler = true;
+	afterKickTime = time; //reset timer
 	return;
 }
 
@@ -30,14 +32,13 @@ void CoilBoard::Run(){
 	writeString("c\n");
 	while (!stop_thread){
 		std::string line = readLineAsync(10);
-		if(line == "true" || line == "false"){
+		if(line == "true" || line == "false" && !forcedNotInTribbler){
 			//std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << line << std::endl;
-		   int newcount = ballInTribblerCount + ((line == "true") ? 1 : -1);
-		//	std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << newcount << " " << line << std::endl;
-		   
-		   ballInTribblerCount = std::min(2, std::max(-2, newcount));
-		   
+			int newcount = ballInTribblerCount + ((line == "true") ? 1 : -1);
+			//std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << newcount << " " << line << std::endl;
+			ballInTribblerCount = std::min(2, std::max(-2, newcount));
  		}
+		//Pinging
 		time = boost::posix_time::microsec_clock::local_time();
 		boost::posix_time::time_duration::tick_type waitDuration = (time - waitTime).total_milliseconds();
 		if (waitDuration > 300){
@@ -46,8 +47,15 @@ void CoilBoard::Run(){
 		} else {
 			writeString("b\n");
 		}
-		
-                std::chrono::milliseconds dura(10);
+		//Forcing ballintribler false after kick
+		boost::posix_time::time_duration::tick_type afterKickDuration = (time - afterKickTime).total_milliseconds();
+		if (afterKickDuration > 1000 && forcedNotInTribbler){
+			forcedNotInTribbler = false;
+		}
+		else if (forcedNotInTribbler){
+			ballInTribblerCount = -1;
+		}
+		std::chrono::milliseconds dura(10);
 		std::this_thread::sleep_for(dura);
 	}
 	writeString("d\n");
