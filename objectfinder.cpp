@@ -24,103 +24,136 @@ ObjectFinder::ObjectFinder()
 }
 
 bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos) {
-	cv::Point2d point = LocateOnScreen(HSVRanges, frameHSV, frameBGR, target);
+	cv::Point2i point = (-1, -1);
+	if (target == BALL){
+		point = LocateBallOnScreen(HSVRanges, frameHSV, frameBGR, target);
+	}
+	else{
+		point = LocateGateOnScreen(HSVRanges, frameHSV, frameBGR, target);
+	}
 	if (point.x < 0 || point.y < 0) return false;
 	targetPos = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
 	WriteInfoOnScreen(targetPos);
 	return true;
 }
 
-cv::Point2i ObjectFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
+cv::Point2i ObjectFinder::LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
 	int smallestGateArea = 1000;
-	int smallestBallArea = 20;
+	int growGateHeight = 1.2;
 	cv::Point2d center(-1,-1);
-
 	cv::Mat imgThresholded = HSVRanges[target]; // reference counted, I think
-	bool gate = target == GATE1 || target == GATE2;
-
 	cv::Mat dst(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));
 
-	//biggest area
+	cv::Scalar color(0, 0, 0);
+	cv::Scalar color2(255, 255, 255);
+
+	//biggest area calculation
 	std::vector<std::vector<cv::Point>> contours; // Vector for storing contour
 	std::vector<cv::Vec4i> hierarchy;
-
 	cv::Rect bounding_rect;
 
 	findContours(imgThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); // Find the contours in the image
 	if (contours.size() == 0){
 		return center;
 	}
-	cv::Scalar color(0, 0, 0);
-	cv::Scalar color2(255, 255, 255);
+
 	double largest_area = 0;
-	double a = 0;
+	double area = 0;
 	size_t largest_contour_index = 0;
 	for (size_t i = 0; i < contours.size(); i++) // iterate through each contour.
 	{
-		a = cv::contourArea(contours[i], false);  //  Find the area of contour		
-		if (a > largest_area){
-			largest_area = a;
+		area = cv::contourArea(contours[i], false);  //  Find the area of contour		
+		if (area > largest_area){
+			largest_area = area;
 			largest_contour_index = i;                //Store the index of largest contour
 		}
 	}
 	//validate gate area
-	if (gate){
-		//drawContours(frameBGR, contours, largest_contour_index, color, 2, 8, hierarchy);
-		if (largest_area < smallestGateArea){
-			return cv::Point2i(-1, -1);
-		}
+	if (largest_area < smallestGateArea){
+		return cv::Point2i(-1, -1);
 	}
-	//validate ball area
-	else{
-		//drawContours(frameBGR, contours, largest_contour_index, color2, 1, 8, hierarchy);
-		if (largest_area  < smallestBallArea){
-			return cv::Point2i(-1, -1);
-		}
-	}
-	
-	//For ball validation, drawed contour should cover balls shadow.
-	int thickness = (int)ceil(largest_area / 60);
-	thickness = std::min(100, std::max(thickness, 12));
-	drawContours(HSVRanges[INNER_BORDER], contours, largest_contour_index, color, thickness, 8, hierarchy);
-	drawContours(HSVRanges[INNER_BORDER], contours, largest_contour_index, color, -5, 8, hierarchy);
-	drawContours(HSVRanges[OUTER_BORDER], contours, largest_contour_index, color, thickness, 8, hierarchy);
-	drawContours(HSVRanges[OUTER_BORDER], contours, largest_contour_index, color, -5, 8, hierarchy);
 	
 	//find center
 	if (contours.size() > largest_contour_index){
 		cv::Moments M = cv::moments(contours[largest_contour_index]);
 		center = cv::Point2i(M.m10 / M.m00, M.m01 / M.m00);
-		//Cutting out gate from ball frame
-		if (gate){
-			bounding_rect = cv::boundingRect(contours[largest_contour_index]);
-			rectangle(HSVRanges[BALL], bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
-			//for clear visual:
-			rectangle(frameBGR, bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
-		}
 	}
 	else {
 		assert(false);
 	}
 
-	//draw area info on screen
-	/*
-	std::ostringstream oss;
-	oss <<  largest_area;
-	cv::putText(frameBGR,  oss.str() , center, cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(255, 0, 255));
-	*/
+	//Cutting out gate from ball frame	
+	bounding_rect = cv::boundingRect(contours[largest_contour_index]);
+	bounding_rect.height = bounding_rect.height * growGateHeight;
+	rectangle(HSVRanges[BALL], bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
+	//for clear visual:
+	rectangle(frameBGR, bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
 
+	return center;
+}
 
-	//validate ball
-	bool valid = true;
-	if (!gate){
-		valid = validateBall(HSVRanges, center, frameHSV, frameBGR);
+cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
+	int smallestBallArea = 20;
+	cv::Point2d center(-1, -1);
+	cv::Mat imgThresholded = HSVRanges[target]; // reference counted, I think
+	cv::Mat dst(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));
+
+	std::vector<std::vector<cv::Point>> contours; // Vector for storing contour
+	std::vector<cv::Vec4i> hierarchy;
+
+	cv::Scalar color(0, 0, 0);
+	cv::Scalar color2(255, 255, 255);
+
+	findContours(imgThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); // Find the contours in the image
+
+	if (contours.size() == 0){ //if no contours found
+		return center;
 	}
+	//the geater the closest
+	double ball_distance = 0;
+	double closest_distance = 0;
+	int closest_ball_index = 0;
+	for (int i = 0; i < contours.size(); i++) // iterate through each contour.
+	{
+		if (cv::contourArea(contours[i], false) < smallestBallArea){
+			ball_distance = -1;
+		}
+		else{
+			cv::Moments M = cv::moments(contours[i]);
+			ball_distance = M.m10 / M.m00;
+		}
+		if (ball_distance >	closest_distance){
+			closest_distance = ball_distance;
+			closest_ball_index = i;                //Store the index of closest contour
+		}
+	}
+	if (ball_distance == -1){
+		return center;
+	}
+	//find center of closest ball
+	if (contours.size() > closest_ball_index){
+		cv::Moments M = cv::moments(contours[closest_ball_index]);
+		center = cv::Point2i(M.m10 / M.m00, M.m01 / M.m00);
+	}
+	else {
+		assert(false);
+	}
+
+	//VALIDATE BALL
+	//For ball validation, drawed contour should cover balls shadow.
+	int thickness = (int)ceil(cv::contourArea(contours[closest_ball_index], false) / 60);
+	thickness = std::min(100, std::max(thickness, 12));
+	drawContours(HSVRanges[INNER_BORDER], contours, closest_ball_index, color, thickness, 8, hierarchy);
+	drawContours(HSVRanges[INNER_BORDER], contours, closest_ball_index, color, -5, 8, hierarchy);
+	drawContours(HSVRanges[OUTER_BORDER], contours, closest_ball_index, color, thickness, 8, hierarchy);
+	drawContours(HSVRanges[OUTER_BORDER], contours, closest_ball_index, color, -5, 8, hierarchy);
+	
+	bool valid = validateBall(HSVRanges, center, frameHSV, frameBGR);
 	if (valid){
 		cv::circle(frameBGR, center, 10, cv::Scalar(220, 220, 220), -1);
 		return center;
 	}
-	else{//not valid
+	else{
 		return cv::Point2i(-1, -1);
 	}
 }
