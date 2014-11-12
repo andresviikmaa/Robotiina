@@ -84,7 +84,7 @@ DriveMode AutoPilot::DriveToBall()
 	double speed;
 	double rotate;
 	double rotateGate;
-	int desiredDistance = 280;
+	int desiredDistance = 200;
 	
 	while (true) {
 		if (stop_thread) return EXIT;
