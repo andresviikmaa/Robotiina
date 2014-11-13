@@ -37,7 +37,7 @@ include_directories(${Boost_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 #endif()
 
-set(SOURCE_FILES Robotiina.cpp camera.cpp stillcamera.cpp robot.cpp objectfinder.cpp colorcalibrator.cpp autocalibrator.cpp wheelcontroller.cpp calibrationconfreader.cpp dialog.cpp wheel.cpp remotecontrol.cpp MouseFinder.cpp ComPortScanner.cpp coilBoard.cpp AutoPilot.cpp RobotTracker.cpp ThreadedClass.cpp)
+set(SOURCE_FILES Robotiina.cpp camera.cpp stillcamera.cpp robot.cpp objectfinder.cpp colorcalibrator.cpp autocalibrator.cpp wheelcontroller.cpp calibrationconfreader.cpp dialog.cpp wheel.cpp remotecontrol.cpp MouseFinder.cpp ComPortScanner.cpp coilBoard.cpp AutoPilot.cpp RobotTracker.cpp ThreadedClass.cpp kalmanFilter.cpp)
 add_executable(robotiina ${SOURCE_FILES})
 target_link_libraries( robotiina  ${OpenCV_LIBS} ${Boost_LIBRARIES} ${WINSOCK_LIB} ${WINSOCK2_LIB})
 

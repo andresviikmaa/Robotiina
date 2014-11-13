@@ -23,7 +23,7 @@ ObjectFinder::ObjectFinder()
 }
 
 bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos) {
-	cv::Point2i point = (-1, -1);
+	cv::Point2i point(-1, -1);
 	if (target == BALL){
 		point = LocateBallOnScreen(HSVRanges, frameHSV, frameBGR, target);
 	}
@@ -32,12 +32,16 @@ bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::M
 	}
 	if (point.x < 0 || point.y < 0){
 		point = filter->getPrediction();
+		if (point.x < 0 || point.y < 0){
+			return false;
+		}
 	}
-	else{
+	else {
 		point = filter->doFiltering(point);
+
 	}
 	cv::circle(frameBGR, point, 10, cv::Scalar(0, 220, 220), -1);
-	std::cout << point << std::endl;
+	//std::cout << point << std::endl;
 	targetPos = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
 	WriteInfoOnScreen(targetPos);
 	return true;
@@ -238,17 +242,17 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 
 		}
 	}//lineiterator end
-	/*cv::circle(frameBGR, lastOuter, 5, cv::Scalar(0, 0, 220), -1);
+	cv::circle(frameBGR, lastOuter, 5, cv::Scalar(0, 0, 220), -1);
 	cv::circle(frameBGR, firstInner, 5, cv::Scalar(200, 0, 220), -1);
 	cv::circle(frameBGR, firstOuter, 5, cv::Scalar(0, 0, 0), -1);
-	cv::circle(frameBGR, lastInner, 5, cv::Scalar(200, 200, 200), -1);*/
+	cv::circle(frameBGR, lastInner, 5, cv::Scalar(200, 200, 200), -1);
 
 	if (!firstFound){
 		return true;
 	}
 	double distLiFo = cv::norm(lastInner - firstOuter);
 
-	if (distLiFo < 20){
+	if (distLiFo < 100){
 		return false;
 	}
 	else{

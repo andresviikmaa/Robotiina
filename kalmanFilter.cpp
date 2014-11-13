@@ -1,6 +1,6 @@
 #include "kalmanFilter.h"
 
-KalmanFilter::KalmanFilter(cv::Point2i &startPoint){
+KalmanFilter::KalmanFilter(const cv::Point2i &startPoint){
 	KF.transitionMatrix = *(cv::Mat_<float>(4, 4) << 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
 	
 	measurement(0) = startPoint.x;
@@ -20,12 +20,12 @@ KalmanFilter::KalmanFilter(cv::Point2i &startPoint){
 
 
 	setIdentity(KF.measurementMatrix);
-	setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-4));
-	setIdentity(KF.measurementNoiseCov, cv::Scalar::all(.1));
-	setIdentity(KF.errorCovPost, cv::Scalar::all(.1));
+	setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-2));
+	setIdentity(KF.measurementNoiseCov, cv::Scalar::all(0.1));
+	setIdentity(KF.errorCovPost, cv::Scalar::all(10));
 }
 
-cv::Point2i KalmanFilter::doFiltering(cv::Point2i &point){
+cv::Point2i KalmanFilter::doFiltering(const cv::Point2i &point){
 	// First predict, to update the internal statePre variable
 	cv::Mat prediction = KF.predict();
 	cv::Point predictPt(prediction.at<float>(0), prediction.at<float>(1));
@@ -37,12 +37,17 @@ cv::Point2i KalmanFilter::doFiltering(cv::Point2i &point){
 	//The update phase
 	estimated = KF.correct(measurement);
 	cv::Point statePt(estimated.at<float>(0), estimated.at<float>(1));
-	
+	predictCount = 0;
 	return statePt;
 }
 
 cv::Point2i KalmanFilter::getPrediction(){
-	cv::Mat prediction = KF.predict();
-	cv::Point predictPt(prediction.at<float>(0), prediction.at<float>(1));
-	return predictPt;
+	if (predictCount > 20) {
+		return cv::Point(-1,-1); // stop predicting
+	} else {
+		cv::Mat prediction = KF.predict();
+		cv::Point predictPt(prediction.at<float>(0), prediction.at<float>(1));
+		predictCount++;
+		return predictPt;	
+	}
 }

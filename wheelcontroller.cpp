@@ -114,6 +114,8 @@ cv::Point3d WheelController::DriveRotate(double velocity, double direction, doub
 }
 cv::Point3d WheelController::CalculateWheelSpeeds(double velocity, double direction, double rotate)
 {
+	velocity = std::min(100.0, velocity); // limit speed to 100 mph
+
 	return cv::Point3d(
 		(velocity*cos((150 - direction) * PI / 180.0)) + rotate,
 		(velocity*cos((30 - direction)  * PI / 180.0)) + rotate,
@@ -127,6 +129,7 @@ cv::Point3d WheelController::Stop()
 
 bool WheelController::IsStalled()
 {
+	//return false;
 	return w_left->IsStalled() || w_right->IsStalled() || w_back->IsStalled();
 }
 bool WheelController::HasError()

@@ -84,7 +84,7 @@ DriveMode AutoPilot::DriveToBall()
 	double speed;
 	double rotate;
 	double rotateGate;
-	int desiredDistance = 200;
+	int desiredDistance = 270;
 	
 	while (true) {
 		if (stop_thread) return EXIT;
@@ -133,7 +133,6 @@ DriveMode AutoPilot::DriveToBall()
 			else{
 				speed = lastBallLocation.distance * 0.33 -77;
 			}
-			speed = std::min(100.0, speed); // limit speed to 100 mph
 			//Which way to rotate
 			if(lastBallLocation.horizontalAngle > 200){
 				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, -rotate);
@@ -186,7 +185,8 @@ DriveMode AutoPilot::LocateGate() {
 			coilgun->ToggleTribbler(true);
 			if (stop_thread) return EXIT;
 			if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 300) return IDLE;
-
+			if (!coilgun->BallInTribbler()) return LOCATE_BALL; 
+			
 			if (wheels->IsStalled()) return RECOVER_CRASH;
 
 			time = boost::posix_time::microsec_clock::local_time();

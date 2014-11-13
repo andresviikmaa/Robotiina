@@ -36,7 +36,7 @@ protected:
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime lastStep = time;
 	boost::posix_time::ptime lastUpdate = time;
-	boost::posix_time::ptime stallTime = time;
+	boost::posix_time::ptime stallTime = time + boost::posix_time::seconds( 60 );
 	boost::posix_time::time_duration stallDuration;
 	long distance_traveled = 0;
 	void CheckStall();

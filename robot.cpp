@@ -189,6 +189,8 @@ void Robot::Run()
 	//RobotTracker tracker(wheels);
 	ThresholdedImages thresholdedImages;
 	ImageThresholder thresholder(thresholdedImages, objectThresholds);
+	ObjectFinder gate1Finder;
+	ObjectFinder gate2Finder;
 	while (true)
     {
 		
@@ -306,20 +308,19 @@ void Robot::Run()
 
 		
 		
-			ObjectPosition ballPos, gatePos;
+			ObjectPosition ballPos, gate1Pos, gate2Pos;
 			//Cut out gate contour.	
 			
-			if (targetGate == GATE1){
-				finder->Locate(thresholdedImages, frameHSV, frameBGR, GATE2, gatePos);
-			}
-			else{
-				finder->Locate(thresholdedImages, frameHSV, frameBGR, GATE1, gatePos);
-			}
+			bool gate1Found = gate2Finder.Locate(thresholdedImages, frameHSV, frameBGR, GATE1, gate1Pos);
+			bool gate2Found = gate1Finder.Locate(thresholdedImages, frameHSV, frameBGR, GATE2, gate2Pos);
 
-			bool gateFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, targetGate, gatePos);
 			bool ballFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos);
-
-			autoPilot.UpdateState(ballFound ? &ballPos : NULL, gateFound ? &gatePos : NULL);
+			ObjectPosition *targetGatePos = 0;
+			if (targetGate == GATE1 && gate1Found) targetGatePos = &gate1Pos;
+			else if(targetGate == GATE2 && gate2Found) targetGatePos = &gate2Pos;
+			// else leave to NULL
+			
+			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos);
 			
         }
 		else if (STATE_MANUAL_CONTROL == state) {
