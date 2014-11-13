@@ -114,8 +114,6 @@ cv::Point3d WheelController::DriveRotate(double velocity, double direction, doub
 }
 cv::Point3d WheelController::CalculateWheelSpeeds(double velocity, double direction, double rotate)
 {
-	velocity = std::min(100.0, velocity); // limit speed to 100 mph
-
 	return cv::Point3d(
 		(velocity*cos((150 - direction) * PI / 180.0)) + rotate,
 		(velocity*cos((30 - direction)  * PI / 180.0)) + rotate,
@@ -129,8 +127,22 @@ cv::Point3d WheelController::Stop()
 
 bool WheelController::IsStalled()
 {
-	//return false;
-	return w_left->IsStalled() || w_right->IsStalled() || w_back->IsStalled();
+	double velocity = 0, direction = 0, rotate = 0;
+	double velocity2 = 0, direction2 = 0, rotate2 = 0;
+
+	GetRobotSpeed(velocity, direction, rotate);
+	GetTargetSpeed(velocity2, direction2, rotate2);
+
+	if (abs(velocity - velocity2) < 20) {
+		// reset timer
+		stallTime = boost::posix_time::microsec_clock::local_time();
+	}
+
+	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
+	boost::posix_time::time_duration::tick_type stallDuration = (time - stallTime).total_milliseconds();
+	return stallDuration > 600;
+
+	//return w_left->IsStalled() || w_right->IsStalled() || w_back->IsStalled();
 }
 bool WheelController::HasError()
 {

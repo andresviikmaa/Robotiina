@@ -2,6 +2,7 @@
 
 #include "wheel.h"
 #include "types.h"
+#include <boost/timer/timer.hpp>
 
 class WheelController {
 private:
@@ -10,7 +11,7 @@ private:
 	BasicWheel * w_left;
 	BasicWheel * w_right;
 	BasicWheel * w_back;
-	
+	boost::posix_time::ptime stallTime = boost::posix_time::microsec_clock::local_time() + boost::posix_time::seconds(60);
 protected:
 	cv::Point3d CalculateWheelSpeeds(double velocity, double direction, double rotate);
 public:
