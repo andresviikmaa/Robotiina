@@ -25,20 +25,21 @@ ObjectFinder::ObjectFinder()
 bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos) {
 	cv::Point2i point(-1, -1);
 	if (target == BALL){
-		point = LocateBallOnScreen(HSVRanges, frameHSV, frameBGR, target);
+		point = LocateBallOnScreen(HSVRanges, frameHSV, frameBGR, target, lastPosition);
 	}
 	else{
 		point = LocateGateOnScreen(HSVRanges, frameHSV, frameBGR, target);
 	}
 	if (point.x < 0 || point.y < 0){
 		point = filter->getPrediction();
+		lastPosition = point;
 		if (point.x < 0 || point.y < 0){
 			return false;
 		}
 	}
 	else {
 		point = filter->doFiltering(point);
-
+		lastPosition = point;
 	}
 	cv::circle(frameBGR, point, 10, cv::Scalar(0, 220, 220), -1);
 	//std::cout << point << std::endl;
@@ -102,7 +103,7 @@ cv::Point2i ObjectFinder::LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::M
 	return center;
 }
 
-cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
+cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, cv::Point2d &lastPosition) {
 	int smallestBallArea = 20;
 	cv::Point2d center(-1, -1);
 	cv::Mat imgThresholded = HSVRanges[target]; // reference counted, I think
@@ -139,17 +140,35 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 	if (ball_indexes.empty()){
 		return center;
 	}
-	std::sort(ball_indexes.begin(), ball_indexes.end());
-	
+
+	int closest_ball_index = 0;
+	cv::Point2d closestBall = cv::Point2d(-1, -1);
 	while (!ball_indexes.empty()){
-		//find center of closest ball
-		int closest_ball_index = ball_indexes.back().second;
-		if (contours.size() > closest_ball_index){
-			cv::Moments M = cv::moments(contours[closest_ball_index]);
-			center = cv::Point2i(M.m10 / M.m00, M.m01 / M.m00);
+		//If there is nothing to compare with
+		if (lastPosition.x == -1 && lastPosition.y == -1){
+			std::sort(ball_indexes.begin(), ball_indexes.end());
+			closest_ball_index = ball_indexes.back().second;
+			if (contours.size() > closest_ball_index){
+				cv::Moments M = cv::moments(contours[closest_ball_index]);
+				closestBall = cv::Point2d(M.m10 / M.m00, M.m01 / M.m00);
+			}
+			else {
+				assert(false);
+			}
 		}
-		else {
-			assert(false);
+		//Comparing with prev result
+		else{
+			double smallestDistance = 9999;
+			
+			for (int i = 0; i < ball_indexes.size(); i++){
+				cv::Moments M = cv::moments(contours[i]);
+				center = cv::Point2d(M.m10 / M.m00, M.m01 / M.m00);
+				double distance = cv::norm(center - lastPosition);
+				if (smallestDistance > distance){
+					smallestDistance = distance;
+					closestBall = center;
+				}
+			}			
 		}
 		//VALIDATE BALL
 		//For ball validation, drawed contour should cover balls shadow.
@@ -160,10 +179,10 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 		drawContours(HSVRanges[OUTER_BORDER], contours, closest_ball_index, color, thickness, 8, hierarchy);
 		drawContours(HSVRanges[OUTER_BORDER], contours, closest_ball_index, color, -5, 8, hierarchy);
 	
-		bool valid = validateBall(HSVRanges, center, frameHSV, frameBGR);
+		bool valid = validateBall(HSVRanges, closestBall, frameHSV, frameBGR);
 		if (valid){
 			cv::circle(frameBGR, center, 10, cv::Scalar(220, 220, 220), -1);
-			return center;
+			return	closestBall;
 		}
 		ball_indexes.pop_back();
 	}
