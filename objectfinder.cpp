@@ -143,7 +143,9 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 
 	int closest_ball_index = 0;
 	cv::Point2d closestBall = cv::Point2d(-1, -1);
+	
 	while (!ball_indexes.empty()){
+	//std::cout << "lastpos: " << lastPosition << std::endl;
 		//If there is nothing to compare with
 		if (lastPosition.x == -1 && lastPosition.y == -1){
 			std::sort(ball_indexes.begin(), ball_indexes.end());
@@ -181,7 +183,7 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 	
 		bool valid = validateBall(HSVRanges, closestBall, frameHSV, frameBGR);
 		if (valid){
-			cv::circle(frameBGR, center, 10, cv::Scalar(220, 220, 220), -1);
+			cv::circle(frameBGR, center, 8, cv::Scalar(220, 220, 220), -1);
 			return	closestBall;
 		}
 		ball_indexes.pop_back();

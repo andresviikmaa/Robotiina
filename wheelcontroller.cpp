@@ -132,15 +132,24 @@ bool WheelController::IsStalled()
 
 	GetRobotSpeed(velocity, direction, rotate);
 	GetTargetSpeed(velocity2, direction2, rotate2);
-
-	if (abs(velocity - velocity2) < 20) {
-		// reset timer
+	if (velocity2 < 0.01 || velocity > 90){
 		stallTime = boost::posix_time::microsec_clock::local_time();
+		return false;
 	}
-
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::time_duration::tick_type stallDuration = (time - stallTime).total_milliseconds();
-	return stallDuration > 600;
+	//std::cout << "stall? " << velocity << ", " << velocity2 << "t: " << stallDuration << std::endl;
+
+		
+	if (abs(velocity - velocity2) < 10) {
+		// reset timer
+		stallTime = boost::posix_time::microsec_clock::local_time();
+	}else {
+		//std::cout << "stall? " << velocity << ", " << velocity2 << "t: " << stallDuration << std::endl;
+		return stallDuration > 600;
+	
+	}
+	return false;
 
 	//return w_left->IsStalled() || w_right->IsStalled() || w_back->IsStalled();
 }

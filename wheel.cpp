@@ -30,7 +30,7 @@ void BasicWheel::Run()
 		{ // new scope for locking
 			//boost::mutex::scoped_lock lock(mutex);
 			UpdateSpeed();
-			CheckStall();
+			//CheckStall();
 			//CalculateDistanceTraveled();
 		}
 		lastStep = time;
