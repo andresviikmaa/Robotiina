@@ -12,7 +12,7 @@ protected:
 	bool validateBall(ThresholdedImages &HSVRanges, cv::Point2d point, cv::Mat &frameHSV, cv::Mat &frameBGR);
 private:
 	void WriteInfoOnScreen(const ObjectPosition &info);
-	KalmanFilter* filter = new KalmanFilter();
+	KalmanFilter* filter = new KalmanFilter(cv::Point2i (40, 40));
 	//Vars
 	double Hfov = 35.21;
 	double Vfov = 21.65; //half of cameras vertical field of view (degrees)

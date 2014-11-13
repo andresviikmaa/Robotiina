@@ -30,8 +30,12 @@ bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::M
 	else{
 		point = LocateGateOnScreen(HSVRanges, frameHSV, frameBGR, target);
 	}
-	if (point.x < 0 || point.y < 0) return false;
-	point = filter->doFiltering(point);
+	if (point.x < 0 || point.y < 0){
+		point = filter->getPrediction();
+	}
+	else{
+		point = filter->doFiltering(point);
+	}
 	cv::circle(frameBGR, point, 10, cv::Scalar(0, 220, 220), -1);
 	std::cout << point << std::endl;
 	targetPos = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
