@@ -258,7 +258,7 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 
 	}//ten times end
 	
-	return !(behindLineCount > 8);
+	return !(behindLineCount >= 7);
 }
 
 void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickness, CvScalar color)
