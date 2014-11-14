@@ -20,9 +20,9 @@ KalmanFilter::KalmanFilter(const cv::Point2i &startPoint){
 
 
 	setIdentity(KF.measurementMatrix);
-	setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-2));
-	setIdentity(KF.measurementNoiseCov, cv::Scalar::all(0.1));
-	setIdentity(KF.errorCovPost, cv::Scalar::all(10));
+	setIdentity(KF.processNoiseCov, cv::Scalar::all(0.1));
+	setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1));
+	setIdentity(KF.errorCovPost, cv::Scalar::all(1));
 }
 
 cv::Point2i KalmanFilter::doFiltering(const cv::Point2i &point){

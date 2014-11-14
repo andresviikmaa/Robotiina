@@ -102,7 +102,7 @@ bool Robot::Launch(int argc, char* argv[])
 
 	std::cout << "Initializing camera... " << std::endl;
 	if (config.count("camera"))
-		camera = new StillCamera(config["camera"].as<std::string>());
+		camera = new Camera(config["camera"].as<std::string>());
 	else
 		camera = new Camera(0);
 	std::cout << "Done" << std::endl;

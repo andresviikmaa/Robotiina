@@ -92,7 +92,7 @@ DriveMode AutoPilot::DriveToBall()
 
 		if (wheels->IsStalled()) return RECOVER_CRASH;
 		if(!ballInSight) return LOCATE_BALL;
-		
+		if (ballInTribbler) return LOCATE_GATE;
 		//rotate calculation for ball
 		if (lastBallLocation.horizontalAngle > 200){
 			rotate = (360 - lastBallLocation.horizontalAngle) * 0.4 + 3;
@@ -175,7 +175,6 @@ DriveMode AutoPilot::CatchBall(){
 }
 
 DriveMode AutoPilot::LocateGate() {
-
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime rotateStart = time;
 	boost::posix_time::ptime rotateTime = time;
@@ -185,8 +184,7 @@ DriveMode AutoPilot::LocateGate() {
 			coilgun->ToggleTribbler(true);
 			if (stop_thread) return EXIT;
 			if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 300) return IDLE;
-			if (!coilgun->BallInTribbler()) return LOCATE_BALL; 
-			
+			if (!ballInTribbler) return LOCATE_BALL;
 			if (wheels->IsStalled()) return RECOVER_CRASH;
 
 			time = boost::posix_time::microsec_clock::local_time();
@@ -210,7 +208,7 @@ DriveMode AutoPilot::LocateGate() {
 		while (gateInSight){
 			if (stop_thread) return EXIT;
 			if (wheels->IsStalled()) return RECOVER_CRASH;
-
+			if (!ballInTribbler) return LOCATE_BALL;
 			//rotate calculation for gate
 			int rotate = 0;
 			if (lastGateLocation.horizontalAngle > 200){
@@ -227,6 +225,7 @@ DriveMode AutoPilot::LocateGate() {
 				std::chrono::milliseconds dura(50);
 				std::this_thread::sleep_for(dura);
 				coilgun->Kick();
+				std::this_thread::sleep_for(dura);
 				return LOCATE_BALL;
 			}
 			else if (lastGateLocation.horizontalDev < -30){
