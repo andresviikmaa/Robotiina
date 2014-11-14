@@ -203,84 +203,62 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 	startPoint.x = frameHSV.cols / 2;
 	startPoint.y = frameHSV.rows;
 
-	cv::Point2d lastInner;
-	cv::Point2d firstInner;
-	cv::Point2d lastOuter;
-	cv::Point2d firstOuter;
-	
-
-	std::string state = "inner";
-	bool Hinrange = false;
-	bool Sinrange = false;
-	bool Vinrange = false;
-	bool firstFound = false;
 	cv::LineIterator iterator(frameHSV, startPoint, endPoint, 8);
-	for (int i = 0; i < iterator.count; i++, ++iterator)
-	{
-		if (state == "inner"){
-			/*
-			cv::Vec3b pixel = frameHSV.ptr<cv::Vec3b>(iterator.pos().y)[iterator.pos().x];
-			//searching for inner border
-			Hinrange = (pixel[0] <= inner.hue.high && pixel[0] >= inner.hue.low);
-			Sinrange = (pixel[1] <= inner.sat.high && pixel[1] >= inner.sat.low);
-			Vinrange = (pixel[2] <= inner.val.high && pixel[2] >= inner.val.low);
-			bool inRange = Hinrange && Sinrange && Vinrange;
-			*/
-			bool inRange = innerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
-			if (inRange){
-				firstInner = iterator.pos();
-				state = "outer";
+	int behindLineCount = 0;
+	int alterIterator = -10;
+	for (int n = 0; n < 10; n++){
+		cv::Point2d lastInner = NULL;
+		cv::Point2d firstInner = NULL;
+		cv::Point2d lastOuter = NULL;
+		cv::Point2d firstOuter = NULL;
+
+		std::string state = "inner";
+		bool Hinrange = false;
+		bool Sinrange = false;
+		bool Vinrange = false;
+		bool firstFound = false;
+		iterator = cv::LineIterator{ frameHSV, cv::Point(startPoint.x + alterIterator, startPoint.y), cv::Point(endPoint.x + alterIterator, endPoint.y), 8 };
+		for (int i = 0; i < iterator.count; i++, ++iterator)
+		{
+			if (state == "inner"){
+				bool inRange = innerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
+				if (inRange){
+					firstInner = iterator.pos();
+					state = "outer";
+				}
 			}
+			else if (state == "outer"){
+				bool inRange = outerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
+				if (inRange && !firstFound){
+					firstFound = true;
+					firstOuter = iterator.pos();
+				}
+				else if (inRange){
+					lastOuter = iterator.pos();
+				}
+				inRange = innerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
+				if (inRange){
+					lastInner = iterator.pos();
+				}
+
+			}
+		}//lineiterator end
+		alterIterator = alterIterator + 2;
+
+		cv::circle(frameBGR, lastOuter, 5, cv::Scalar(0, 0, 220), -1);
+		cv::circle(frameBGR, firstInner, 5, cv::Scalar(200, 0, 220), -1);
+		cv::circle(frameBGR, firstOuter, 5, cv::Scalar(0, 0, 0), -1);
+		cv::circle(frameBGR, lastInner, 5, cv::Scalar(200, 200, 200), -1);
+
+		double distLiFo = cv::norm(lastInner - firstOuter);
+
+		if (distLiFo < 100){
+			behindLineCount++;
 		}
-		else if (state == "outer"){
-			/*
-			cv::Vec3b pixel = frameHSV.ptr<cv::Vec3b>(iterator.pos().y)[iterator.pos().x];
-			//Outer border last pixel
-			Hinrange = (pixel[0] <= outer.hue.high && pixel[0] >= outer.hue.low);
-			Sinrange = (pixel[1] <= outer.sat.high && pixel[1] >= outer.sat.low);
-			Vinrange = (pixel[2] <= outer.val.high && pixel[2] >= outer.val.low);
-			bool inRange = Hinrange && Sinrange && Vinrange;
-			*/
-			bool inRange = outerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
-			if (inRange && !firstFound){
-				firstFound = true;
-				firstOuter = iterator.pos();
-			}
-			else if (inRange){
-				lastOuter = iterator.pos();
-			}
-			/*
-			//Inner border last pixel
-			Hinrange = (pixel[0] <= inner.hue.high && pixel[0] >= inner.hue.low);
-			Sinrange = (pixel[1] <= inner.sat.high && pixel[1] >= inner.sat.low);
-			Vinrange = (pixel[2] <= inner.val.high && pixel[2] >= inner.val.low);
-			inRange = Hinrange && Sinrange && Vinrange;
-			*/
-			inRange = innerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
-			if (inRange){
-				lastInner = iterator.pos();
-			}
 
-		}
-	}//lineiterator end
-	cv::circle(frameBGR, lastOuter, 5, cv::Scalar(0, 0, 220), -1);
-	cv::circle(frameBGR, firstInner, 5, cv::Scalar(200, 0, 220), -1);
-	cv::circle(frameBGR, firstOuter, 5, cv::Scalar(0, 0, 0), -1);
-	cv::circle(frameBGR, lastInner, 5, cv::Scalar(200, 200, 200), -1);
-
-	if (!firstFound){
-		return true;
-	}
-	double distLiFo = cv::norm(lastInner - firstOuter);
-
-	if (distLiFo < 100){
-		return false;
-	}
-	else{
-		return true;
-	}
+	}//ten times end
 	
-	return true;
+	return !(behindLineCount > 8);
 }
 
 void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickness, CvScalar color)
