@@ -24,26 +24,37 @@ ObjectFinder::ObjectFinder()
 
 bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos) {
 	cv::Point2i point(-1, -1);
-	cv::Scalar color(0, 0, 0);;
+	cv::Scalar color(0, 0, 0);
+	bool resetFilter = false;
 	if (target == BALL){
 		point = LocateBallOnScreen(HSVRanges, frameHSV, frameBGR, target);
-		color = cv::Scalar(0, 220, 220);
+		color = cv::Scalar(0, 225, 225);
 	}
 	else{
 		point = LocateGateOnScreen(HSVRanges, frameHSV, frameBGR, target);
 	}
-	if (point.x < 0 && point.y < 0){
+	if (point.x < -1 && point.y < -1){//If ball is not valid then no predicting
+		lastPosition = point;
+		resetFilter = true;
+		return false;
+	}
+	else if (point.x < 0 && point.y < 0){//If ball is suddenly lost then predict where it could be
 		point = filter->getPrediction();
 		lastPosition = point;
 		if (point.x < 0 && point.y < 0){
+			resetFilter = true;
 			return false;
 		}
 	}
-	else {
+	else {//Ball is in frame
+		if (resetFilter){
+			resetFilter = false;
+			filter->reset(point);
+		}
 		point = filter->doFiltering(point);
 		lastPosition = point;
 	}
-	cv::circle(frameBGR, point, 10, color, -1);
+	cv::circle(frameBGR, point, 8, color, -1);
 	//std::cout << point << std::endl;
 	targetPos = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
 	WriteInfoOnScreen(targetPos);
@@ -149,7 +160,7 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 	while (!ball_indexes.empty()){
 		//If there is nothing to compare with
 		closest_ball_index = ball_indexes.back().second;
-		
+		//Choosing new ball
  		if (lastPosition.x < 0 && lastPosition.y < 0){
 			if (contours.size() > closest_ball_index){
 				cv::Moments M = cv::moments(contours[closest_ball_index]);
@@ -157,6 +168,13 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 			}
 			else {
 				assert(false);
+			}
+			//If we found not valid ball
+			if (cv::norm(closestBall - notValidPosition) < 100 && notValidPosition.x > 0 && notValidPosition.y > 0){
+				return cv::Point2i(-2, -2);
+			}
+			else{
+				notValidPosition = cv::Point2i(-1, -1); //reset variable
 			}
 		}
 		//Comparing with prev result
@@ -173,10 +191,10 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 				}
 			}
 			//distance between found ball and chosen ball
-			std::cout << "smallestdistance: " << smallestDistance << std::endl;
-			if (smallestDistance > 80){
+			if (smallestDistance > 60){
 				return cv::Point2d(-1,-1);
 			}
+			
 		}
 		//VALIDATE BALL
 		//For ball validation, drawed contour should cover balls shadow.
@@ -189,7 +207,8 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 
 		bool valid = validateBall(HSVRanges, closestBall, frameHSV, frameBGR);
 		if (!valid){
-			cv::circle(frameBGR, closestBall, 5, cv::Scalar(0, 0, 225), -1); //not valid ball is red
+			notValidPosition = closestBall;
+			cv::circle(frameBGR, closestBall, 5, cv::Scalar(100, 0, 225), -1); //not valid ball is purple
 		}
 		else{
 			cv::circle(frameBGR, closestBall, 12, cv::Scalar(225, 225, 225), 3); //valid ball is white
@@ -197,8 +216,8 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 		}
 		ball_indexes.pop_back();
 	}
-
-	return cv::Point2i(-1, -1);
+	//If there is not valid ball
+	return cv::Point2i(-2, -2);
 
 }
 

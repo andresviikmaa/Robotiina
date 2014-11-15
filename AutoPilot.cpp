@@ -222,10 +222,9 @@ DriveMode AutoPilot::LocateGate() {
 			if (lastGateLocation.horizontalDev > -30 && lastGateLocation.horizontalDev < 30){
 				coilgun->ToggleTribbler(false);
 				wheels->Stop();
-				std::chrono::milliseconds dura(50);
-				std::this_thread::sleep_for(dura);
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 				coilgun->Kick();
-				std::this_thread::sleep_for(dura);
+				std::this_thread::sleep_for(std::chrono::milliseconds(500)); //half second wait.
 				return LOCATE_BALL;
 			}
 			else if (lastGateLocation.horizontalDev < -30){

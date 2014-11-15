@@ -1,17 +1,21 @@
 #include "kalmanFilter.h"
 
 KalmanFilter::KalmanFilter(const cv::Point2i &startPoint){
-	KF.transitionMatrix = *(cv::Mat_<float>(4, 4) << 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+	KF.transitionMatrix = *(cv::Mat_<float>(4, 4) << 1, 0, 1, 0, 
+													 0, 1, 0, 1, 
+													 0, 0, 1, 0, 
+													 0, 0, 0, 1);
+
 	
 	measurement(0) = startPoint.x;
 	measurement(1) = startPoint.y;
 	estimated(0) = startPoint.x;
 	estimated(1) = startPoint.y;
 
-	KF.statePre.at<float>(0) = 0;
-	KF.statePre.at<float>(1) = 0;
-	KF.statePre.at<float>(2) = 0;
-	KF.statePre.at<float>(3) = 0;
+	KF.statePre.at<float>(0) = startPoint.x;
+	KF.statePre.at<float>(1) = startPoint.y;
+	KF.statePre.at<float>(2) = startPoint.x;
+	KF.statePre.at<float>(3) = startPoint.y;
 
 	KF.statePost.at<float>(0) = startPoint.x;
 	KF.statePost.at<float>(1) = startPoint.y;
@@ -20,8 +24,8 @@ KalmanFilter::KalmanFilter(const cv::Point2i &startPoint){
 
 
 	setIdentity(KF.measurementMatrix);
-	setIdentity(KF.processNoiseCov, cv::Scalar::all(0.1));
-	setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1));
+	setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-2));
+	setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1e-1));
 	setIdentity(KF.errorCovPost, cv::Scalar::all(1));
 }
 
@@ -51,3 +55,21 @@ cv::Point2i KalmanFilter::getPrediction(){
 		return predictPt;	
 	}
 }
+
+void KalmanFilter::reset(const cv::Point2i &startPoint){
+	measurement(0) = startPoint.x;
+	measurement(1) = startPoint.y;
+	estimated(0) = startPoint.x;
+	estimated(1) = startPoint.y;
+
+	KF.statePre.at<float>(0) = startPoint.x;
+	KF.statePre.at<float>(1) = startPoint.y;
+	KF.statePre.at<float>(2) = startPoint.x;
+	KF.statePre.at<float>(3) = startPoint.y;
+
+	KF.statePost.at<float>(0) = startPoint.x;
+	KF.statePost.at<float>(1) = startPoint.y;
+	KF.statePost.at<float>(2) = startPoint.x;
+	KF.statePost.at<float>(3) = startPoint.y;
+}
+
