@@ -216,10 +216,10 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 	int behindLineCount = 0;
 	int alterIterator = -10;
 	for (int n = 0; n < 10; n++){
-		cv::Point2d lastInner = NULL;
-		cv::Point2d firstInner = NULL;
-		cv::Point2d lastOuter = NULL;
-		cv::Point2d firstOuter = NULL;
+		cv::Point2d lastInner = {0,0};
+		cv::Point2d firstInner = {0,0};
+		cv::Point2d lastOuter = {0,0};
+		cv::Point2d firstOuter = {0,0};
 
 		std::string state = "inner";
 		bool Hinrange = false;
