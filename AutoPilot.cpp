@@ -47,7 +47,6 @@ DriveMode AutoPilot::LocateBall() {
 	if (ballInSight) return DRIVE_TO_BALL;
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime rotateStart = time;
-	boost::posix_time::ptime rotateTime = time;
 	while (!ballInSight) {
 		if (ballInTribbler){
 			return LOCATE_GATE;
@@ -65,17 +64,30 @@ DriveMode AutoPilot::LocateBall() {
 		if (false && rotateDuration >= 500){
 			wheels->Stop();
 			if (rotateDuration >= 600){
-				rotateTime = time; //reset
+				//rotateTime = time; //reset
 			}
 		}
 		else{
-			wheels->Rotate(1, 10);
+			if (rotateDuration < 5700){
+				wheels->rotateBack(40);
+				coilgun->ToggleTribbler(false);
+				
+			}
+			else if(rotateDuration < 6800){
+				wheels->Forward(-70);				
+			}
+			else{
+				rotateTime = time;
+			}
+			
+			
 		}
 
 
 		std::chrono::milliseconds dura(10);
 		std::this_thread::sleep_for(dura);
-	}
+	}//while not ball in sight
+	wheels->Stop();
 	return DRIVE_TO_BALL;
 }
 
@@ -87,6 +99,8 @@ DriveMode AutoPilot::DriveToBall()
 	int desiredDistance = 270;
 	
 	while (true) {
+	boost::posix_time::ptime rotateTime = time;
+
 		if (stop_thread) return EXIT;
 		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
 
@@ -199,7 +213,7 @@ DriveMode AutoPilot::LocateGate() {
 				}
 			}
 			else{
-				wheels->Rotate(1, 10);
+				wheels->rotateBack(50);
 			}
 			std::chrono::milliseconds dura(8);
 			std::this_thread::sleep_for(dura);
@@ -212,10 +226,10 @@ DriveMode AutoPilot::LocateGate() {
 			//rotate calculation for gate
 			int rotate = 0;
 			if (lastGateLocation.horizontalAngle > 200){
-				rotate = (360 - lastGateLocation.horizontalAngle) * 0.4 + 3;
+				rotate = (360 - lastGateLocation.horizontalAngle) * 1.25 + 5;
 			}
 			else{
-				rotate = lastGateLocation.horizontalAngle  * 0.4 + 3;
+				rotate = lastGateLocation.horizontalAngle  * 1.25 + 5;
 			}
 			
 			//Turn robot to gate
@@ -228,10 +242,10 @@ DriveMode AutoPilot::LocateGate() {
 				return LOCATE_BALL;
 			}
 			else if (lastGateLocation.horizontalDev < -30){
-				wheels->Rotate(1, rotate);
+				wheels->rotateBack(rotate);
 			}
 			else{
-				wheels->Rotate(0, rotate);
+				wheels->rotateBack(-rotate);
 			}
 		}
 

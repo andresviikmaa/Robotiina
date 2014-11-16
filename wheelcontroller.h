@@ -18,6 +18,8 @@ public:
 	WheelController();
 	void InitWheels(boost::asio::io_service &io, bool useDummyPorts = false);
 	void Forward(int speed);
+	void rotateBack(int speed);
+	bool directControl = false;
     void MoveTo(const CvPoint &);
 	cv::Point3d Rotate(bool direction, double speed);
 	cv::Point3d Drive(double velocity, double direction);

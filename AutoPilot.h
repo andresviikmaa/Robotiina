@@ -30,10 +30,12 @@ private:
 	boost::atomic<bool> drive;
 	boost::thread_group threads;
 	boost::mutex mutex;
+	boost::posix_time::ptime rotateTime = time;
 
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime lastUpdate = time; 
 	DriveMode driveMode = IDLE;
+
 protected:
 	DriveMode DriveToBall();
 	DriveMode LocateBall();

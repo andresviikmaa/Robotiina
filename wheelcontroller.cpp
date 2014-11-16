@@ -73,6 +73,12 @@ void WheelController::Forward(int speed) {
 	DriveRotate(speed * 1.1547, 0, 0);
 
 }
+void WheelController::rotateBack(int speed) {
+	w_back->SetSpeed(speed);
+	w_left->SetSpeed(speed*0.2);
+	w_right->SetSpeed(speed*0.2);
+	directControl = true;
+}
 cv::Point3d WheelController::Rotate(bool direction, double speed)
 {
 	return DriveRotate(0,0, direction ? speed : -speed);
@@ -113,7 +119,7 @@ cv::Point3d WheelController::DriveRotate(double velocity, double direction, doub
 	w_left->SetSpeed(speeds.x);
 	w_right->SetSpeed(speeds.y);
 	w_back->SetSpeed(speeds.z);
-
+	directControl = false;
 	return lastSpeed;
 	
 }
@@ -132,6 +138,7 @@ cv::Point3d WheelController::Stop()
 
 bool WheelController::IsStalled()
 {
+	if (directControl) return false;
 	double velocity = 0, direction = 0, rotate = 0;
 	double velocity2 = 0, direction2 = 0, rotate2 = 0;
 

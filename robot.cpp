@@ -205,13 +205,13 @@ void Robot::Run()
 			lastStepTime = time;
 			frames = 0;
 		}
+		frameBGR = camera->Capture();
 		
 		if (captureFrames) {
 			std::string frameName = captureDir + boost::posix_time::to_simple_string(time) + ".jpg";
 			std::replace(frameName.begin(), frameName.end(), ':', '.');
 			cv::imwrite(frameName , frameBGR);
 		}
-		frameBGR = camera->Capture();
 
 		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 

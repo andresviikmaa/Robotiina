@@ -198,7 +198,7 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 		}
 		//VALIDATE BALL
 		//For ball validation, drawed contour should cover balls shadow.
-		int thickness = (int)ceil(cv::contourArea(contours[closest_ball_index], false) / 60);
+		int thickness = (int)ceil(cv::contourArea(contours[closest_ball_index], false) / 50);
 		thickness = std::min(100, std::max(thickness, 12));
 		drawContours(HSVRanges[INNER_BORDER], contours, closest_ball_index, color, thickness, 8, hierarchy);
 		drawContours(HSVRanges[INNER_BORDER], contours, closest_ball_index, color, -5, 8, hierarchy);
@@ -280,7 +280,7 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 		if (!firstFound){
 			continue;
 		}
-		if (distLiFo < 100){
+		if (distLiFo < 60){
 			behindLineCount++;
 		}
 	}//ten times end
