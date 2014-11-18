@@ -69,7 +69,7 @@ DriveMode AutoPilot::LocateBall() {
 		}
 		else{
 			if (rotateDuration < 5700){
-				wheels->rotateBack(40);
+				wheels->Rotate(1,15);
 				coilgun->ToggleTribbler(false);
 				
 			}
@@ -213,7 +213,7 @@ DriveMode AutoPilot::LocateGate() {
 				}
 			}
 			else{
-				wheels->rotateBack(50);
+				wheels->Rotate(0,15);
 			}
 			std::chrono::milliseconds dura(8);
 			std::this_thread::sleep_for(dura);
@@ -242,10 +242,10 @@ DriveMode AutoPilot::LocateGate() {
 				return LOCATE_BALL;
 			}
 			else if (lastGateLocation.horizontalDev < -30){
-				wheels->rotateBack(rotate);
+				wheels->Rotate(1, rotate);
 			}
 			else{
-				wheels->rotateBack(-rotate);
+				wheels->Rotate(0, rotate);
 			}
 		}
 
