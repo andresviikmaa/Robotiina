@@ -24,6 +24,7 @@
 #include "AutoPilot.h"
 #include "RobotTracker.h"
 #include "ImageThresholder.h"
+#include "VideoRecorder.h"
 
 #define STATE_BUTTON(name, new_state) \
 createButton(name, [&](){ this->SetState(new_state); });
@@ -180,6 +181,9 @@ void Robot::Run()
 	cv::Mat frameBGR, frameHSV;
 
 	std::string captureDir;
+	boost::posix_time::ptime captureStart = boost::posix_time::microsec_clock::local_time();
+	cv::VideoWriter *outputVideo = NULL;
+
 	/*= "videos/" + boost::posix_time::to_simple_string(time) + "/";
 	std::replace(captureDir.begin(), captureDir.end(), ':', '.');
 	if (captureFrames) {
@@ -194,10 +198,11 @@ void Robot::Run()
 	ObjectFinder gate1Finder;
 	ObjectFinder gate2Finder;
 
+	VideoRecorder videoRecorder("videos/", 30, frameBGR.size());
+
 	frameBGR = camera->Capture();
 	
-	cv::VideoWriter *outputVideo = NULL;
-
+	std::stringstream subtitles;
 	while (true)
     {
 		
@@ -212,8 +217,10 @@ void Robot::Run()
 		}
 		frameBGR = camera->Capture();
 		
-		if (captureFrames && outputVideo != NULL) {
-			*outputVideo << frameBGR;
+		if (captureFrames) {
+			subtitles.str("");
+			subtitles << "fps: " << fps;
+			videoRecorder.RecordFrame(frameBGR, subtitles.str());
 		}
 
 		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
@@ -279,34 +286,14 @@ void Robot::Run()
 		}
 		else if (STATE_RUN == state) {
 			START_DIALOG
-				createButton(std::string("Save video: ") + (captureFrames ? "on" : "off"), [this, &captureDir, &time, &outputVideo, &frameBGR]{
+				createButton(std::string("Save video: ") + (captureFrames ? "on" : "off"), [this, &captureDir, &time, &videoRecorder, &frameBGR]{
 					if (this->captureFrames) {
 						// save old video
 					}
 
 					this->captureFrames = !this->captureFrames;
+					this->captureFrames ? videoRecorder.Start() : videoRecorder.Stop();
 
-					if (this->captureFrames) {
-						if (outputVideo != NULL) {
-							delete outputVideo;
-						}
-						outputVideo = new cv::VideoWriter();
-#ifdef WIN32
-						int ex = -1;
-#else
-						int ex = CV_FOURCC('F', 'M', 'P', '4');
-#endif
-
-						captureDir = "videos/" + boost::posix_time::to_simple_string(time) + ".avi";
-						std::replace(captureDir.begin(), captureDir.end(), ':', '.');
-
-						outputVideo->open(captureDir, ex, 30, frameBGR.size(), true);
-						if (!outputVideo->isOpened())
-						{
-							std::cout << "Could not open the output video for write: " << captureDir << std::endl;
-							this->captureFrames = false;
-						}
-					}
 					this->last_state = STATE_NONE; // force dialog redraw
 				});
 				createButton(std::string("Border detection: ") + (detectBorders ? "on" : "off"), [this]{
