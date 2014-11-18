@@ -200,10 +200,10 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 		//For ball validation, drawed contour should cover balls shadow.
 		int thickness = (int)ceil(cv::contourArea(contours[closest_ball_index], false) / 50);
 		thickness = std::min(100, std::max(thickness, 12));
-		drawContours(HSVRanges[INNER_BORDER], contours, closest_ball_index, color, thickness, 8, hierarchy);
-		drawContours(HSVRanges[INNER_BORDER], contours, closest_ball_index, color, -5, 8, hierarchy);
 		drawContours(HSVRanges[OUTER_BORDER], contours, closest_ball_index, color, thickness, 8, hierarchy);
 		drawContours(HSVRanges[OUTER_BORDER], contours, closest_ball_index, color, -5, 8, hierarchy);
+		drawContours(frameBGR, contours, closest_ball_index, color, thickness, 8, hierarchy);
+		drawContours(frameBGR, contours, closest_ball_index, color, -5, 8, hierarchy);
 
 		bool valid = validateBall(HSVRanges, closestBall, frameHSV, frameBGR);
 		if (!valid){
