@@ -179,11 +179,13 @@ void Robot::Run()
 	boost::posix_time::time_duration rotateDuration;
 	cv::Mat frameBGR, frameHSV;
 
-	std::string captureDir = "videos/" + boost::posix_time::to_simple_string(time) + "/";
+	std::string captureDir;
+	/*= "videos/" + boost::posix_time::to_simple_string(time) + "/";
 	std::replace(captureDir.begin(), captureDir.end(), ':', '.');
 	if (captureFrames) {
 		boost::filesystem::create_directories(captureDir);
 	}
+	*/
 	coilBoard->Start();
 	AutoPilot autoPilot(wheels, coilBoard);
 	//RobotTracker tracker(wheels);
@@ -191,7 +193,10 @@ void Robot::Run()
 	ImageThresholder thresholder(thresholdedImages, objectThresholds);
 	ObjectFinder gate1Finder;
 	ObjectFinder gate2Finder;
-		frameBGR = camera->Capture();
+
+	frameBGR = camera->Capture();
+	
+	cv::VideoWriter *outputVideo = NULL;
 
 	while (true)
     {
@@ -207,10 +212,8 @@ void Robot::Run()
 		}
 		frameBGR = camera->Capture();
 		
-		if (captureFrames) {
-			std::string frameName = captureDir + boost::posix_time::to_simple_string(time) + ".jpg";
-			std::replace(frameName.begin(), frameName.end(), ':', '.');
-			cv::imwrite(frameName , frameBGR);
+		if (captureFrames && outputVideo != NULL) {
+			*outputVideo << frameBGR;
 		}
 
 		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
@@ -276,12 +279,33 @@ void Robot::Run()
 		}
 		else if (STATE_RUN == state) {
 			START_DIALOG
-				createButton(std::string("Save video: ") + (captureFrames ? "on" : "off"), [this, &captureDir, &time]{
-					this->captureFrames = !this->captureFrames;
+				createButton(std::string("Save video: ") + (captureFrames ? "on" : "off"), [this, &captureDir, &time, &outputVideo, &frameBGR]{
 					if (this->captureFrames) {
-						captureDir = "videos/" + boost::posix_time::to_simple_string(time) + "/";
+						// save old video
+					}
+
+					this->captureFrames = !this->captureFrames;
+
+					if (this->captureFrames) {
+						if (outputVideo != NULL) {
+							delete outputVideo;
+						}
+						outputVideo = new cv::VideoWriter();
+#ifdef WIN32
+						int ex = -1;
+#else
+						int ex = CV_FOURCC('F', 'M', 'P', '4');
+#endif
+
+						captureDir = "videos/" + boost::posix_time::to_simple_string(time) + ".avi";
 						std::replace(captureDir.begin(), captureDir.end(), ':', '.');
-						boost::filesystem::create_directories(captureDir);
+
+						outputVideo->open(captureDir, ex, 30, frameBGR.size(), true);
+						if (!outputVideo->isOpened())
+						{
+							std::cout << "Could not open the output video for write: " << captureDir << std::endl;
+							this->captureFrames = false;
+						}
 					}
 					this->last_state = STATE_NONE; // force dialog redraw
 				});
@@ -371,6 +395,10 @@ void Robot::Run()
     }
 
 	coilBoard->Stop();
+	if (outputVideo != NULL) {
+		delete outputVideo;
+	}
+
 
 }
 std::string Robot::ExecuteRemoteCommand(const std::string &command){

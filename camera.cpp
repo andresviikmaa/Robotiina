@@ -10,8 +10,8 @@ Camera::Camera(const std::string &device)
 		throw std::runtime_error("Camera not found");
     }
 	//cap->set(CV_CAP_PROP_FPS, 60);
-	cap->set(CV_CAP_PROP_FRAME_WIDTH, 1280);
-	cap->set(CV_CAP_PROP_FRAME_HEIGHT, 720);
+	//cap->set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+	//cap->set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
 	/*
 	https://github.com/jaantti/Firestarter/blob/master/2014/run.sh
@@ -31,6 +31,8 @@ Camera::Camera(int device)
 	{
 		throw std::runtime_error("Camera is missing");
 	}
+	frameSize = cv::Size((int)cap->get(CV_CAP_PROP_FRAME_WIDTH),    // Acquire input size
+		(int)cap->get(CV_CAP_PROP_FRAME_HEIGHT));
 	/*
 	cap->set(CV_CAP_PROP_EXPOSURE, -5);
 	cap->set(CV_CAP_PROP_BRIGHTNESS, 0);
@@ -47,8 +49,11 @@ const cv::Mat &Camera::Capture()
 		
 		*cap >> frame;
 		
-
-    return frame;
+	if (frame.size().height > 0) {
+		frame.copyTo(lastframe);
+	}
+	lastframe.copyTo(buffer);
+	return buffer;
 }
 const cv::Mat &Camera::CaptureHSV() {
     cvtColor(frame, buffer, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV

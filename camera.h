@@ -4,8 +4,9 @@
 class Camera: public ICamera
 {
 private:
-    cv::Mat frame, buffer;
+    cv::Mat frame, lastframe, buffer;
 	cv::VideoCapture *cap;
+	cv::Size frameSize;
 public:
     Camera(const std::string &device);
 	Camera(int device);
