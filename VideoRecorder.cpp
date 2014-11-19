@@ -32,7 +32,7 @@ void VideoRecorder::Start()
 		std::cout << "Could not open the output video for write: " << fileName << std::endl;
 	}
 	subtitles->open(fileName + ".sub");
-	frameCounter = 0;
+	frameCounter = 1;
 
 
 }
@@ -51,5 +51,6 @@ void VideoRecorder::Stop()
 void VideoRecorder::RecordFrame(const cv::Mat &frame, const std::string subtitle)
 {
 	*outputVideo << frame;
-	*subtitles << "{" << frameCounter << "}{" << (frameCounter++) << "}" << " frame " << frameCounter << ": " << boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time()) << "|" << subtitle << "\r\n";
+	*subtitles << "{" << frameCounter << "}{" << (frameCounter) << "}" << " frame " << frameCounter << ": " << boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time()) << "|" << subtitle << "\r\n";
+	frameCounter++;
 }

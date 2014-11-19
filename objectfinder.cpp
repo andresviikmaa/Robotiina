@@ -2,6 +2,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <math.h>
+void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickness, CvScalar color);
+
 ObjectFinder::ObjectFinder()
 {
 	using boost::property_tree::ptree;
@@ -107,12 +109,37 @@ cv::Point2i ObjectFinder::LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::M
 		assert(false);
 	}
 
+	/* old:
 	//Cutting out gate from ball frame	
 	bounding_rect = cv::boundingRect(contours[largest_contour_index]);
 	bounding_rect.height = bounding_rect.height * growGateHeight;
 	rectangle(HSVRanges[BALL], bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
 	//for clear visual:
 	rectangle(frameBGR, bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
+
+	cv::Scalar color4(255, 0, 0);
+	new:
+	*/
+	cv::RotatedRect bounding_rect2 = cv::minAreaRect(contours[largest_contour_index]);
+	cv::Point2f rect_points[4]; bounding_rect2.points(rect_points);
+
+	for (int j = 0; j < 4; j++) {
+		line(frameBGR, rect_points[j], rect_points[(j + 1) % 4], color2, 1, 8);
+
+		std::vector<cv::Point2i> points;
+		points.push_back(rect_points[j]);
+		points.push_back(rect_points[(j + 1) % 4]);
+		cv::Vec4f newLine;
+		cv::fitLine(points, newLine, CV_DIST_L2, 0, 0.1, 0.1);
+		//std::cout << rect_points[j] << ", " << rect_points[(j + 1) % 4] << ": " << atan2(newLine[1], newLine[0])*180/PI << std::endl;
+		if (abs(atan2(newLine[1], newLine[0]) * 180 / PI) < 45) {
+			newLine[3] += 20; // shift line down
+			drawLine(frameBGR, HSVRanges[BALL], 1, newLine, 1, cv::Scalar(0, 255 * (1 + 0.3), 0));
+		}
+
+	}
+	//std::cout << "-----------------" << std::endl;
+	// find out lowest line
 	return center;
 }
 
