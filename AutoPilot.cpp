@@ -26,7 +26,7 @@ AutoPilot::AutoPilot(WheelController *wheels, CoilGun *coilgun, Audrino *audrino
 	threads.create_thread(boost::bind(&AutoPilot::Run, this));
 }
 
-void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation)
+void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool sightObstructed)
 {
 	boost::mutex::scoped_lock lock(mutex);
 	ballInSight = ballLocation != NULL;
@@ -36,6 +36,8 @@ void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLo
 	ballInTribbler =  coilgun->BallInTribbler();
 	lastUpdate = boost::posix_time::microsec_clock::local_time();
 	sonars = audrino->GetSonarReadings();
+	this->sightObstructed = sightObstructed;
+
 	if (driveMode == IDLE) driveMode = LOCATE_BALL;
 }
 
@@ -241,6 +243,11 @@ DriveMode AutoPilot::LocateGate() {
 			if (stop_thread) return EXIT;
 			if (wheels->IsStalled()) return RECOVER_CRASH;
 			if (!ballInTribbler) return LOCATE_BALL;
+			if (sightObstructed) { //then move sideways
+				wheels->Drive(50, 270);
+				std::chrono::milliseconds dura(400);
+				std::this_thread::sleep_for(dura);
+			}
 			//rotate calculation for gate
 			int rotate = 0;
 			if (lastGateLocation.horizontalAngle > 200){
@@ -334,6 +341,7 @@ std::string AutoPilot::GetDebugInfo(){
 	oss << ", Ball visible: " << (ballInSight ? "yes" : "no");
 	oss << ", Gate Visible: " << (gateInSight ? "yes" : "no");
 	oss << ", Ball in tribbler: " << (ballInTribbler ? "yes" : "no");
+	oss << ", Sight free: " << (!sightObstructed ? "yes" : "no");
 	oss << "|[Autopilot] Ball Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
 	oss << "Gate Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
 

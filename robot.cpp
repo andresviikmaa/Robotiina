@@ -330,7 +330,14 @@ void Robot::Run()
 				finder->IsolateField(thresholdedImages, frameHSV, frameBGR);
 			};
 
-		
+			bool sightObstructed = false;
+			cv::Mat selected;
+			cv::Mat mask(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
+			cv::line(mask, cv::Point(frameBGR.cols / 3, 0), cv::Point(frameBGR.cols / 3, frameBGR.rows-100), cv::Scalar(255, 255, 255), 40);
+			thresholdedImages[BALL].copyTo(selected, mask); // perhaps use field and inner border
+			//cv::imshow("mmm", selected);
+			sightObstructed = countNonZero(selected) > 10;
+
 		
 			ObjectPosition ballPos, gate1Pos, gate2Pos;
 			//Cut out gate contour.	
@@ -339,12 +346,15 @@ void Robot::Run()
 			bool gate2Found = gate1Finder.Locate(thresholdedImages, frameHSV, frameBGR, GATE2, gate2Pos);
 
 			bool ballFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos);
+
+
 			ObjectPosition *targetGatePos = 0;
 			if (targetGate == GATE1 && gate1Found) targetGatePos = &gate1Pos;
 			else if(targetGate == GATE2 && gate2Found) targetGatePos = &gate2Pos;
 			// else leave to NULL
-			
-			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos);
+
+
+			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos, sightObstructed);
 			
         }
 		else if (STATE_MANUAL_CONTROL == state) {

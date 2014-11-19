@@ -31,6 +31,7 @@ private:
 	volatile bool gateInSight = false;
 	volatile bool homeGateInSight = false;
 	volatile bool ballInTribbler = false;
+	volatile bool sightObstructed = false;
 	cv::Point3i sonars{ 100, 100, 100 };
 
 
@@ -56,7 +57,7 @@ protected:
 	void WriteInfoOnScreen();
 public:
 	AutoPilot(WheelController *wheels, CoilGun *coilgun, Audrino *audrino);
-	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation);
+	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool sightObstructed);
 	void Run();
 	~AutoPilot();
 	std::string GetDebugInfo();
