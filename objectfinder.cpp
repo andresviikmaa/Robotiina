@@ -59,7 +59,7 @@ bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::M
 	cv::circle(frameBGR, point, 8, color, -1);
 	//std::cout << point << std::endl;
 	targetPos = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
-	WriteInfoOnScreen(targetPos);
+	//WriteInfoOnScreen(targetPos);
 	return true;
 }
 

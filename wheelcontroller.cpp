@@ -212,3 +212,15 @@ void WheelController::GetTargetSpeed(double &velocity, double &direction, double
 	direction = lastSpeed.y;
 	rotate = lastSpeed.z;
 }
+
+std::string WheelController::GetDebugInfo(){
+
+	double velocity = 0, direction = 0, rotate = 0;
+	double velocity2 = 0, direction2 = 0, rotate2 = 0;
+
+	GetRobotSpeed(velocity, direction, rotate);
+	std::ostringstream oss;
+	oss << "[WheelController] target: " << "velocity: " << lastSpeed.x << ", heading: " << lastSpeed.y << ", rotate: " << lastSpeed.z << "|";
+	oss << "[WheelController] actual: " << "velocity: " << velocity2 << ", heading: " << direction2 << ", rotate: " << rotate2 << "";
+	return oss.str();
+}

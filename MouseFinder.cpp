@@ -10,7 +10,7 @@ MouseFinder::MouseFinder()
 	}, this);
 }
 
-cv::Point2i MouseFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target)
+cv::Point2i MouseFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target)
 {
 	cv::Point2i point = filter->doFiltering(cv::Point2i(mouseLocation.x, mouseLocation.y));
 	cv::Scalar colorCircle(133, 33, 55);

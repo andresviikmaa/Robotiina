@@ -32,4 +32,6 @@ public:
 	bool HasError();
 	~WheelController();
 	void DestroyWheels();
+	std::string GetDebugInfo();
+
 };

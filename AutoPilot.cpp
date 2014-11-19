@@ -8,6 +8,7 @@ std::pair<DriveMode, std::string> DriveModes[] = {
 	std::pair<DriveMode, std::string>(IDLE, "IDLE"),
 	std::pair<DriveMode, std::string>(LOCATE_BALL, "LOCATE_BALL"),
 	std::pair<DriveMode, std::string>(DRIVE_TO_BALL, "DRIVE_TO_BALL"),
+	std::pair<DriveMode, std::string>(DRIVE_TO_HOME, "DRIVE_TO_HOME"),
 	std::pair<DriveMode, std::string>(LOCATE_GATE, "LOCATE_GATE"),
 	std::pair<DriveMode, std::string>(CATCH_BALL, "CATCH_BALL"),
 	std::pair<DriveMode, std::string>(RECOVER_CRASH, "RECOVER_CRASH"),
@@ -74,7 +75,8 @@ DriveMode AutoPilot::LocateBall() {
 				
 			}
 			else if(rotateDuration < 6800){
-				wheels->Forward(-70);				
+				//wheels->Forward(-70);				
+				return DRIVE_TO_HOME;
 			}
 			else{
 				rotateTime = time;
@@ -89,6 +91,20 @@ DriveMode AutoPilot::LocateBall() {
 	}//while not ball in sight
 	wheels->Stop();
 	return DRIVE_TO_BALL;
+}
+
+DriveMode AutoPilot::LocateHome()
+{
+	return LOCATE_BALL;
+}
+
+DriveMode AutoPilot::DriveToHome() 
+{
+	wheels->Forward(-70);
+	std::chrono::milliseconds dura(1000);
+	std::this_thread::sleep_for(dura);
+
+	return LOCATE_BALL;
 }
 
 DriveMode AutoPilot::DriveToBall()
@@ -120,7 +136,7 @@ DriveMode AutoPilot::DriveToBall()
 		//if ball is close and  center
 		if (lastBallLocation.distance < desiredDistance &&
 			lastBallLocation.horizontalDev > -10 &&
-			lastBallLocation.horizontalDev < 10){
+			lastBallLocation.horizontalDev < 10) {
 				
 				//wheels->Stop();
 				coilgun->ToggleTribbler(true);
@@ -250,7 +266,7 @@ DriveMode AutoPilot::LocateGate() {
 		}
 
 	//}
-
+	return LOCATE_BALL;
 }
 
 DriveMode AutoPilot::RecoverCrash() 
@@ -284,6 +300,9 @@ void AutoPilot::Run()
 		case LOCATE_BALL:
 			driveMode = LocateBall();
 			break;
+		case DRIVE_TO_HOME:
+			driveMode = DriveToHome();
+			break;
 		case DRIVE_TO_BALL:
 			driveMode = DriveToBall();
 			break;
@@ -292,6 +311,9 @@ void AutoPilot::Run()
 			break;
 		case LOCATE_GATE:
 			driveMode = LocateGate();
+			break;
+		case LOCATE_HOME:
+			driveMode = LocateHome();
 			break;
 		case RECOVER_CRASH:
 			driveMode = RecoverCrash();
@@ -304,23 +326,35 @@ void AutoPilot::Run()
 	}
 }
 
+std::string AutoPilot::GetDebugInfo(){
+	std::ostringstream oss;
+	oss << "[Autopilot] State: " << DRIVEMODE_LABELS[driveMode];
+	oss << ", Ball visible: " << (ballInSight ? "yes" : "no");
+	oss << ", Gate Visible: " << (gateInSight ? "yes" : "no");
+	oss << ", Ball in tribbler: " << (ballInTribbler ? "yes" : "no");
+	oss << "|[Autopilot] Ball Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
+	oss << "Gate Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
+
+	return oss.str();
+}
+
 void AutoPilot::WriteInfoOnScreen(){
 	cv::Mat infoWindow(140, 250, CV_8UC3, cv::Scalar::all(0));
 	std::ostringstream oss;
-	oss << "State :" << DRIVEMODE_LABELS[driveMode];
+	oss << "State: " << DRIVEMODE_LABELS[driveMode];
 	//std::cout << oss.str() << std::endl;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 	//std::cout << oss.str() << std::endl;
 	oss.str("");
-	oss << "Ball visible :" << (ballInSight ? "yes" : "no");
+	oss << "Ball visible: " << (ballInSight ? "yes" : "no");
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 50), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 	//std::cout << oss.str() << std::endl;
 	oss.str("");
-	oss << "Gate Visible :" << (gateInSight ? "yes" : "no");
+	oss << "Gate Visible: " << (gateInSight ? "yes" : "no");
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 	//std::cout << oss.str() << std::endl;
 	oss.str("");
-	oss << "Ball in tribbler :" << (ballInTribbler ? "yes" : "no");
+	oss << "Ball in tribbler: " << (ballInTribbler ? "yes" : "no");
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 110), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 	//std::cout << oss.str() << std::endl;
 	cv::imshow("AutoPilot", infoWindow);

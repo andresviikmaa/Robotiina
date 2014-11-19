@@ -215,13 +215,18 @@ void Robot::Run()
 			lastStepTime = time;
 			frames = 0;
 		}
-		frameBGR = camera->Capture();
-		
+#ifdef RECORD_AFTER_PROCESSING
 		if (captureFrames) {
-			subtitles.str("");
-			subtitles << "fps: " << fps;
 			videoRecorder.RecordFrame(frameBGR, subtitles.str());
 		}
+#endif
+		frameBGR = camera->Capture();
+		
+#ifndef RECORD_AFTER_PROCESSING
+		if (captureFrames) {
+			videoRecorder.RecordFrame(frameBGR, subtitles.str());
+		}
+#endif
 
 		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
@@ -367,10 +372,21 @@ void Robot::Run()
 		else if (STATE_END_OF_GAME == state) {
 			break;
 		}
+		subtitles.str("");
+		subtitles << autoPilot.GetDebugInfo();
+		subtitles << "|" << wheels->GetDebugInfo();
+
 
 		cv::putText(frameBGR, "fps:" + std::to_string(fps), cv::Point(frameHSV.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		//assert(STATE_END_OF_GAME != state);
 		cv::putText(frameBGR, "state:" + STATE_LABELS[state], cv::Point(frameHSV.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+
+		//TODO: fix putText newline thing
+		std::string s(subtitles.str());
+		std::replace(s.begin(), s.end(), '|', '\n');
+		std::cout << s << std::endl;
+		cv::putText(frameBGR, s, cv::Point(10, frameHSV.rows - 140), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+
 		show(frameBGR);
 
 		if (cv::waitKey(1) == 27) {

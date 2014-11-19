@@ -10,6 +10,8 @@ enum DriveMode {
 	IDLE = 0,
 	LOCATE_BALL,
 	DRIVE_TO_BALL,
+	LOCATE_HOME,
+	DRIVE_TO_HOME,
 	CATCH_BALL,
 	LOCATE_GATE,
 	RECOVER_CRASH,
@@ -22,8 +24,10 @@ private:
 	CoilGun *coilgun;
 	ObjectPosition lastBallLocation;
 	ObjectPosition lastGateLocation;
+	ObjectPosition lastHomeGateLocation;
 	volatile bool ballInSight = false;
 	volatile bool gateInSight = false;
+	volatile bool homeGateInSight = false;
 	volatile bool ballInTribbler = false;
 
 	boost::atomic<bool> stop_thread;
@@ -41,6 +45,8 @@ protected:
 	DriveMode LocateBall();
 	DriveMode CatchBall();
 	DriveMode LocateGate();
+	DriveMode LocateHome();
+	DriveMode DriveToHome();
 	DriveMode RecoverCrash();
 	void Step();
 	void WriteInfoOnScreen();
@@ -49,5 +55,6 @@ public:
 	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation);
 	void Run();
 	~AutoPilot();
+	std::string GetDebugInfo();
 };
 
