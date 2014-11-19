@@ -312,7 +312,7 @@ void Robot::Run()
 
 				
 			// thresholding in parallel
-			thresholder.Start(frameHSV, { BALL, GATE1, GATE2, INNER_BORDER, OUTER_BORDER });
+			thresholder.Start(frameHSV, { BALL, GATE1, GATE2, INNER_BORDER, OUTER_BORDER, FIELD });
 			thresholder.WaitForStop();
 			
 			if (detectBorders) {

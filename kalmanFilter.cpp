@@ -24,8 +24,8 @@ KalmanFilter::KalmanFilter(const cv::Point2i &startPoint){
 
 
 	setIdentity(KF.measurementMatrix);
-	setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-2));
-	setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1e-1));
+	setIdentity(KF.processNoiseCov, cv::Scalar::all(0.005));
+	setIdentity(KF.measurementNoiseCov, cv::Scalar::all(0.08));
 	setIdentity(KF.errorCovPost, cv::Scalar::all(1));
 }
 
@@ -46,7 +46,7 @@ cv::Point2i KalmanFilter::doFiltering(const cv::Point2i &point){
 }
 
 cv::Point2i KalmanFilter::getPrediction(){
-	if (predictCount > 20) {
+	if (predictCount > 8) {
 		return cv::Point(-1,-1); // stop predicting
 	} else {
 		cv::Mat prediction = KF.predict();

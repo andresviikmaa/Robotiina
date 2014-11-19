@@ -226,6 +226,7 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 
 	cv::Mat innerThresholded = HSVRanges[INNER_BORDER];
 	cv::Mat outerThresholded = HSVRanges[OUTER_BORDER];
+	cv::Mat fieldThresholded = HSVRanges[FIELD];
 
 	cv::Point startPoint;
 	startPoint.x = frameHSV.cols / 2;
@@ -245,6 +246,7 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 		bool Sinrange = false;
 		bool Vinrange = false;
 		bool firstFound = false;
+		bool fieldFound = false;
 		iterator = cv::LineIterator{ frameHSV, cv::Point(startPoint.x + alterIterator, startPoint.y), cv::Point(endPoint.x + alterIterator, endPoint.y), 8 };
 		for (int i = 0; i < iterator.count; i++, ++iterator)
 		{
@@ -257,7 +259,13 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 			}
 			else if (state == "outer"){
 				bool inRange = outerThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
-				if (inRange && !firstFound){
+				bool fieldInRange = fieldThresholded.ptr<uchar>(iterator.pos().y)[iterator.pos().x] == 255;
+				if (fieldInRange && !fieldFound){
+					if (!firstFound){
+						fieldFound = true; //Found field between inner and outer
+					}
+				}
+				else if (inRange && !firstFound){
 					firstFound = true;
 					firstOuter = iterator.pos();
 				}
@@ -277,15 +285,15 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 
 		double distLiFo = cv::norm(lastInner - firstOuter);
 
-		if (!firstFound){
+		if (!firstFound || fieldFound){
 			continue;
 		}
-		if (distLiFo < 60){
+		if (distLiFo < 20){
 			behindLineCount++;
 		}
 	}//ten times end
 	
-	return !(behindLineCount >= 2);
+	return !(behindLineCount >= 4);
 }
 
 void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickness, CvScalar color)
