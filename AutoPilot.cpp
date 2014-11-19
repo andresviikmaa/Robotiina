@@ -1,6 +1,7 @@
 
 #include "AutoPilot.h"
 #include "coilBoard.h"
+#include "Audrino.h"
 #include "wheelcontroller.h"
 #include <thread>
 
@@ -34,6 +35,7 @@ void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLo
 	if (gateInSight) lastGateLocation = *gateLocation;
 	ballInTribbler =  coilgun->BallInTribbler();
 	lastUpdate = boost::posix_time::microsec_clock::local_time();
+	sonars = audrino->GetSonarReadings();
 	if (driveMode == IDLE) driveMode = LOCATE_BALL;
 }
 

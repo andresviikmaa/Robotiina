@@ -38,7 +38,6 @@ public:
 		ballInTribbler = false;
 	};
 	virtual ~AudrinoBoard(){
-		writeString("d\n");//discharge
 	}
 	void Run();
 
