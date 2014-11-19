@@ -10,6 +10,7 @@
 #include "dialog.h"
 #include "wheel.h"
 #include "ComPortScanner.h"
+#include "Audrino.h"
 
 #include <opencv2/opencv.hpp>
 #include <chrono>
@@ -94,6 +95,8 @@ Robot::~Robot()
 		delete finder;
 	if (coilBoard)
 		delete coilBoard;
+	if (audrino)
+		delete audrino;
 
 }
 
@@ -142,11 +145,14 @@ bool Robot::Launch(int argc, char* argv[])
 					ptree pt;
 					read_ini("conf/ports.ini", pt);
 					std::string port = pt.get<std::string>(std::to_string(ID_COILGUN));
+					std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
 
 					coilBoard = new CoilBoard(io, port);
+					audrino = new AudrinoBoard(io, port2);
 				}
 				else {
 					coilBoard = new CoilGun();
+					audrino = new Audrino();
 				}
 			}
 		}
@@ -191,7 +197,7 @@ void Robot::Run()
 	}
 	*/
 	coilBoard->Start();
-	AutoPilot autoPilot(wheels, coilBoard);
+	AutoPilot autoPilot(wheels, coilBoard, audrino);
 	//RobotTracker tracker(wheels);
 	ThresholdedImages thresholdedImages;
 	ImageThresholder thresholder(thresholdedImages, objectThresholds);
@@ -375,6 +381,7 @@ void Robot::Run()
 		subtitles.str("");
 		subtitles << autoPilot.GetDebugInfo();
 		subtitles << "|" << wheels->GetDebugInfo();
+		subtitles << "|" << audrino->GetDebugInfo();
 
 
 		cv::putText(frameBGR, "fps:" + std::to_string(fps), cv::Point(frameHSV.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));

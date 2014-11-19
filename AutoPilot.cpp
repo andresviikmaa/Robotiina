@@ -19,7 +19,7 @@ std::pair<DriveMode, std::string> DriveModes[] = {
 
 std::map<DriveMode, std::string> DRIVEMODE_LABELS(DriveModes, DriveModes + sizeof(DriveModes) / sizeof(DriveModes[0]));
 
-AutoPilot::AutoPilot(WheelController *wheels, CoilGun *coilgun) :wheels(wheels), coilgun(coilgun)
+AutoPilot::AutoPilot(WheelController *wheels, CoilGun *coilgun, Audrino *audrino) :wheels(wheels), coilgun(coilgun), audrino(audrino)
 {
 	stop_thread = false;
 	threads.create_thread(boost::bind(&AutoPilot::Run, this));

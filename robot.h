@@ -1,6 +1,4 @@
 #include "types.h"
-#include "objectfinder.h"
-#include "coilBoard.h"
 #include "dialog.h"
 #include <boost/atomic.hpp>
 #include <boost/program_options.hpp>
@@ -8,7 +6,12 @@
 #include <boost/thread/mutex.hpp>
 
 namespace po = boost::program_options;
+class ObjectFinder;
 class WheelController;
+class CoilGun;
+class Audrino;
+
+
 class Robot: public Dialog {
 private:
 	po::variables_map config;
@@ -17,6 +20,7 @@ private:
     WheelController * wheels;
 	ObjectFinder *finder;
 	CoilGun *coilBoard;
+	Audrino *audrino;
 
 	HSVColorRangeMap objectThresholds;
     //STATE state = STATE_NONE;

@@ -61,6 +61,9 @@
     <ClCompile Include="VideoRecorder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Audrino.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="autocalibrator.h">
@@ -130,6 +133,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VideoRecorder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Audrino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

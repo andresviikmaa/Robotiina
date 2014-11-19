@@ -6,6 +6,7 @@
 
 class CoilGun;
 class WheelController;
+class Audrino;
 enum DriveMode {
 	IDLE = 0,
 	LOCATE_BALL,
@@ -22,6 +23,7 @@ class AutoPilot
 private:
 	WheelController *wheels;
 	CoilGun *coilgun;
+	Audrino *audrino;
 	ObjectPosition lastBallLocation;
 	ObjectPosition lastGateLocation;
 	ObjectPosition lastHomeGateLocation;
@@ -51,7 +53,7 @@ protected:
 	void Step();
 	void WriteInfoOnScreen();
 public:
-	AutoPilot(WheelController *wheels, CoilGun *coilgun);
+	AutoPilot(WheelController *wheels, CoilGun *coilgun, Audrino *audrino);
 	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation);
 	void Run();
 	~AutoPilot();
