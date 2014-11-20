@@ -197,6 +197,7 @@ void Robot::Run()
 	}
 	*/
 	coilBoard->Start();
+	audrino->Start();
 	AutoPilot autoPilot(wheels, coilBoard, audrino);
 	//RobotTracker tracker(wheels);
 	ThresholdedImages thresholdedImages;
@@ -391,7 +392,7 @@ void Robot::Run()
 		//TODO: fix putText newline thing
 		std::string s(subtitles.str());
 		std::replace(s.begin(), s.end(), '|', '\n');
-		std::cout << s << std::endl;
+//		std::cout << s << std::endl;
 		cv::putText(frameBGR, s, cv::Point(10, frameHSV.rows - 140), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 
 		show(frameBGR);

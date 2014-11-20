@@ -23,6 +23,7 @@ public:
 	virtual bool BallInTribbler(){ throw std::runtime_error("Not implemented"); };
 	std::string GetDebugInfo();
 
+
 };
 
 
