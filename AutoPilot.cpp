@@ -36,6 +36,11 @@ void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLo
 	ballInTribbler =  coilgun->BallInTribbler();
 	lastUpdate = boost::posix_time::microsec_clock::local_time();
 	sonars = audrino->GetSonarReadings();
+	somethingOnWay = (
+			(sonars.x < 15 && sonars.x > 0) || 
+			(sonars.y < 15 && sonars.y > 0) || 
+			(sonars.z < 15 && sonars.z > 0));
+
 	if (driveMode == IDLE) driveMode = LOCATE_BALL;
 }
 
@@ -57,7 +62,7 @@ DriveMode AutoPilot::LocateBall() {
 		if (stop_thread) return EXIT;
 		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
 
-		if (wheels->IsStalled()) return RECOVER_CRASH;
+		if (somethingOnWay) return RECOVER_CRASH;
 
 		time = boost::posix_time::microsec_clock::local_time();
 		if ((time - rotateStart).total_milliseconds() > 10000) { // give up after 10 sec or perhaps go to different search mode
@@ -114,7 +119,7 @@ DriveMode AutoPilot::DriveToBall()
 	double speed;
 	double rotate;
 	double rotateGate;
-	int desiredDistance = 270;
+	int desiredDistance = 300;
 	
 	while (true) {
 	boost::posix_time::ptime rotateTime = time;
@@ -122,7 +127,7 @@ DriveMode AutoPilot::DriveToBall()
 		if (stop_thread) return EXIT;
 		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
 
-		if (wheels->IsStalled()) return RECOVER_CRASH;
+		if (somethingOnWay) return RECOVER_CRASH;
 		if(!ballInSight) return LOCATE_BALL;
 		if (ballInTribbler) return LOCATE_GATE;
 		//rotate calculation for ball
@@ -189,7 +194,7 @@ DriveMode AutoPilot::CatchBall(){
 	//trying to catch ball for 2 seconds
 	while (!ballInTribbler && catchDuration < 2000){
 		if (stop_thread) return EXIT;
-		if (wheels->IsStalled()) return RECOVER_CRASH;
+		if (somethingOnWay) return RECOVER_CRASH;
 
 		catchDuration = (time - catchStart).total_milliseconds();
 		time = boost::posix_time::microsec_clock::local_time();
@@ -217,7 +222,7 @@ DriveMode AutoPilot::LocateGate() {
 			if (stop_thread) return EXIT;
 			if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 300) return IDLE;
 			if (!ballInTribbler) return LOCATE_BALL;
-			if (wheels->IsStalled()) return RECOVER_CRASH;
+			if (somethingOnWay) return RECOVER_CRASH;
 
 			time = boost::posix_time::microsec_clock::local_time();
 			if ((time - rotateStart).total_milliseconds() > 10000) { // give up after 10 sec or perhaps go to different search mode
@@ -239,15 +244,15 @@ DriveMode AutoPilot::LocateGate() {
 		//Aim
 		while (gateInSight){
 			if (stop_thread) return EXIT;
-			if (wheels->IsStalled()) return RECOVER_CRASH;
+			if (somethingOnWay) return RECOVER_CRASH;
 			if (!ballInTribbler) return LOCATE_BALL;
 			//rotate calculation for gate
 			int rotate = 0;
 			if (lastGateLocation.horizontalAngle > 200){
-				rotate = (360 - lastGateLocation.horizontalAngle) * 1.25 + 5;
+				rotate = (360 - lastGateLocation.horizontalAngle) * 0.4 + 3;
 			}
 			else{
-				rotate = lastGateLocation.horizontalAngle  * 1.25 + 5;
+				rotate = lastGateLocation.horizontalAngle  * 0.4 + 3;
 			}
 			
 			//Turn robot to gate
@@ -273,7 +278,8 @@ DriveMode AutoPilot::LocateGate() {
 
 DriveMode AutoPilot::RecoverCrash() 
 {
-	while (wheels->IsStalled()) {
+	wheels->Stop();
+	while (somethingOnWay) {
 		if (stop_thread) return EXIT;
 		//Backwards
 		wheels->Drive(50, 180);
@@ -296,7 +302,7 @@ void AutoPilot::Run()
 		switch (driveMode){
 		case IDLE:
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			wheels->Stop();
+			//wheels->Stop();
 			coilgun->ToggleTribbler(false);
 			break;
 		case LOCATE_BALL:

@@ -5,7 +5,7 @@
 #define TRIBBLER_STATE_THRESHOLD 16
 
 void CoilBoard::Kick(){
-	writeString("k1000\n");
+	writeString("k700\n");
 	forcedNotInTribbler = true;
 	afterKickTime = time; //reset timer
 	return;
