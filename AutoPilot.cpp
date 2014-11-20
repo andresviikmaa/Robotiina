@@ -115,6 +115,7 @@ DriveMode AutoPilot::DriveToBall()
 	double rotate;
 	double rotateGate;
 	int desiredDistance = 270;
+	bool ballAlmostOutOfFrame;
 	
 	while (true) {
 	boost::posix_time::ptime rotateTime = time;
@@ -125,13 +126,26 @@ DriveMode AutoPilot::DriveToBall()
 		if (wheels->IsStalled()) return RECOVER_CRASH;
 		if(!ballInSight) return LOCATE_BALL;
 		if (ballInTribbler) return LOCATE_GATE;
-		//rotate calculation for ball
-		if (lastBallLocation.horizontalAngle > 200){
-			rotate = (360 - lastBallLocation.horizontalAngle) * 0.4 + 3;
+		ballAlmostOutOfFrame = abs(lastBallLocation.horizontalDev) > 300;
+		if (gateInSight && !ballAlmostOutOfFrame){
+			//rotate calculation for gate
+			if (lastGateLocation.horizontalAngle > 200){
+				rotate = (360 - lastGateLocation.horizontalAngle) * 0.4 + 3;
+			}
+			else{
+				rotate = lastGateLocation.horizontalAngle  * 0.4 + 3;
+			}
 		}
 		else{
-			rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
+			//rotate calculation for ball
+			if (lastBallLocation.horizontalAngle > 200){
+				rotate = (360 - lastBallLocation.horizontalAngle) * 0.4 + 3;
+			}
+			else{
+				rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
+			}
 		}
+		
 
 		//driving commands
 
@@ -149,10 +163,10 @@ DriveMode AutoPilot::DriveToBall()
 		else if (lastBallLocation.distance <= desiredDistance){
 			coilgun->ToggleTribbler(true);
 			if (lastBallLocation.horizontalDev < -10) {
-				wheels->Rotate(1, rotate);
+				wheels->DriveRotate(10, 90, 0);
 			}
 			else if (lastBallLocation.horizontalDev > 10) {
-				wheels->Rotate(0, rotate);
+				wheels->DriveRotate(10, 270, 0);
 			}
 		}
 		//if ball is not close 
