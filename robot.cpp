@@ -331,7 +331,7 @@ void Robot::Run()
 			};
 
 			bool sightObstructed = false;
-			cv::Mat selected;
+			cv::Mat selected(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
 			cv::Mat mask(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
 			cv::line(mask, cv::Point(frameBGR.cols / 3, 0), cv::Point(frameBGR.cols / 3, frameBGR.rows-100), cv::Scalar(255, 255, 255), 40);
 			thresholdedImages[BALL].copyTo(selected, mask); // perhaps use field and inner border

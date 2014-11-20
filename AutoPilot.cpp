@@ -5,23 +5,27 @@
 #include "wheelcontroller.h"
 #include <thread>
 
-std::pair<DriveMode, std::string> DriveModes[] = {
-	std::pair<DriveMode, std::string>(IDLE, "IDLE"),
-	std::pair<DriveMode, std::string>(LOCATE_BALL, "LOCATE_BALL"),
-	std::pair<DriveMode, std::string>(DRIVE_TO_BALL, "DRIVE_TO_BALL"),
-	std::pair<DriveMode, std::string>(DRIVE_TO_HOME, "DRIVE_TO_HOME"),
-	std::pair<DriveMode, std::string>(LOCATE_GATE, "LOCATE_GATE"),
-	std::pair<DriveMode, std::string>(CATCH_BALL, "CATCH_BALL"),
-	std::pair<DriveMode, std::string>(RECOVER_CRASH, "RECOVER_CRASH"),
+std::pair<DriveMode, DriveInstruction*> DriveModes[] = {
+	std::pair<DriveMode, DriveInstruction*>(IDLE, new Idle()),
+	std::pair<DriveMode, DriveInstruction*>(LOCATE_BALL, new LocateBall()),
+	std::pair<DriveMode, DriveInstruction*>(DRIVE_TO_BALL, new DriveToBall()),
+	std::pair<DriveMode, DriveInstruction*>(LOCATE_HOME, new LocateHome()),
+	std::pair<DriveMode, DriveInstruction*>(DRIVE_TO_HOME, new DriveToHome()),
+	std::pair<DriveMode, DriveInstruction*>(LOCATE_GATE, new LocateGate()),
+	std::pair<DriveMode, DriveInstruction*>(AIM_GATE, new AimGate()),
+	std::pair<DriveMode, DriveInstruction*>(KICK, new Kick()),
+	std::pair<DriveMode, DriveInstruction*>(CATCH_BALL, new CatchBall()),
+	std::pair<DriveMode, DriveInstruction*>(RECOVER_CRASH, new RecoverCrash()),
 
 	//	std::pair<STATE, std::string>(STATE_END_OF_GAME, "End of Game") // this is intentionally left out
 
 };
 
-std::map<DriveMode, std::string> DRIVEMODE_LABELS(DriveModes, DriveModes + sizeof(DriveModes) / sizeof(DriveModes[0]));
 
 AutoPilot::AutoPilot(WheelController *wheels, CoilGun *coilgun, Audrino *audrino) :wheels(wheels), coilgun(coilgun), audrino(audrino)
+, driveModes(DriveModes, DriveModes + sizeof(DriveModes) / sizeof(DriveModes[0]))
 {
+	curDriveMode = driveModes.find(IDLE);
 	stop_thread = false;
 	threads.create_thread(boost::bind(&AutoPilot::Run, this));
 }
@@ -41,115 +45,86 @@ void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLo
 	if (driveMode == IDLE) driveMode = LOCATE_BALL;
 }
 
-/*
-No ball in sight
-*/
-DriveMode AutoPilot::LocateBall() {
-	if (ballInTribbler){
-		return LOCATE_GATE;
-	}
-
-	if (ballInSight) return DRIVE_TO_BALL;
-	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
-	boost::posix_time::ptime rotateStart = time;
-	while (!ballInSight) {
-		if (ballInTribbler){
-			return LOCATE_GATE;
-		}
-		if (stop_thread) return EXIT;
-		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
-
-		if (wheels->IsStalled()) return RECOVER_CRASH;
-
-		time = boost::posix_time::microsec_clock::local_time();
-		if ((time - rotateStart).total_milliseconds() > 10000) { // give up after 10 sec or perhaps go to different search mode
-			return IDLE;
-		}
-		boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateTime).total_milliseconds();
-		if (false && rotateDuration >= 500){
-			wheels->Stop();
-			if (rotateDuration >= 600){
-				//rotateTime = time; //reset
-			}
-		}
-		else{
-			if (rotateDuration < 5700){
-				wheels->Rotate(1,15);
-				coilgun->ToggleTribbler(false);
-				
-			}
-			else if(rotateDuration < 6800){
-				//wheels->Forward(-70);				
-				return DRIVE_TO_HOME;
-			}
-			else{
-				rotateTime = time;
-			}
-			
-			
-		}
-
-
-		std::chrono::milliseconds dura(10);
-		std::this_thread::sleep_for(dura);
-	}//while not ball in sight
-	wheels->Stop();
-	return DRIVE_TO_BALL;
+/*BEGIN Idle*/
+void Idle::onEnter(const AutoPilot& autoPilot)
+{
+	idleStart = autoPilot.lastUpdate;
 }
 
-DriveMode AutoPilot::LocateHome()
+DriveMode Idle::step(const AutoPilot& autoPilot, double dt)
+{
+	std::cout << "idle: " << (idleStart - autoPilot.lastUpdate).total_milliseconds() << std::endl;
+	return (idleStart - autoPilot.lastUpdate).total_milliseconds() == 0 ? IDLE : DRIVE_TO_BALL;
+}
+
+/*BEGIN LocateBall*/
+void LocateBall::onEnter(const AutoPilot& autoPilot)
+{
+	rotateStart = boost::posix_time::microsec_clock::local_time();
+}
+
+DriveMode LocateBall::step(const AutoPilot& autoPilot, double dt)
+{
+	auto &ballInTribbler = autoPilot.ballInTribbler;
+	auto &ballInSight = autoPilot.ballInSight;
+	auto &wheels = autoPilot.wheels;
+
+	if (ballInTribbler) return LOCATE_GATE;
+	if (ballInSight) return DRIVE_TO_BALL;
+
+	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
+	boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateStart).total_milliseconds();
+
+	if (rotateDuration < 5700){
+		wheels->Rotate(1,15);
+		return LOCATE_BALL;
+	}
+	else {				
+		return DRIVE_TO_HOME;
+	}
+}
+/*BEGIN LocateHome*/
+DriveMode LocateHome::step(const AutoPilot& autoPilot, double dt)
 {
 	return LOCATE_BALL;
 }
 
-DriveMode AutoPilot::DriveToHome() 
+/*BEGIN DriveToHome*/
+DriveMode DriveToHome::step(const AutoPilot& autoPilot, double dt)
 {
-	wheels->Forward(-70);
+	autoPilot.wheels->Forward(-70);
 	std::chrono::milliseconds dura(1000);
 	std::this_thread::sleep_for(dura);
 
 	return LOCATE_BALL;
 }
-
-DriveMode AutoPilot::DriveToBall()
+/*BEGIN DriveToBall*/
+void DriveToBall::onEnter(const AutoPilot& autoPilot)
 {
-	double speed;
-	double rotate;
-	double rotateGate;
-	int desiredDistance = 270;
+	autoPilot.coilgun->ToggleTribbler(false);
+	start = autoPilot.lastBallLocation;
+	target = { 270, 0, 0};
+}
+
+DriveMode DriveToBall::step(const AutoPilot& autoPilot, double dt)
+{
+	if (!autoPilot.ballInSight) return LOCATE_BALL;
+	if (autoPilot.ballInTribbler) return LOCATE_GATE;
+
+	auto &lastBallLocation = autoPilot.lastBallLocation;
+	auto &wheels = autoPilot.wheels;
+
+	if (lastBallLocation.distance < target.distance
+		&& abs(lastBallLocation.horizontalDev) < target.horizontalDev ) {
+		return CATCH_BALL;
+	}
+
+
+	//rotate calculation for ball
+	rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
 	
-	while (true) {
-	boost::posix_time::ptime rotateTime = time;
-
-		if (stop_thread) return EXIT;
-		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) return IDLE;
-
-		if (wheels->IsStalled()) return RECOVER_CRASH;
-		if(!ballInSight) return LOCATE_BALL;
-		if (ballInTribbler) return LOCATE_GATE;
-		//rotate calculation for ball
-		if (lastBallLocation.horizontalAngle > 200){
-			rotate = (360 - lastBallLocation.horizontalAngle) * 0.4 + 3;
-		}
-		else{
-			rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
-		}
-
-		//driving commands
-
-		//if ball is close and  center
-		if (lastBallLocation.distance < desiredDistance &&
-			lastBallLocation.horizontalDev > -10 &&
-			lastBallLocation.horizontalDev < 10) {
-				
-				//wheels->Stop();
-				coilgun->ToggleTribbler(true);
-				return CATCH_BALL;
-
-			}
-		//if ball is close and not center
-		else if (lastBallLocation.distance <= desiredDistance){
-			coilgun->ToggleTribbler(true);
+	if (lastBallLocation.distance <= desiredDistance){
+			//coilgun->ToggleTribbler(true);
 			if (lastBallLocation.horizontalDev < -10) {
 				wheels->Rotate(1, rotate);
 			}
@@ -159,7 +134,7 @@ DriveMode AutoPilot::DriveToBall()
 		}
 		//if ball is not close 
 		else { 
-			coilgun->ToggleTribbler(false);
+			//coilgun->ToggleTribbler(false);
 			//speed calculation
 			if (lastBallLocation.distance > 700){
 				speed = 150;
@@ -167,138 +142,156 @@ DriveMode AutoPilot::DriveToBall()
 			else{
 				speed = lastBallLocation.distance * 0.33 -77;
 			}
-			//Which way to rotate
-			if(lastBallLocation.horizontalAngle > 200){
-				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, -rotate);
-			}
-			else{
-				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, rotate);
-			}
+			wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, rotate);
 		}
+		return DRIVE_TO_BALL;
 
-		//check tribbler
-		if (ballInTribbler){
-			return LOCATE_GATE;
-		}
-	}
+	
 }
-
-DriveMode AutoPilot::CatchBall(){
-
+/*BEGIN CatchBall*/
+void CatchBall::onEnter(const AutoPilot& autoPilot)
+{
+	autoPilot.coilgun->ToggleTribbler(true);
+	catchStart = boost::posix_time::microsec_clock::local_time();
+}
+void CatchBall::onExit(const AutoPilot& autoPilot)
+{
+	//autoPilot.coilgun->ToggleTribbler(false);
+}
+DriveMode CatchBall::step(const AutoPilot& autoPilot, double dt)
+{
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
-	boost::posix_time::ptime catchStart = time;
 	boost::posix_time::time_duration::tick_type catchDuration = (time - catchStart).total_milliseconds();
-	//trying to catch ball for 2 seconds
-	while (!ballInTribbler && catchDuration < 2000){
-		if (stop_thread) return EXIT;
-		if (wheels->IsStalled()) return RECOVER_CRASH;
 
-		catchDuration = (time - catchStart).total_milliseconds();
-		time = boost::posix_time::microsec_clock::local_time();
-		//coilgun->ToggleTribbler(true);//start tribbler
-		//wheels->Forward(15);
-		wheels->DriveRotate(40, 0, 0);
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	}
-	if (ballInTribbler){
+	if (autoPilot.ballInTribbler) {
 		return LOCATE_GATE;
 	}
-	else{
+	else if (catchDuration > 2000) { //trying to catch ball for 2 seconds
 		return LOCATE_BALL;
+
+	}
+	else {
+		autoPilot.wheels->DriveRotate(40, 0, 0);
+		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		return CATCH_BALL;
 	}
 }
+/*END CatchBall*/
 
-DriveMode AutoPilot::LocateGate() {
+/*BEGIN LocateGate*/
+DriveMode LocateGate::step(const AutoPilot& autoPilot, double dt)
+{
+	auto &gateInSight = autoPilot.gateInSight;
+	auto &coilgun = autoPilot.coilgun;
+	auto &ballInTribbler = autoPilot.ballInTribbler;
+	auto &wheels = autoPilot.wheels;
+	auto &sightObstructed = autoPilot.sightObstructed;
+	auto &lastGateLocation = autoPilot.lastGateLocation;
+
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
-	boost::posix_time::ptime rotateStart = time;
-	boost::posix_time::ptime rotateTime = time;
-	//while (true){
-		//Search
-		while (!gateInSight) {
-			coilgun->ToggleTribbler(true);
-			if (stop_thread) return EXIT;
-			if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 300) return IDLE;
-			if (!ballInTribbler) return LOCATE_BALL;
-			if (wheels->IsStalled()) return RECOVER_CRASH;
 
-			time = boost::posix_time::microsec_clock::local_time();
-			if ((time - rotateStart).total_milliseconds() > 10000) { // give up after 10 sec or perhaps go to different search mode
-				return IDLE;
-			}
-			boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateTime).total_milliseconds();
-			if (false && rotateDuration >= 500){
-				wheels->Stop();
-				if (rotateDuration >= 600){
-					rotateTime = time; //reset
-				}
-			}
-			else{
-				wheels->Rotate(0,15);
-			}
-			std::chrono::milliseconds dura(8);
-			std::this_thread::sleep_for(dura);
-		}
-		//Aim
-		while (gateInSight){
-			if (stop_thread) return EXIT;
-			if (wheels->IsStalled()) return RECOVER_CRASH;
-			if (!ballInTribbler) return LOCATE_BALL;
+	if (!ballInTribbler) return LOCATE_BALL;
+	if (gateInSight) return AIM_GATE;
+	
+	
+	wheels->Rotate(0, 15);
+	
+	return LOCATE_GATE;
+}
+/*BEGIN AimGate*/
+DriveMode AimGate::step(const AutoPilot& autoPilot, double dt)
+{
+
+	auto &gateInSight = autoPilot.gateInSight;
+	auto &coilgun = autoPilot.coilgun;
+	auto &ballInTribbler = autoPilot.ballInTribbler;
+	auto &wheels = autoPilot.wheels;
+	auto &sightObstructed = autoPilot.sightObstructed;
+	auto &lastGateLocation = autoPilot.lastGateLocation;
+
+
+	if (!ballInTribbler) return LOCATE_BALL;
+	if (!gateInSight) return LOCATE_GATE;
+
+
+		//Turn robot to gate
+		if (abs(lastGateLocation.horizontalDev) < 30) {
 			if (sightObstructed) { //then move sideways
 				wheels->Drive(50, 270);
 				std::chrono::milliseconds dura(400);
 				std::this_thread::sleep_for(dura);
+				return LOCATE_GATE;
 			}
-			//rotate calculation for gate
-			int rotate = 0;
-			if (lastGateLocation.horizontalAngle > 200){
-				rotate = (360 - lastGateLocation.horizontalAngle) * 1.25 + 5;
-			}
-			else{
-				rotate = lastGateLocation.horizontalAngle  * 1.25 + 5;
-			}
-			
-			//Turn robot to gate
-			if (lastGateLocation.horizontalDev > -30 && lastGateLocation.horizontalDev < 30){
-				coilgun->ToggleTribbler(false);
-				wheels->Stop();
-				std::this_thread::sleep_for(std::chrono::milliseconds(50));
-				coilgun->Kick();
-				std::this_thread::sleep_for(std::chrono::milliseconds(500)); //half second wait.
-				return LOCATE_BALL;
-			}
-			else if (lastGateLocation.horizontalDev < -30){
-				wheels->Rotate(1, rotate);
-			}
-			else{
-				wheels->Rotate(0, rotate);
+			else {
+				return KICK;
 			}
 		}
+		else {
+			//rotate calculation for gate
+			int rotate = lastGateLocation.horizontalAngle  * 1.25 + 5;
+			wheels->Rotate(0, rotate);
+		}
+	
 
 	//}
 	return LOCATE_BALL;
 }
 
-DriveMode AutoPilot::RecoverCrash() 
+/*BEGIN Kick*/
+DriveMode Kick::step(const AutoPilot& autoPilot, double dt)
 {
-	while (wheels->IsStalled()) {
-		if (stop_thread) return EXIT;
-		//Backwards
-		wheels->Drive(50, 180);
-		std::chrono::milliseconds dura(1000);
-		std::this_thread::sleep_for(dura);
-		wheels->Stop();
-		//Turn a littlebit
-		wheels->Rotate(1, 20);
-		std::this_thread::sleep_for(dura);
-		wheels->Stop();
-	}
+	autoPilot.coilgun->ToggleTribbler(false);
+	autoPilot.wheels->Stop();
+	std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	autoPilot.coilgun->Kick();
+	std::this_thread::sleep_for(std::chrono::milliseconds(500)); //half second wait.
+	return LOCATE_BALL;
+
+}
+
+/*BEGIN RecoverCrash*/
+DriveMode RecoverCrash::step(const AutoPilot& autoPilot, double dt)
+{
+	double velocity2 = 0, direction2 = 0, rotate2 = 0;
+	autoPilot.wheels->GetTargetSpeed(velocity2, direction2, rotate2);
+
+	//Backwards
+	autoPilot.wheels->Drive(-velocity2, 180 - direction2);
+	std::chrono::milliseconds dura(1000);
+	std::this_thread::sleep_for(dura);
+	autoPilot.wheels->Stop();
+	
 	return LOCATE_BALL;
 }
 
 void AutoPilot::Run()
 {
-
+	boost::posix_time::ptime lastStep = boost::posix_time::microsec_clock::local_time();
+	DriveMode newMode = curDriveMode->first;
+	curDriveMode->second->onEnter(*this);
 	while (!stop_thread){
+		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) {
+			newMode = IDLE;
+		}
+		else if (wheels->IsStalled() && curDriveMode->first != RECOVER_CRASH){
+			newMode = RECOVER_CRASH;
+		}
+		else {
+			boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
+			boost::posix_time::time_duration::tick_type dt = (time - lastStep).total_milliseconds();
+			newMode = curDriveMode->second->step(*this, dt);
+		}
+
+		if (newMode != curDriveMode->first){
+			boost::mutex::scoped_lock lock(mutex);
+			curDriveMode->second->onExit(*this);
+			//wheels->Stop();
+			curDriveMode = driveModes.find(newMode);
+			curDriveMode->second->onEnter(*this);
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+		/*
 		WriteInfoOnScreen();
 		switch (driveMode){
 		case IDLE:
@@ -332,12 +325,14 @@ void AutoPilot::Run()
 		}
 		std::chrono::milliseconds dura(8);
 		std::this_thread::sleep_for(dura);
+		*/
 	}
 }
 
 std::string AutoPilot::GetDebugInfo(){
 	std::ostringstream oss;
-	oss << "[Autopilot] State: " << DRIVEMODE_LABELS[driveMode];
+	boost::mutex::scoped_lock lock(mutex);
+	oss << "[Autopilot] State: " << curDriveMode->second->name;
 	oss << ", Ball visible: " << (ballInSight ? "yes" : "no");
 	oss << ", Gate Visible: " << (gateInSight ? "yes" : "no");
 	oss << ", Ball in tribbler: " << (ballInTribbler ? "yes" : "no");
@@ -351,7 +346,7 @@ std::string AutoPilot::GetDebugInfo(){
 void AutoPilot::WriteInfoOnScreen(){
 	cv::Mat infoWindow(140, 250, CV_8UC3, cv::Scalar::all(0));
 	std::ostringstream oss;
-	oss << "State: " << DRIVEMODE_LABELS[driveMode];
+	oss << "State: " << curDriveMode->second->name;
 	//std::cout << oss.str() << std::endl;
 	cv::putText(infoWindow, oss.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 	//std::cout << oss.str() << std::endl;
@@ -376,8 +371,11 @@ void AutoPilot::WriteInfoOnScreen(){
 
 AutoPilot::~AutoPilot()
 {
-	coilgun->ToggleTribbler(false);
 	stop_thread = true;
 	threads.join_all();
+	for (auto &mode : driveModes){
+		delete mode.second;
+	}
+	coilgun->ToggleTribbler(false);
 
 }
