@@ -5,9 +5,12 @@
 #define TRIBBLER_STATE_THRESHOLD 16
 
 void CoilBoard::Kick(){
-	writeString("k700\n");
+	boost::posix_time::ptime time2 = boost::posix_time::microsec_clock::local_time();
+	//std::cout << (afterKickTime - time2).total_milliseconds() << std::endl;
+	if ((time2 - afterKickTime).total_milliseconds() < 1500) return;
+	writeString("k800\n");
 	forcedNotInTribbler = true;
-	afterKickTime = time; //reset timer
+	afterKickTime = time2; //reset timer
 	return;
 }
 
@@ -47,14 +50,16 @@ void CoilBoard::Run(){
 		} else {
 			writeString("b\n");
 		}
+		/*
 		//Forcing ballintribler false after kick
 		boost::posix_time::time_duration::tick_type afterKickDuration = (time - afterKickTime).total_milliseconds();
 		if (afterKickDuration > 1000 && forcedNotInTribbler){
-			forcedNotInTribbler = false;
+			//forcedNotInTribbler = false;
 		}
 		else if (forcedNotInTribbler){
 			ballInTribblerCount = -1;
 		}
+		*/
 		std::chrono::milliseconds dura(10);
 		std::this_thread::sleep_for(dura);
 	}

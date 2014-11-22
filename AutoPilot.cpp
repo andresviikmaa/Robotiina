@@ -77,7 +77,7 @@ DriveMode AutoPilot::LocateBall() {
 			}
 		}
 		else{
-			if (rotateDuration < 5700){
+			if (true || rotateDuration < 5700){
 				wheels->Rotate(1,15);
 				coilgun->ToggleTribbler(false);
 				
@@ -240,7 +240,7 @@ DriveMode AutoPilot::LocateGate() {
 				}
 			}
 			else{
-				wheels->Rotate(0,15);
+				wheels->Rotate(0,75);
 			}
 			std::chrono::milliseconds dura(8);
 			std::this_thread::sleep_for(dura);
@@ -341,9 +341,9 @@ void AutoPilot::Run()
 std::string AutoPilot::GetDebugInfo(){
 	std::ostringstream oss;
 	oss << "[Autopilot] State: " << DRIVEMODE_LABELS[driveMode];
-	oss << ", Ball visible: " << (ballInSight ? "yes" : "no");
-	oss << ", Gate Visible: " << (gateInSight ? "yes" : "no");
-	oss << ", Ball in tribbler: " << (ballInTribbler ? "yes" : "no");
+	oss << ", Ball vis: " << (ballInSight ? "yes" : "no");
+	oss << ", Gate Vis: " << (gateInSight ? "yes" : "no");
+	oss << ", Ball in trib: " << (ballInTribbler ? "yes" : "no");
 	oss << "|[Autopilot] Ball Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
 	oss << "Gate Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
 
