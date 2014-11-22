@@ -83,7 +83,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Audrino.h" />
+    <ClInclude Include="Arduino.h" />
     <ClInclude Include="autocalibrator.h" />
     <ClInclude Include="AutoPilot.h" />
     <ClInclude Include="blockingreader.h" />
@@ -110,7 +110,7 @@
     <ClInclude Include="wheelcontroller.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Audrino.cpp" />
+    <ClCompile Include="Arduino.cpp" />
     <ClCompile Include="autocalibrator.cpp" />
     <ClCompile Include="AutoPilot.cpp" />
     <ClCompile Include="calibrationconfreader.cpp" />

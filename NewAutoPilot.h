@@ -121,7 +121,7 @@ public:
 
 class CoilGun;
 class WheelController;
-class Audrino;
+class Arduino;
 
 class NewAutoPilot: public IAutoPilot
 {
@@ -140,7 +140,7 @@ private:
 	std::map<NewDriveMode, DriveInstruction*>::iterator curDriveMode;
 	WheelController *wheels;
 	CoilGun *coilgun;
-	Audrino *audrino;
+	Arduino *arduino;
 	ObjectPosition lastBallLocation;
 	ObjectPosition lastGateLocation;
 	ObjectPosition lastHomeGateLocation;
@@ -174,7 +174,7 @@ protected:
 	void Step();
 	void WriteInfoOnScreen();
 public:
-	NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Audrino *audrino);
+	NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino);
 	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool sightObstructed);
 	void Run();
 	~NewAutoPilot();

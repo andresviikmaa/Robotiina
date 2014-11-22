@@ -10,13 +10,13 @@ class ButtonClickListener
 	virtual void OnGateButtonClicked() = 0;
 };
 
-class Audrino : public ThreadedClass
+class Arduino : public ThreadedClass
 {
 protected:
 	cv::Point3i sonars = {100,100,100};
 public:
-	Audrino(){}
-	virtual ~Audrino(){}
+	Arduino(){}
+	virtual ~Arduino(){}
 	void Run(){};
 	void AddButtonListener(ButtonClickListener *buttonListener){};
 	const cv::Point3i &GetSonarReadings(){ return sonars; }
@@ -27,19 +27,19 @@ public:
 };
 
 
-class AudrinoBoard : public Audrino, SimpleSerial
+class ArduinoBoard : public Arduino, SimpleSerial
 {
 private:
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::atomic<bool> ballInTribbler;
 
 public:
-	static Audrino Create();
-	AudrinoBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
+	static Arduino Create();
+	ArduinoBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
 		stop_thread = false;
 		ballInTribbler = false;
 	};
-	virtual ~AudrinoBoard(){
+	virtual ~ArduinoBoard(){
 	}
 	void Run();
 

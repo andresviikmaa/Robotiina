@@ -10,7 +10,7 @@
 #include "dialog.h"
 #include "wheel.h"
 #include "ComPortScanner.h"
-#include "Audrino.h"
+#include "Arduino.h"
 
 #include <opencv2/opencv.hpp>
 #include <chrono>
@@ -77,7 +77,7 @@ void dance_step(float time, float &move1, float &move2) {
 
 /* END DANCE MOVES */
 
-Robot::Robot(boost::asio::io_service &io) : Dialog("Robotiina"), io(io), camera(0), wheels(0), finder(0), coilBoard(0),audrino(0)
+Robot::Robot(boost::asio::io_service &io) : Dialog("Robotiina"), io(io), camera(0), wheels(0), finder(0), coilBoard(0),arduino(0)
 {
 	
 	last_state = STATE_END_OF_GAME;
@@ -96,8 +96,8 @@ Robot::~Robot()
 		delete finder;
 	if (coilBoard)
 		delete coilBoard;
-	if (audrino)
-		delete audrino;
+	if (arduino)
+		delete arduino;
 
 }
 
@@ -150,13 +150,13 @@ bool Robot::Launch(int argc, char* argv[])
 
 					coilBoard = new CoilBoard(io, port);
 
-//					audrino = new AudrinoBoard(io, port2);
+//					arduino = new ArduinoBoard(io, port2);
 				}
 				else {
 					coilBoard = new CoilGun();
-//					audrino = new Audrino();
+//					arduino = new Arduino();
 				}
-				audrino = new Audrino();
+				arduino = new Arduino();
 	
 			}
 		}
@@ -201,8 +201,8 @@ void Robot::Run()
 	}
 	*/
 	coilBoard->Start();
-	audrino->Start();
-	std::auto_ptr<IAutoPilot> autoPilot(new NewAutoPilot(wheels, coilBoard, audrino));
+	arduino->Start();
+	std::auto_ptr<IAutoPilot> autoPilot(new NewAutoPilot(wheels, coilBoard, arduino));
 
 	//RobotTracker tracker(wheels);
 	ThresholdedImages thresholdedImages;
@@ -393,7 +393,7 @@ void Robot::Run()
 		subtitles.str("");
 		subtitles << autoPilot->GetDebugInfo();
 		subtitles << "|" << wheels->GetDebugInfo();
-		subtitles << "|" << audrino->GetDebugInfo();
+		subtitles << "|" << arduino->GetDebugInfo();
 
 
 		cv::putText(frameBGR, "fps:" + std::to_string(fps), cv::Point(frameHSV.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));

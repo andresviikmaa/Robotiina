@@ -1,7 +1,7 @@
 
 #include "NewAutoPilot.h"
 #include "coilBoard.h"
-#include "Audrino.h"
+#include "Arduino.h"
 #include "wheelcontroller.h"
 #include <thread>
 
@@ -22,7 +22,7 @@ std::pair<NewDriveMode, DriveInstruction*> DriveModes[] = {
 };
 
 
-NewAutoPilot::NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Audrino *audrino) :wheels(wheels), coilgun(coilgun), audrino(audrino)
+NewAutoPilot::NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino) :wheels(wheels), coilgun(coilgun), arduino(arduino)
 , driveModes(DriveModes, DriveModes + sizeof(DriveModes) / sizeof(DriveModes[0]))
 {
 	curDriveMode = driveModes.find(DRIVEMODE_IDLE);
@@ -39,7 +39,7 @@ void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gat
 	if (gateInSight) lastGateLocation = *gateLocation;
 	ballInTribbler = coilgun->BallInTribbler();
 	lastUpdate = boost::posix_time::microsec_clock::local_time();
-	sonars = audrino->GetSonarReadings();
+	sonars = arduino->GetSonarReadings();
 	this->sightObstructed = sightObstructed;
 
 	if (driveMode == DRIVEMODE_IDLE) driveMode = DRIVEMODE_LOCATE_BALL;

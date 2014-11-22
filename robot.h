@@ -9,7 +9,7 @@ namespace po = boost::program_options;
 class ObjectFinder;
 class WheelController;
 class CoilGun;
-class Audrino;
+class Arduino;
 
 
 class Robot: public Dialog {
@@ -20,7 +20,7 @@ private:
     WheelController * wheels;
 	ObjectFinder *finder;
 	CoilGun *coilBoard;
-	Audrino *audrino;
+	Arduino *arduino;
 
 	HSVColorRangeMap objectThresholds;
     //STATE state = STATE_NONE;
