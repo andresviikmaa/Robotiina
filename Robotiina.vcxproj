@@ -83,7 +83,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Audrino.h" />
+    <ClInclude Include="Arduino.h" />
     <ClInclude Include="autocalibrator.h" />
     <ClInclude Include="AutoPilot.h" />
     <ClInclude Include="blockingreader.h" />
@@ -96,6 +96,7 @@
     <ClInclude Include="ImageThresholder.h" />
     <ClInclude Include="kalmanFilter.h" />
     <ClInclude Include="MouseFinder.h" />
+    <ClInclude Include="NewAutoPilot.h" />
     <ClInclude Include="objectfinder.h" />
     <ClInclude Include="remotecontrol.h" />
     <ClInclude Include="robot.h" />
@@ -109,7 +110,7 @@
     <ClInclude Include="wheelcontroller.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Audrino.cpp" />
+    <ClCompile Include="Arduino.cpp" />
     <ClCompile Include="autocalibrator.cpp" />
     <ClCompile Include="AutoPilot.cpp" />
     <ClCompile Include="calibrationconfreader.cpp" />
@@ -120,6 +121,7 @@
     <ClCompile Include="dialog.cpp" />
     <ClCompile Include="kalmanFilter.cpp" />
     <ClCompile Include="MouseFinder.cpp" />
+    <ClCompile Include="NewAutoPilot.cpp" />
     <ClCompile Include="objectfinder.cpp" />
     <ClCompile Include="remotecontrol.cpp" />
     <ClCompile Include="robot.cpp" />

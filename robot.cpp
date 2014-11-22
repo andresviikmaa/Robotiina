@@ -10,7 +10,7 @@
 #include "dialog.h"
 #include "wheel.h"
 #include "ComPortScanner.h"
-#include "Audrino.h"
+#include "Arduino.h"
 
 #include <opencv2/opencv.hpp>
 #include <chrono>
@@ -23,6 +23,7 @@
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/filesystem.hpp>
 #include "AutoPilot.h"
+#include "NewAutoPilot.h"
 #include "RobotTracker.h"
 #include "ImageThresholder.h"
 #include "VideoRecorder.h"
@@ -76,7 +77,7 @@ void dance_step(float time, float &move1, float &move2) {
 
 /* END DANCE MOVES */
 
-Robot::Robot(boost::asio::io_service &io) : Dialog("Robotiina"), io(io), camera(0), wheels(0), finder(0), coilBoard(0),audrino(0)
+Robot::Robot(boost::asio::io_service &io) : Dialog("Robotiina"), io(io), camera(0), wheels(0), finder(0), coilBoard(0),arduino(0)
 {
 	
 	last_state = STATE_END_OF_GAME;
@@ -95,8 +96,8 @@ Robot::~Robot()
 		delete finder;
 	if (coilBoard)
 		delete coilBoard;
-	if (audrino)
-		delete audrino;
+	if (arduino)
+		delete arduino;
 
 }
 
@@ -149,13 +150,13 @@ bool Robot::Launch(int argc, char* argv[])
 
 					coilBoard = new CoilBoard(io, port);
 
-//					audrino = new AudrinoBoard(io, port2);
+//					arduino = new ArduinoBoard(io, port2);
 				}
 				else {
 					coilBoard = new CoilGun();
-//					audrino = new Audrino();
+//					arduino = new Arduino();
 				}
-				audrino = new Audrino();
+				arduino = new Arduino();
 	
 			}
 		}
@@ -200,8 +201,9 @@ void Robot::Run()
 	}
 	*/
 	coilBoard->Start();
-	audrino->Start();
-	AutoPilot autoPilot(wheels, coilBoard, audrino);
+	arduino->Start();
+	std::auto_ptr<IAutoPilot> autoPilot(new NewAutoPilot(wheels, coilBoard, arduino));
+
 	//RobotTracker tracker(wheels);
 	ThresholdedImages thresholdedImages;
 	ImageThresholder thresholder(thresholdedImages, objectThresholds);
@@ -334,7 +336,13 @@ void Robot::Run()
 				finder->IsolateField(thresholdedImages, frameHSV, frameBGR);
 			};
 
-		
+			bool sightObstructed = false;
+			cv::Mat selected(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
+			cv::Mat mask(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
+			cv::line(mask, cv::Point(frameBGR.cols / 3, 0), cv::Point(frameBGR.cols / 3, frameBGR.rows - 100), cv::Scalar(255, 255, 255), 40);
+			thresholdedImages[BALL].copyTo(selected, mask); // perhaps use field and inner border
+			//cv::imshow("mmm", selected);
+			sightObstructed = countNonZero(selected) > 10;
 		
 			ObjectPosition ballPos, gate1Pos, gate2Pos;
 			//Cut out gate contour.	
@@ -348,7 +356,7 @@ void Robot::Run()
 			else if(targetGate == GATE2 && gate2Found) targetGatePos = &gate2Pos;
 			// else leave to NULL
 			
-			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos);
+			autoPilot->UpdateState(ballFound ? &ballPos : NULL, targetGatePos, sightObstructed);
 			
         }
 		else if (STATE_MANUAL_CONTROL == state) {
@@ -383,9 +391,9 @@ void Robot::Run()
 			break;
 		}
 		subtitles.str("");
-		subtitles << autoPilot.GetDebugInfo();
+		subtitles << autoPilot->GetDebugInfo();
 		subtitles << "|" << wheels->GetDebugInfo();
-		subtitles << "|" << audrino->GetDebugInfo();
+		subtitles << "|" << arduino->GetDebugInfo();
 
 
 		cv::putText(frameBGR, "fps:" + std::to_string(fps), cv::Point(frameHSV.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));

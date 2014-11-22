@@ -61,7 +61,10 @@
     <ClCompile Include="VideoRecorder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Audrino.cpp">
+    <ClCompile Include="NewAutoPilot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Arduino.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -135,7 +138,10 @@
     <ClInclude Include="VideoRecorder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Audrino.h">
+    <ClInclude Include="NewAutoPilot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Arduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

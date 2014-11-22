@@ -1,8 +1,8 @@
-#include "Audrino.h"
+#include "arduino.h"
 #include <thread>
 
 
-void AudrinoBoard::Run(){
+void ArduinoBoard::Run(){
 	std::string resp;
 	while (!stop_thread){
 		std::chrono::milliseconds dura(120);
@@ -25,9 +25,9 @@ void AudrinoBoard::Run(){
 }
 
 
-std::string Audrino::GetDebugInfo(){
+std::string Arduino::GetDebugInfo(){
 	std::ostringstream oss;
-	oss << "[Audrino] left: " << sonars.x;
+	oss << "[Arduino] left: " << sonars.x;
 	oss << ", right: " << sonars.z;
 	oss << ", back " << sonars.y;
 	

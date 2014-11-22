@@ -1,7 +1,7 @@
 
 #include "AutoPilot.h"
 #include "coilBoard.h"
-#include "Audrino.h"
+#include "Arduino.h"
 #include "wheelcontroller.h"
 #include <thread>
 
@@ -20,13 +20,13 @@ std::pair<DriveMode, std::string> DriveModes[] = {
 
 std::map<DriveMode, std::string> DRIVEMODE_LABELS(DriveModes, DriveModes + sizeof(DriveModes) / sizeof(DriveModes[0]));
 
-AutoPilot::AutoPilot(WheelController *wheels, CoilGun *coilgun, Audrino *audrino) :wheels(wheels), coilgun(coilgun), audrino(audrino)
+AutoPilot::AutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino) :wheels(wheels), coilgun(coilgun), arduino(arduino)
 {
 	stop_thread = false;
 	threads.create_thread(boost::bind(&AutoPilot::Run, this));
 }
 
-void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation)
+void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool sightObstructed)
 {
 	boost::mutex::scoped_lock lock(mutex);
 	ballInSight = ballLocation != NULL;
@@ -35,7 +35,7 @@ void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLo
 	if (gateInSight) lastGateLocation = *gateLocation;
 	ballInTribbler =  coilgun->BallInTribbler();
 	lastUpdate = boost::posix_time::microsec_clock::local_time();
-	sonars = audrino->GetSonarReadings();
+	sonars = arduino->GetSonarReadings();
 	somethingOnWay = (
 			(sonars.x < 15 && sonars.x > 0) || 
 			(sonars.y < 15 && sonars.y > 0) || 
