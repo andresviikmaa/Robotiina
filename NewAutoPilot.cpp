@@ -5,7 +5,7 @@
 #include "wheelcontroller.h"
 #include <thread>
 
-std::pair<NewDriveMode, DriveInstruction*> DriveModes[] = {
+std::pair<NewDriveMode, DriveInstruction*> NewDriveModes[] = {
 	std::pair<NewDriveMode, DriveInstruction*>(DRIVEMODE_IDLE, new Idle()),
 	std::pair<NewDriveMode, DriveInstruction*>(DRIVEMODE_LOCATE_BALL, new LocateBall()),
 	std::pair<NewDriveMode, DriveInstruction*>(DRIVEMODE_DRIVE_TO_BALL, new DriveToBall()),
@@ -23,7 +23,7 @@ std::pair<NewDriveMode, DriveInstruction*> DriveModes[] = {
 
 
 NewAutoPilot::NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino) :wheels(wheels), coilgun(coilgun), arduino(arduino)
-, driveModes(DriveModes, DriveModes + sizeof(DriveModes) / sizeof(DriveModes[0]))
+, driveModes(NewDriveModes, NewDriveModes + sizeof(NewDriveModes) / sizeof(NewDriveModes[0]))
 {
 	curDriveMode = driveModes.find(DRIVEMODE_IDLE);
 	stop_thread = false;
@@ -53,7 +53,6 @@ void Idle::onEnter(const NewAutoPilot& NewAutoPilot)
 
 NewDriveMode Idle::step(const NewAutoPilot& NewAutoPilot, double dt)
 {
-	std::cout << "idle: " << (idleStart - NewAutoPilot.lastUpdate).total_milliseconds() << std::endl;
 	return (idleStart - NewAutoPilot.lastUpdate).total_milliseconds() == 0 ? DRIVEMODE_IDLE : DRIVEMODE_DRIVE_TO_BALL;
 }
 
@@ -273,9 +272,9 @@ void NewAutoPilot::Run()
 		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) {
 			newMode = DRIVEMODE_IDLE;
 		}
-		else if (wheels->IsStalled() && curDriveMode->first != DRIVEMODE_RECOVER_CRASH){
-			newMode = DRIVEMODE_RECOVER_CRASH;
-		}
+		//else if (wheels->IsStalled() && curDriveMode->first != DRIVEMODE_RECOVER_CRASH){
+		//	newMode = DRIVEMODE_RECOVER_CRASH;
+		//}
 		else {
 			boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 			boost::posix_time::time_duration::tick_type dt = (time - lastStep).total_milliseconds();
@@ -298,10 +297,10 @@ std::string NewAutoPilot::GetDebugInfo(){
 	std::ostringstream oss;
 	boost::mutex::scoped_lock lock(mutex);
 	oss << "[NewAutoPilot] State: " << curDriveMode->second->name;
-	oss << ", Ball visible: " << (ballInSight ? "yes" : "no");
-	oss << ", Gate Visible: " << (gateInSight ? "yes" : "no");
-	oss << ", Ball in tribbler: " << (ballInTribbler ? "yes" : "no");
-	oss << ", Sight free: " << (!sightObstructed ? "yes" : "no");
+	oss << ", Ball: " << (ballInSight ? "yes" : "no");
+	oss << ", Gate: " << (gateInSight ? "yes" : "no");
+	oss << ", trib: " << (ballInTribbler ? "yes" : "no");
+	oss << ", Sight: " << (!sightObstructed ? "yes" : "no");
 	oss << "|[NewAutoPilot] Ball Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
 	oss << "Gate Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
 

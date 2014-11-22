@@ -36,10 +36,10 @@ void CoilBoard::Run(){
 	while (!stop_thread){
 		std::string line = readLineAsync(10);
 		if(line == "true" || line == "false" && !forcedNotInTribbler){
-			//std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << line << std::endl;
+			std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << line << std::endl;
 			int newcount = ballInTribblerCount + ((line == "true") ? 1 : -1);
-			//std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << newcount << " " << line << std::endl;
-			ballInTribblerCount = std::min(2, std::max(-2, newcount));
+			std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << newcount << " " << line << std::endl;
+			ballInTribblerCount = std::min(20, std::max(-20, newcount));
  		}
 		//Pinging
 		time = boost::posix_time::microsec_clock::local_time();

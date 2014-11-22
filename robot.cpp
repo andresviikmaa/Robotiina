@@ -202,7 +202,7 @@ void Robot::Run()
 	*/
 	coilBoard->Start();
 	arduino->Start();
-	std::auto_ptr<IAutoPilot> autoPilot(new NewAutoPilot(wheels, coilBoard, arduino));
+	IAutoPilot *autoPilot = new AutoPilot(wheels, coilBoard, arduino);
 
 	//RobotTracker tracker(wheels);
 	ThresholdedImages thresholdedImages;
@@ -415,7 +415,8 @@ void Robot::Run()
 		frames++;
 
     }
-
+    
+	delete autoPilot;
 	coilBoard->Stop();
 	if (outputVideo != NULL) {
 		delete outputVideo;

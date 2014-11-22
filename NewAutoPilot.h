@@ -18,6 +18,8 @@ enum NewDriveMode {
 	DRIVEMODE_RECOVER_CRASH,
 	DRIVEMODE_EXIT
 };
+class NewAutoPilot;
+
 class DriveInstruction
 {
 	friend class NewAutoPilot;
