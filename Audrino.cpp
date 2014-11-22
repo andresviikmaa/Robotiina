@@ -5,7 +5,7 @@
 void AudrinoBoard::Run(){
 	std::string resp;
 	while (!stop_thread){
-		std::chrono::milliseconds dura(100);
+		std::chrono::milliseconds dura(120);
 		//std::cout << "start" << std::endl;
 		
 		writeString("snr0\n");

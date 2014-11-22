@@ -70,8 +70,8 @@ std::map<STATE, std::string> STATE_LABELS(states, states + sizeof(states) / size
 
 /* BEGIN DANCE MOVES */
 void dance_step(float time, float &move1, float &move2) {
-	move1 = 50*sin(time/1000);
-	move2 = 360 * cos(time / 1000);
+	move1 = 50*sin(time/4000);
+	move2 = 360 * cos(time / 4000);
 }
 
 /* END DANCE MOVES */
@@ -145,15 +145,18 @@ bool Robot::Launch(int argc, char* argv[])
 					ptree pt;
 					read_ini("conf/ports.ini", pt);
 					std::string port = pt.get<std::string>(std::to_string(ID_COILGUN));
-					std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
+//					std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
 
 					coilBoard = new CoilBoard(io, port);
-					audrino = new AudrinoBoard(io, port2);
+
+//					audrino = new AudrinoBoard(io, port2);
 				}
 				else {
 					coilBoard = new CoilGun();
-					audrino = new Audrino();
+//					audrino = new Audrino();
 				}
+				audrino = new Audrino();
+	
 			}
 		}
 		catch (...) {

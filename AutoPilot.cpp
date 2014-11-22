@@ -40,6 +40,7 @@ void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLo
 			(sonars.x < 15 && sonars.x > 0) || 
 			(sonars.y < 15 && sonars.y > 0) || 
 			(sonars.z < 15 && sonars.z > 0));
+	somethingOnWay = false;
 
 	if (driveMode == IDLE) driveMode = LOCATE_BALL;
 }
@@ -81,7 +82,7 @@ DriveMode AutoPilot::LocateBall() {
 				coilgun->ToggleTribbler(false);
 				
 			}
-			else if(rotateDuration < 6800){
+			else if(rotateDuration > 6800){
 				//wheels->Forward(-70);				
 				return DRIVE_TO_HOME;
 			}
@@ -119,7 +120,7 @@ DriveMode AutoPilot::DriveToBall()
 	double speed;
 	double rotate;
 	double rotateGate;
-	int desiredDistance = 300;
+	int desiredDistance = 210;
 	
 	while (true) {
 	boost::posix_time::ptime rotateTime = time;
@@ -142,21 +143,22 @@ DriveMode AutoPilot::DriveToBall()
 
 		//if ball is close and  center
 		if (lastBallLocation.distance < desiredDistance &&
-			lastBallLocation.horizontalDev > -10 &&
-			lastBallLocation.horizontalDev < 10) {
+			lastBallLocation.horizontalDev > -8 &&
+			lastBallLocation.horizontalDev < 8) {
 				
 				//wheels->Stop();
 				coilgun->ToggleTribbler(true);
 				return CATCH_BALL;
+				
 
 			}
 		//if ball is close and not center
 		else if (lastBallLocation.distance <= desiredDistance){
 			coilgun->ToggleTribbler(true);
-			if (lastBallLocation.horizontalDev < -10) {
+			if (lastBallLocation.horizontalDev < -8) {
 				wheels->Rotate(1, rotate);
 			}
-			else if (lastBallLocation.horizontalDev > 10) {
+			else if (lastBallLocation.horizontalDev > 8) {
 				wheels->Rotate(0, rotate);
 			}
 		}
@@ -168,8 +170,10 @@ DriveMode AutoPilot::DriveToBall()
 				speed = 150;
 			}
 			else{
-				speed = lastBallLocation.distance * 0.33 -77;
+				speed = lastBallLocation.distance * 0.3 - 57;
 			}
+	
+			
 			//Which way to rotate
 			if(lastBallLocation.horizontalAngle > 200){
 				wheels->DriveRotate(speed, lastBallLocation.horizontalAngle, -rotate);

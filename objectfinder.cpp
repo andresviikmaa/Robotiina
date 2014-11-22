@@ -59,7 +59,7 @@ bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::M
 	cv::circle(frameBGR, point, 8, color, -1);
 	//std::cout << point << std::endl;
 	targetPos = ConvertPixelToRealWorld(point, cv::Point2i(frameHSV.cols, frameHSV.rows));
-	//WriteInfoOnScreen(targetPos);
+	WriteInfoOnScreen(targetPos);
 	return true;
 }
 
@@ -503,7 +503,7 @@ ObjectPosition ObjectFinder::ConvertPixelToRealWorld(const cv::Point2i &point, c
 	const cv::Point2d center (frame_size.x / 2.0, frame_size.y / 2.0);
 	//Calculating distance
 	double angle = (Vfov * (point.y - center.y) / center.y) + CamAngleDev;
-	double distance = CamHeight / tan(angle * PI / 180);
+	double distance = CamHeight / tan(angle * PI / 180) - 50;
 	//Calculating horizontal deviation
 	double hor_space = tan(Hfov)*distance;
 	double HorizontalDev = (hor_space * (point.x - center.x) / center.x);

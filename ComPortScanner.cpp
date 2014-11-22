@@ -35,6 +35,35 @@ std::string ComPortScanner::CheckPort(boost::asio::io_service &io_service, const
 	}
 	return "";
 }
+bool ComPortScanner::VerifyObject(boost::asio::io_service &io_service, const std::string &conf_file, OBJECT_ID id) 
+{
+	bool ok = true;
+	boost::property_tree::ptree ports;
+	try {
+		read_ini(conf_file, ports);
+	}
+	catch (...) {
+		std::cout << "Error reading old port configuration: " << std::endl;
+		return false;
+	}
+		std::stringstream portNum;
+		std::string _id = std::to_string(id); // v.first;
+		try {
+			portNum << ports.get<std::string>(std::to_string(id));//(v.second).data();
+		}
+		catch (...)
+		{
+			std::cout << "ID: " << _id << " not found in conf file" << std::endl;
+			ok = false;
+		}
+		std::string id2 = CheckPort(io_service, portNum.str());
+		if (id2.empty()) {
+			ok = false;
+		}
+	
+	return ok;
+}
+
 
 bool ComPortScanner::Verify(boost::asio::io_service &io_service, const std::string &conf_file) 
 {

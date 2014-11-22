@@ -13,7 +13,7 @@ class ButtonClickListener
 class Audrino : public ThreadedClass
 {
 protected:
-	cv::Point3i sonars;
+	cv::Point3i sonars = {100,100,100};
 public:
 	Audrino(){}
 	virtual ~Audrino(){}
@@ -34,6 +34,7 @@ private:
 	boost::atomic<bool> ballInTribbler;
 
 public:
+	static Audrino Create();
 	AudrinoBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
 		stop_thread = false;
 		ballInTribbler = false;
