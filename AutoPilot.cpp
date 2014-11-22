@@ -26,7 +26,7 @@ AutoPilot::AutoPilot(WheelController *wheels, CoilGun *coilgun, Audrino *audrino
 	threads.create_thread(boost::bind(&AutoPilot::Run, this));
 }
 
-void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation)
+void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool sightObstructed)
 {
 	boost::mutex::scoped_lock lock(mutex);
 	ballInSight = ballLocation != NULL;

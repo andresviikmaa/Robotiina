@@ -64,6 +64,9 @@
     <ClCompile Include="Audrino.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NewAutoPilot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="autocalibrator.h">
@@ -136,6 +139,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Audrino.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NewAutoPilot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

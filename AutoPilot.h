@@ -18,7 +18,7 @@ enum DriveMode {
 	RECOVER_CRASH,
 	EXIT
 };
-class AutoPilot
+class AutoPilot: public IAutoPilot
 {
 private:
 	WheelController *wheels;
@@ -57,7 +57,7 @@ protected:
 	void WriteInfoOnScreen();
 public:
 	AutoPilot(WheelController *wheels, CoilGun *coilgun, Audrino *audrino);
-	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation);
+	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool sightObstructed);
 	void Run();
 	~AutoPilot();
 	std::string GetDebugInfo();

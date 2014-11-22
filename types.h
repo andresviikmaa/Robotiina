@@ -75,6 +75,12 @@ public:
     virtual const cv::Mat & Capture() = 0;
 };
 
+class IAutoPilot
+{
+public:
+	virtual void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool sightObstructed) = 0;
+	virtual std::string GetDebugInfo() = 0;
+};
 extern std::map<OBJECT, std::string> OBJECT_LABELS;
 typedef std::map<OBJECT, HSVColorRange> HSVColorRangeMap;
 typedef std::map<OBJECT, cv::Mat> ThresholdedImages;

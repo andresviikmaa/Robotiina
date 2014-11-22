@@ -23,6 +23,7 @@
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/filesystem.hpp>
 #include "AutoPilot.h"
+#include "NewAutoPilot.h"
 #include "RobotTracker.h"
 #include "ImageThresholder.h"
 #include "VideoRecorder.h"
@@ -201,7 +202,8 @@ void Robot::Run()
 	*/
 	coilBoard->Start();
 	audrino->Start();
-	AutoPilot autoPilot(wheels, coilBoard, audrino);
+	std::auto_ptr<IAutoPilot> autoPilot(new NewAutoPilot(wheels, coilBoard, audrino));
+
 	//RobotTracker tracker(wheels);
 	ThresholdedImages thresholdedImages;
 	ImageThresholder thresholder(thresholdedImages, objectThresholds);
@@ -334,7 +336,13 @@ void Robot::Run()
 				finder->IsolateField(thresholdedImages, frameHSV, frameBGR);
 			};
 
-		
+			bool sightObstructed = false;
+			cv::Mat selected(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
+			cv::Mat mask(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
+			cv::line(mask, cv::Point(frameBGR.cols / 3, 0), cv::Point(frameBGR.cols / 3, frameBGR.rows - 100), cv::Scalar(255, 255, 255), 40);
+			thresholdedImages[BALL].copyTo(selected, mask); // perhaps use field and inner border
+			//cv::imshow("mmm", selected);
+			sightObstructed = countNonZero(selected) > 10;
 		
 			ObjectPosition ballPos, gate1Pos, gate2Pos;
 			//Cut out gate contour.	
@@ -348,7 +356,7 @@ void Robot::Run()
 			else if(targetGate == GATE2 && gate2Found) targetGatePos = &gate2Pos;
 			// else leave to NULL
 			
-			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos);
+			autoPilot->UpdateState(ballFound ? &ballPos : NULL, targetGatePos, sightObstructed);
 			
         }
 		else if (STATE_MANUAL_CONTROL == state) {
@@ -383,7 +391,7 @@ void Robot::Run()
 			break;
 		}
 		subtitles.str("");
-		subtitles << autoPilot.GetDebugInfo();
+		subtitles << autoPilot->GetDebugInfo();
 		subtitles << "|" << wheels->GetDebugInfo();
 		subtitles << "|" << audrino->GetDebugInfo();
 
