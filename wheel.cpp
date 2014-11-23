@@ -10,12 +10,6 @@ BasicWheel::BasicWheel()
 	actual_speed = 0;
 }
 
-void BasicWheel::Stop()
-{
-	ThreadedClass::Stop();
-	SetSpeed(0);
-	UpdateSpeed();
-};
 
 void BasicWheel::SetSpeed(int given_speed) {
 	//boost::mutex::scoped_lock lock(mutex);
@@ -133,3 +127,8 @@ void SerialWheel::UpdateSpeed()
 		stop_thread = true;
 	}
 };
+
+SerialWheel::~SerialWheel(){
+	SetSpeed(0);
+	UpdateSpeed();
+}

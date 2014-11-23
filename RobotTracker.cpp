@@ -16,6 +16,7 @@ void RobotTracker::Run()
 	double velocity2 = 0, direction2 = 0, rotate2 = 0;
 
 	while (!stop_thread) {
+		/*
 		time = boost::posix_time::microsec_clock::local_time();
 		double dt = (time - lastStep).total_milliseconds();
 		wheels->GetRobotSpeed(velocity, direction, rotate);
@@ -27,6 +28,7 @@ void RobotTracker::Run()
 		cv::Point3d position;
 
 		position.x = lastPosition.x + velocity * dt + 0.5 * (acceleration.x) * pow(dt, 2);
+		*/
 		/*
 		positoion.y = lastPosition.x
 		// from polar coordinates to ...
@@ -34,10 +36,10 @@ void RobotTracker::Run()
 		lastSpeed.y = cos(direction* PI / 180.0)* velocity + rotate,
 		lastSpeed.z = rotate;
 		*/
-		WriteInfoOnScreen(current_speed, target_speed, acceleration, dt);
+		//WriteInfoOnScreen(current_speed, target_speed, acceleration, dt);
 
 		lastStep = time;
-		lastSpeed = current_speed;
+		//lastSpeed = current_speed;
 
 		// speed update interval is 62.5Hz
 		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // do not poll serial to fast

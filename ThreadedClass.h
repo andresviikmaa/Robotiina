@@ -7,11 +7,10 @@ class ThreadedClass
 public:
 	ThreadedClass(); 
 	void Start();
-	void Stop();
-	void WaitForStop() { Stop(); }
+	void WaitForStop();
 	bool HasError() { return stop_thread; };
 
-	~ThreadedClass();
+	virtual ~ThreadedClass();
 protected:
 	boost::thread_group threads;
 	boost::atomic<bool> stop_thread;

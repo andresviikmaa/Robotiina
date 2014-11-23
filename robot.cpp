@@ -202,7 +202,7 @@ void Robot::Run()
 	*/
 	coilBoard->Start();
 	arduino->Start();
-	IAutoPilot *autoPilot = new AutoPilot(wheels, coilBoard, arduino);
+	IAutoPilot *autoPilot = new NewAutoPilot(wheels, coilBoard, arduino);
 
 	//RobotTracker tracker(wheels);
 	ThresholdedImages thresholdedImages;
@@ -470,10 +470,12 @@ void Robot::Run()
 		subtitles << "|" << wheels->GetDebugInfo();
 		subtitles << "|" << arduino->GetDebugInfo();
 
+		cv::Mat display(frameBGR.rows + 160, frameBGR.cols + 200, frameBGR.type(), cv::Scalar::all(0));
+		frameBGR.copyTo(display(cv::Rect(0, 0, frameBGR.cols, frameBGR.rows)));
 
-		cv::putText(frameBGR, "fps:" + std::to_string(fps), cv::Point(frameHSV.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::putText(display, "fps:" + std::to_string(fps), cv::Point(display.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		//assert(STATE_END_OF_GAME != state);
-		cv::putText(frameBGR, "state:" + STATE_LABELS[state], cv::Point(frameHSV.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::putText(display, "state:" + STATE_LABELS[state], cv::Point(display.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 
 		//TODO: fix putText newline thing
 		std::vector<std::string> subtitles2;
@@ -483,10 +485,20 @@ void Robot::Run()
 
 		int j = 0;
 		for (auto s : subtitles2) {
-			cv::putText(frameBGR, s, cv::Point(10, frameHSV.rows - 140 + j), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+			cv::putText(display, s, cv::Point(10, display.rows - 140 + j), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 			j += 20;
 		}
-		show(frameBGR);
+
+		/* robot tracker */
+		cv::Point2i center(display.cols - 100, 200);
+		double velocity = 0, direction = 0, rotate = 0;
+		auto speed = wheels->GetTargetSpeed();
+
+
+		//Draw circle
+		cv::Scalar colorCircle(133, 33, 55);
+		cv::circle(display, center, 60, colorCircle, 2);
+		show(display);
 
 		if (cv::waitKey(1) == 27) {
 			std::cout << "exiting program" << std::endl;
@@ -497,7 +509,6 @@ void Robot::Run()
     }
     
 	delete autoPilot;
-	coilBoard->Stop();
 	if (outputVideo != NULL) {
 		delete outputVideo;
 	}

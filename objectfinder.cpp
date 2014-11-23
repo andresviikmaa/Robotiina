@@ -209,7 +209,7 @@ cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::M
 			double smallestDistance = 9999;
 			
 			for (int i = 0; i < ball_indexes.size(); i++){
-				cv::Moments M = cv::moments(contours[i]);
+				cv::Moments M = cv::moments(contours[ball_indexes[i].second]);
 				center = cv::Point2d(M.m10 / M.m00, M.m01 / M.m00);
 				double distance = cv::norm(center - lastPosition);
 				if (smallestDistance > distance){

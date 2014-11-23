@@ -1,6 +1,7 @@
 #include "wheelcontroller.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <thread>
 
 #define deg150 (150.0 * PI / 180.0)
 #define deg30 (30.0 * PI / 180.0)
@@ -11,6 +12,7 @@ WheelController::WheelController()
 	w_left = NULL;
 	w_right = NULL;
 	w_back = NULL;
+	targetSpeed = { 0, 0, 0 };
 };
 
 void WheelController::InitWheels(boost::asio::io_service &io, bool useDummyPorts/* = false*/)
@@ -42,23 +44,21 @@ void WheelController::InitWheels(boost::asio::io_service &io, bool useDummyPorts
 	w_left->Start();
 	w_right->Start();
 	w_back->Start();
+	Start();
 
 }
 
 void WheelController::DestroyWheels()
 {
 	if (w_left != NULL) {
-		w_left->Stop();
 		delete w_left;
 		w_left = NULL;
 	}
 	if (w_right != NULL) {
-		w_right->Stop();
 		delete w_right;
 		w_right = NULL;
 	}
 	if (w_back != NULL) {
-		w_back->Stop();
 		delete w_back;
 		w_back = NULL;
 
@@ -73,16 +73,16 @@ void WheelController::Forward(int speed) {
 	DriveRotate(speed * 1.1547, 0, 0);
 
 }
-cv::Point3d WheelController::Rotate(bool direction, double speed)
+void WheelController::Rotate(bool direction, double speed)
 {
-	return DriveRotate(0,0, direction ? speed : -speed);
+	DriveRotate(0,0, direction ? speed : -speed);
 }
-cv::Point3d WheelController::Drive(double velocity, double direction)
+void WheelController::Drive(double velocity, double direction)
 {
-	return DriveRotate(velocity, direction, 0);
+	DriveRotate(velocity, direction, 0);
 }
 
-cv::Point3d WheelController::DriveRotate(double velocity, double direction, double rotate)
+void WheelController::DriveRotate(double velocity, double direction, double rotate)
 {
 	if (abs(velocity) > 190){
 		if (velocity > 0){
@@ -104,9 +104,9 @@ cv::Point3d WheelController::DriveRotate(double velocity, double direction, doub
 			
 	}
 
-	lastSpeed.x = velocity; // sin(direction* PI / 180.0)* velocity + rotate;
-	lastSpeed.y = direction; //cos(direction* PI / 180.0)* velocity + rotate,
-	lastSpeed.z = rotate;
+	targetSpeed.velocity = velocity; // sin(direction* PI / 180.0)* velocity + rotate;
+	targetSpeed.heading = direction; //cos(direction* PI / 180.0)* velocity + rotate,
+	targetSpeed.rotation = rotate;
 
 	auto speeds = CalculateWheelSpeeds(velocity, direction, rotate);
 	//std::cout << "wheel speeds, left: " << speeds.x << ", right: " << speeds.y << ", back: " << speeds.z << std::endl;
@@ -114,7 +114,7 @@ cv::Point3d WheelController::DriveRotate(double velocity, double direction, doub
 	w_right->SetSpeed(speeds.y);
 	w_back->SetSpeed(speeds.z);
 	directControl = false;
-	return lastSpeed;
+
 	
 }
 cv::Point3d WheelController::CalculateWheelSpeeds(double velocity, double direction, double rotate)
@@ -125,20 +125,16 @@ cv::Point3d WheelController::CalculateWheelSpeeds(double velocity, double direct
 		(velocity*cos((270 - direction)  * PI / 180.0)) + rotate
 	);
 }
-cv::Point3d WheelController::Stop()
+void WheelController::Stop()
 {
-	return Drive(0,0);
+	Drive(0,0);
 }
 
 bool WheelController::IsStalled()
 {
 	if (directControl) return false;
-	double velocity = 0, direction = 0, rotate = 0;
-	double velocity2 = 0, direction2 = 0, rotate2 = 0;
 
-	GetRobotSpeed(velocity, direction, rotate);
-	GetTargetSpeed(velocity2, direction2, rotate2);
-	if (velocity2 < 0.01 || velocity > 90){
+	if (targetSpeed.velocity < 0.01 || actualSpeed.velocity > 90){
 		stallTime = boost::posix_time::microsec_clock::local_time();
 		return false;
 	}
@@ -147,7 +143,7 @@ bool WheelController::IsStalled()
 	//std::cout << "stall? " << velocity << ", " << velocity2 << "t: " << stallDuration << std::endl;
 
 		
-	if (abs(velocity - velocity2) < 10) {
+	if (abs(actualSpeed.velocity - targetSpeed.velocity) < 10) {
 		// reset timer
 		stallTime = boost::posix_time::microsec_clock::local_time();
 	}else {
@@ -169,10 +165,10 @@ cv::Point3d WheelController::GetWheelSpeeds()
 	return cv::Point3d(w_left->GetSpeed(), w_right->GetSpeed(), w_back->GetSpeed());
 }
 
-void WheelController::GetRobotSpeed(double &velocity, double &direction, double &rotate)
+void WheelController::CalculateRobotSpeed()
 {
+	lastSpeed = actualSpeed;
 	cv::Point3d speeds = GetWheelSpeeds();
-	velocity = direction = rotate = 0;
 	double a, b, c, u, v, w;
 	/*
 	a = x *[cos(u) * cos(y) + sin(u) * sin(y)] + z
@@ -193,34 +189,44 @@ void WheelController::GetRobotSpeed(double &velocity, double &direction, double 
 	}
 	else {
 		// all equal, rotation only
-		rotate = speeds.x;
+		actualSpeed.velocity = 0;
+		actualSpeed.heading = 0;
+		actualSpeed.rotation = speeds.x;
 		return;
 
 	}
 	double s = (b - a) / (c - a);
 	double directionInRad = atan(((cos(v) - cos(u)) - s * (cos(w) - cos(u))) / (s * (sin(w) - sin(u)) - (sin(v) - sin(u))));
 	if (directionInRad < 0) directionInRad += 2 * PI;
-	direction = directionInRad / PI * 180;
-	velocity = (a - c) / ((cos(u) - cos(w)) * cos(directionInRad) + (sin(u) - sin(w)) * sin(directionInRad));
-	rotate = c - (velocity * cos(w - directionInRad));
+	actualSpeed.heading = directionInRad / PI * 180;
+	actualSpeed.velocity = (a - c) / ((cos(u) - cos(w)) * cos(directionInRad) + (sin(u) - sin(w)) * sin(directionInRad));
+	actualSpeed.rotation = c - (actualSpeed.velocity  * cos(w - directionInRad));
 
 }
 
-void WheelController::GetTargetSpeed(double &velocity, double &direction, double &rotate) 
+const Speed &  WheelController::GetTargetSpeed()
 {
-	velocity = lastSpeed.x;
-	direction = lastSpeed.y;
-	rotate = lastSpeed.z;
+	return targetSpeed;
+}
+
+const Speed &  WheelController::GetActualSpeed()
+{
+	return actualSpeed;
 }
 
 std::string WheelController::GetDebugInfo(){
 
-	double velocity = 0, direction = 0, rotate = 0;
-	double velocity2 = 0, direction2 = 0, rotate2 = 0;
-
-	GetRobotSpeed(velocity, direction, rotate);
 	std::ostringstream oss;
-	oss << "[WheelController] target: " << "velocity: " << lastSpeed.x << ", heading: " << lastSpeed.y << ", rotate: " << lastSpeed.z << "|";
-	oss << "[WheelController] actual: " << "velocity: " << velocity2 << ", heading: " << direction2 << ", rotate: " << rotate2 << "";
+	oss << "[WheelController] target: " << "velocity: " << targetSpeed.velocity << ", heading: " << targetSpeed.heading << ", rotate: " << targetSpeed.rotation << "|";
+	oss << "[WheelController] target: " << "actual  : " << actualSpeed.velocity << ", heading: " << actualSpeed.heading << ", rotate: " << actualSpeed.rotation << "|";
+	oss << "[WheelController] pos: " << "x: " << robotPos.x << ", y: " << robotPos.y << ", r: " << robotPos.z;
 	return oss.str();
+}
+
+
+void WheelController::Run()
+{
+	while (!stop_thread) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // do not poll serial to fast
+	}
 }

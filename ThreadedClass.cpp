@@ -11,7 +11,7 @@ void ThreadedClass::Start()
 {
 	threads.create_thread(boost::bind(&ThreadedClass::Run, this));
 };
-void ThreadedClass::Stop()
+void ThreadedClass::WaitForStop()
 {
 	stop_thread = true;
 	threads.join_all();
@@ -19,6 +19,7 @@ void ThreadedClass::Stop()
 
 ThreadedClass::~ThreadedClass()
 {
+	WaitForStop();
 	// must call stop before desctruction
-	//assert(stop_thread);
+	assert(stop_thread);
 }

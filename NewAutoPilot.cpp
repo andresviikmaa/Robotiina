@@ -260,10 +260,10 @@ NewDriveMode Kick::step(const NewAutoPilot& NewAutoPilot, double dt)
 NewDriveMode RecoverCrash::step(const NewAutoPilot& NewAutoPilot, double dt)
 {
 	double velocity2 = 0, direction2 = 0, rotate2 = 0;
-	NewAutoPilot.wheels->GetTargetSpeed(velocity2, direction2, rotate2);
+	auto targetSpeed = NewAutoPilot.wheels->GetTargetSpeed();
 
 	//Backwards
-	NewAutoPilot.wheels->Drive(-velocity2, 180 - direction2);
+	NewAutoPilot.wheels->Drive(-targetSpeed.velocity, 180 - targetSpeed.heading);
 	std::chrono::milliseconds dura(1000);
 	std::this_thread::sleep_for(dura);
 	NewAutoPilot.wheels->Stop();
