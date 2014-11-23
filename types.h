@@ -78,8 +78,9 @@ public:
 class IAutoPilot
 {
 public:
-	virtual void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool sightObstructed) = 0;
+	virtual void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay) = 0;
 	virtual std::string GetDebugInfo() = 0;
+	virtual ~IAutoPilot(){}
 };
 extern std::map<OBJECT, std::string> OBJECT_LABELS;
 typedef std::map<OBJECT, HSVColorRange> HSVColorRangeMap;

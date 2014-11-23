@@ -7,6 +7,7 @@ private:
     cv::Mat frame, lastframe, buffer;
 	cv::VideoCapture *cap;
 	cv::Size frameSize;
+	bool flip = false;
 public:
     Camera(const std::string &device);
 	Camera(int device);

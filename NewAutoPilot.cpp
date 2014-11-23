@@ -27,20 +27,28 @@ NewAutoPilot::NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *a
 {
 	curDriveMode = driveModes.find(DRIVEMODE_IDLE);
 	stop_thread = false;
+
+	ballInSight = false;
+	gateInSight = false;
+	homeGateInSight = false;
+	ballInTribbler = false;
+	sightObstructed = false;
+	somethingOnWay = false;
+
 	threads.create_thread(boost::bind(&NewAutoPilot::Run, this));
 }
 
-void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool sightObstructed)
+void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay)
 {
 	boost::mutex::scoped_lock lock(mutex);
 	ballInSight = ballLocation != NULL;
 	gateInSight = gateLocation != NULL;
 	if (ballInSight) lastBallLocation = *ballLocation;
 	if (gateInSight) lastGateLocation = *gateLocation;
-	ballInTribbler = coilgun->BallInTribbler();
-	lastUpdate = boost::posix_time::microsec_clock::local_time();
-	sonars = arduino->GetSonarReadings();
+	this->ballInTribbler = ballInTribbler;
 	this->sightObstructed = sightObstructed;
+	this->somethingOnWay = somethingOnWay;
+	lastUpdate = boost::posix_time::microsec_clock::local_time();
 
 	if (driveMode == DRIVEMODE_IDLE) driveMode = DRIVEMODE_LOCATE_BALL;
 }

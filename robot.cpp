@@ -29,7 +29,7 @@
 #include "VideoRecorder.h"
 
 #define STATE_BUTTON(name, new_state) \
-createButton(name, [&](){ this->SetState(new_state); });
+createButton(std::string("") + name, [&](){ this->SetState(new_state); });
 #define BUTTON(name, function_body) \
 createButton(name, [&]() function_body);
 #define START_DIALOG if (state != last_state) { \
@@ -215,6 +215,25 @@ void Robot::Run()
 	frameBGR = camera->Capture();
 	
 	std::stringstream subtitles;
+
+	/* Input */
+	bool ballInTribbler = false;
+	cv::Point3i sonars = {100,100,100};
+	bool somethingOnWay = false;
+	bool autoPilotEnabled = false;
+
+	try {
+		CalibrationConfReader calibrator;
+		for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
+			objectThresholds[(OBJECT)i] = calibrator.GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
+		}
+	}
+	catch (...){
+		std::cout << "Calibration data is missing!" << std::endl;
+
+	}
+
+
 	while (true)
     {
 		
@@ -239,14 +258,93 @@ void Robot::Run()
 			videoRecorder.RecordFrame(frameBGR, subtitles.str());
 		}
 #endif
+		//
+		/**************************************************/
+		/*	STEP 1. Convert picture to HSV colorspace	  */
+		/**************************************************/
 
 		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
-        if (STATE_NONE == state) {
+		/**************************************************/
+		/*	STEP 2. thresholding in parallel	          */
+		/**************************************************/
+		thresholder.Start(frameHSV, { BALL, GATE1, GATE2, INNER_BORDER, OUTER_BORDER, FIELD });
+		thresholder.WaitForStop();
+
+		if (detectBorders) {
+			finder->IsolateField(thresholdedImages, frameHSV, frameBGR);
+		};
+
+		/**************************************************/
+		/*	STEP 3. check that path to gate is clean      */
+		/* this is done here, because finding contures	  */
+		/* corrupts thresholded imagees					  */
+		/**************************************************/
+		bool sightObstructed = false;
+		cv::Mat selected(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
+		cv::Mat mask(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
+		cv::line(mask, cv::Point(frameBGR.cols / 3, 0), cv::Point(frameBGR.cols / 3, frameBGR.rows - 100), cv::Scalar(255, 255, 255), 40);
+		thresholdedImages[BALL].copyTo(selected, mask); // perhaps use field and inner border
+		//cv::imshow("mmm", selected);
+		sightObstructed = countNonZero(selected) > 10;
+
+		/**************************************************/
+		/* STEP 4. extract closest ball and gate positions*/
+		/**************************************************/
+		ObjectPosition ballPos, gate1Pos, gate2Pos;
+		//Cut out gate contour.	
+
+		bool gate1Found = gate2Finder.Locate(thresholdedImages, frameHSV, frameBGR, GATE1, gate1Pos);
+		bool gate2Found = gate1Finder.Locate(thresholdedImages, frameHSV, frameBGR, GATE2, gate2Pos);
+
+		bool ballFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos);
+		ObjectPosition *targetGatePos = 0;
+		if (targetGate == GATE1 && gate1Found) targetGatePos = &gate1Pos;
+		else if (targetGate == GATE2 && gate2Found) targetGatePos = &gate2Pos;
+		// else leave to NULL
+
+
+		/**************************************************/
+		/* STEP 5. check if ball is in tribbler			  */
+		/**************************************************/
+		ballInTribbler = coilBoard->BallInTribbler();
+		/**************************************************/
+		/* STEP 6. check if something is in front of us   */
+		/**************************************************/
+		sonars = arduino->GetSonarReadings();
+		somethingOnWay = (
+			(sonars.x < 15 && sonars.x > 0) ||
+			(sonars.y < 15 && sonars.y > 0) ||
+			(sonars.z < 15 && sonars.z > 0));
+
+		/**************************************************/
+		/* STEP 7. feed these variables to Autopilot	  */
+		/**************************************************/
+		std::ostringstream oss;
+		oss << "[Robot] State: " << STATE_LABELS[state];
+		oss << ", Ball: " << (ballFound ? "yes" : "no");
+		oss << ", Gate: " << (targetGatePos != NULL ? "yes" : "no");
+		oss << ", trib: " << (ballInTribbler ? "yes" : "no");
+		oss << ", Sight: " << (!sightObstructed ? "yes" : "no");
+//		oss << "|[NewAutoPilot] Ball Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
+//		oss << "Gate Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
+
+
+		if (autoPilotEnabled) {
+			autoPilot->UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay);
+		}
+
+		/**************************************************/
+		/* STEP 8. kick and drive (done in AutoPilot	  */
+		/**************************************************/
+
+		/* Main UI */
+		if (STATE_NONE == state) {
 			START_DIALOG
 				STATE_BUTTON("(A)utoCalibrate objects", STATE_AUTOCALIBRATE)
-				STATE_BUTTON("(M)anualCalibrate objects", STATE_CALIBRATE)
-				STATE_BUTTON("(S)tart Robot", STATE_LAUNCH)
+				//STATE_BUTTON("(M)anualCalibrate objects", STATE_CALIBRATE)
+				STATE_BUTTON("(C)Change Gate [" + OBJECT_LABELS[targetGate] + "]", STATE_SELECT_GATE)
+				STATE_BUTTON("Auto(P)ilot [" + (autoPilotEnabled ? "On" :"Off") + "]", STATE_LAUNCH)
 				STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
@@ -262,7 +360,7 @@ void Robot::Run()
 					createButton(OBJECT_LABELS[(OBJECT)i], [this, i, &frameBGR]{
 						ColorCalibrator* calibrator = STATE_AUTOCALIBRATE == state ? new AutoCalibrator() : new ColorCalibrator();
 						calibrator->LoadImage(frameBGR);
-						calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
+						this->objectThresholds[(OBJECT)i] = calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
 						delete calibrator;
 					});
 				}
@@ -273,11 +371,11 @@ void Robot::Run()
 			START_DIALOG
 				createButton(OBJECT_LABELS[GATE1], [this]{
 					this->targetGate = GATE1;
-					this->SetState(STATE_RUN);
+					this->SetState(STATE_NONE);
 				});
 				createButton(OBJECT_LABELS[GATE2], [this]{
 					this->targetGate = GATE2;
-					this->SetState(STATE_RUN);
+					this->SetState(STATE_NONE);
 				});
 			END_DIALOG
 		}
@@ -292,12 +390,14 @@ void Robot::Run()
 					for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
 						objectThresholds[(OBJECT)i] = calibrator.GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
 					}
-					SetState(STATE_SELECT_GATE);
+					//SetState(STATE_SELECT_GATE);
+					autoPilotEnabled = !autoPilotEnabled;
+					SetState(STATE_NONE);
 				}
 				catch (...){
 					std::cout << "Calibration data is missing!" << std::endl;
 					//TODO: display error
-					SetState(STATE_NONE); // no conf
+					SetState(STATE_AUTOCALIBRATE); // no conf
 				}
 			}
 		}
@@ -328,35 +428,8 @@ void Robot::Run()
 			END_DIALOG
 
 				
-			// thresholding in parallel
-			thresholder.Start(frameHSV, { BALL, GATE1, GATE2, INNER_BORDER, OUTER_BORDER, FIELD });
-			thresholder.WaitForStop();
 			
-			if (detectBorders) {
-				finder->IsolateField(thresholdedImages, frameHSV, frameBGR);
-			};
-
-			bool sightObstructed = false;
-			cv::Mat selected(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
-			cv::Mat mask(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
-			cv::line(mask, cv::Point(frameBGR.cols / 3, 0), cv::Point(frameBGR.cols / 3, frameBGR.rows - 100), cv::Scalar(255, 255, 255), 40);
-			thresholdedImages[BALL].copyTo(selected, mask); // perhaps use field and inner border
-			//cv::imshow("mmm", selected);
-			sightObstructed = countNonZero(selected) > 10;
-		
-			ObjectPosition ballPos, gate1Pos, gate2Pos;
-			//Cut out gate contour.	
-			
-			bool gate1Found = gate2Finder.Locate(thresholdedImages, frameHSV, frameBGR, GATE1, gate1Pos);
-			bool gate2Found = gate1Finder.Locate(thresholdedImages, frameHSV, frameBGR, GATE2, gate2Pos);
-
-			bool ballFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos);
-			ObjectPosition *targetGatePos = 0;
-			if (targetGate == GATE1 && gate1Found) targetGatePos = &gate1Pos;
-			else if(targetGate == GATE2 && gate2Found) targetGatePos = &gate2Pos;
-			// else leave to NULL
-			
-			autoPilot->UpdateState(ballFound ? &ballPos : NULL, targetGatePos, sightObstructed);
+//			autoPilot->UpdateState(ballFound ? &ballPos : NULL, targetGatePos, sightObstructed);
 			
         }
 		else if (STATE_MANUAL_CONTROL == state) {
@@ -390,8 +463,10 @@ void Robot::Run()
 		else if (STATE_END_OF_GAME == state) {
 			break;
 		}
+		 
 		subtitles.str("");
-		subtitles << autoPilot->GetDebugInfo();
+		subtitles << oss.str();
+		subtitles << "|" << autoPilot->GetDebugInfo();
 		subtitles << "|" << wheels->GetDebugInfo();
 		subtitles << "|" << arduino->GetDebugInfo();
 
@@ -401,11 +476,14 @@ void Robot::Run()
 		cv::putText(frameBGR, "state:" + STATE_LABELS[state], cv::Point(frameHSV.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 
 		//TODO: fix putText newline thing
-		std::string s(subtitles.str());
-		std::replace(s.begin(), s.end(), '|', '\n');
-//		std::cout << s << std::endl;
-		cv::putText(frameBGR, s, cv::Point(10, frameHSV.rows - 140), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		std::vector<std::string> subtitles2;
+		boost::split(subtitles2, subtitles.str(), boost::is_any_of("|"));
 
+		int j = 0;
+		for (auto s : subtitles2) {
+			cv::putText(frameBGR, s, cv::Point(10, frameHSV.rows - 140 + j), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+			j += 20;
+		}
 		show(frameBGR);
 
 		if (cv::waitKey(1) == 27) {
@@ -424,6 +502,8 @@ void Robot::Run()
 
 
 }
+
+
 std::string Robot::ExecuteRemoteCommand(const std::string &command){
     std::stringstream response;
     boost::mutex::scoped_lock lock(remote_mutex); //allow one command at a time

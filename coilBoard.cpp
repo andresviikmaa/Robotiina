@@ -8,7 +8,8 @@ void CoilBoard::Kick(){
 	boost::posix_time::ptime time2 = boost::posix_time::microsec_clock::local_time();
 	//std::cout << (afterKickTime - time2).total_milliseconds() << std::endl;
 	if ((time2 - afterKickTime).total_milliseconds() < 1500) return;
-	writeString("k800\n");
+	//writeString("k800\n");
+	kick = true;
 	forcedNotInTribbler = true;
 	afterKickTime = time2; //reset timer
 	return;
@@ -49,6 +50,10 @@ void CoilBoard::Run(){
 			waitTime = time;
 		} else {
 			writeString("b\n");
+		}
+		if (kick) {
+			std::cout << "kick ----->" << std::endl;
+			writeString("k800\n");
 		}
 		/*
 		//Forcing ballintribler false after kick

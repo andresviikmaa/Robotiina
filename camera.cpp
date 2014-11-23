@@ -33,6 +33,7 @@ Camera::Camera(int device)
 	}
 	frameSize = cv::Size((int)cap->get(CV_CAP_PROP_FRAME_WIDTH),    // Acquire input size
 		(int)cap->get(CV_CAP_PROP_FRAME_HEIGHT));
+	flip = true;
 	/*
 	cap->set(CV_CAP_PROP_EXPOSURE, -5);
 	cap->set(CV_CAP_PROP_BRIGHTNESS, 0);
@@ -52,8 +53,11 @@ const cv::Mat &Camera::Capture()
 	if (frame.size().height > 0) {
 		frame.copyTo(lastframe);
 	}
-	//lastframe.copyTo(buffer);
-	cv::flip(lastframe,buffer,-1);
+	if (flip)
+		cv::flip(lastframe, buffer, -1);
+	else
+		lastframe.copyTo(buffer);
+
 	return buffer;
 }
 const cv::Mat &Camera::CaptureHSV() {

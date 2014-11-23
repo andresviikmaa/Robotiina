@@ -3,7 +3,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/atomic.hpp>
 #include <boost/thread/mutex.hpp>
-
+#include <atomic>
 
 enum NewDriveMode {
 	DRIVEMODE_IDLE = 0,
@@ -146,16 +146,17 @@ private:
 	ObjectPosition lastBallLocation;
 	ObjectPosition lastGateLocation;
 	ObjectPosition lastHomeGateLocation;
-	volatile bool ballInSight = false;
-	volatile bool gateInSight = false;
-	volatile bool homeGateInSight = false;
-	volatile bool ballInTribbler = false;
-	volatile bool sightObstructed = false;
-	cv::Point3i sonars{ 100, 100, 100 };
+
+	std::atomic_bool ballInSight;
+	std::atomic_bool gateInSight;
+	std::atomic_bool homeGateInSight;
+	std::atomic_bool ballInTribbler;
+	std::atomic_bool sightObstructed;
+	std::atomic_bool somethingOnWay;
 
 
-	boost::atomic<bool> stop_thread;
-	boost::atomic<bool> drive;
+	std::atomic_bool stop_thread;
+	std::atomic_bool drive;
 	boost::thread_group threads;
 	boost::mutex mutex;
 	boost::posix_time::ptime rotateTime = time;
@@ -177,8 +178,8 @@ protected:
 	void WriteInfoOnScreen();
 public:
 	NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino);
-	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool sightObstructed);
+	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay);
 	void Run();
-	~NewAutoPilot();
+	virtual ~NewAutoPilot();
 	std::string GetDebugInfo();
 };

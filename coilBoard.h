@@ -1,7 +1,7 @@
 #pragma  once
 #include "types.h"
 #include "simpleserial.h"
-#include <boost/atomic.hpp>
+#include <atomic>
 #include <boost/timer/timer.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -26,14 +26,16 @@ private:
 	boost::posix_time::time_duration waitDuration;
 	boost::posix_time::ptime afterKickTime = time;
 	boost::posix_time::time_duration afterKickDuration;
-	boost::atomic<bool> ballInTribbler;
-	volatile int ballInTribblerCount = 0;
+	std::atomic_bool ballInTribbler;
+	std::atomic_bool kick;
+	std::atomic_int ballInTribblerCount;
 	bool forcedNotInTribbler = false;
 
 public:
 	CoilBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
 		stop_thread = false;
 		ballInTribbler = false;
+		ballInTribblerCount = 0;
 	};
 	virtual ~CoilBoard(){
 		writeString("d\n");//discharge
