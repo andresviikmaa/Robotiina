@@ -9,8 +9,8 @@ void CoilBoard::Kick(){
 	//std::cout << (afterKickTime - time2).total_milliseconds() << std::endl;
 	if ((time2 - afterKickTime).total_milliseconds() < 1500) return;
 	//writeString("k800\n");
-	kick = true;
-	forcedNotInTribbler = true;
+	kick = true; // set flag, so that we do not corrupt writing in Run method
+	//forcedNotInTribbler = true;
 	afterKickTime = time2; //reset timer
 	return;
 }
@@ -36,7 +36,7 @@ void CoilBoard::Run(){
 	writeString("c\n");
 	while (!stop_thread){
 		std::string line = readLineAsync(10);
-		if(line == "true" || line == "false" && !forcedNotInTribbler){
+		if(line == "true" || line == "false"/* && !forcedNotInTribbler*/){
 			std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << line << std::endl;
 			int newcount = ballInTribblerCount + ((line == "true") ? 1 : -1);
 			std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << newcount << " " << line << std::endl;
