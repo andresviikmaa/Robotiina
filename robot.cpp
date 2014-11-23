@@ -389,7 +389,7 @@ void Robot::Run()
 			END_DIALOG
 		}
 		else if (STATE_LAUNCH == state) {
-			if (false && targetGate == NUMBER_OF_OBJECTS) {
+			if (targetGate == NUMBER_OF_OBJECTS) {
 				std::cout << "Select target gate" << std::endl;
 				SetState(STATE_SELECT_GATE);
 			}
