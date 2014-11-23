@@ -54,6 +54,7 @@ void CoilBoard::Run(){
 		if (kick) {
 			std::cout << "kick ----->" << std::endl;
 			writeString("k800\n");
+			kick = false;
 		}
 		/*
 		//Forcing ballintribler false after kick
