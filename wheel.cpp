@@ -2,7 +2,7 @@
 #include <chrono>
 #include <thread>
 
-BasicWheel::BasicWheel()
+BasicWheel::BasicWheel(const std::string &name): ThreadedClass("wheel "+ name)
 {
 	stall = false;
 	update_speed = false;
@@ -129,6 +129,7 @@ void SerialWheel::UpdateSpeed()
 };
 
 SerialWheel::~SerialWheel(){
+	WaitForStop();
 	SetSpeed(0);
 	UpdateSpeed();
 }

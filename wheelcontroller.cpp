@@ -7,7 +7,7 @@
 #define deg30 (30.0 * PI / 180.0)
 #define deg270 (270.0 * PI / 180.0)
 
-WheelController::WheelController()
+WheelController::WheelController() : ThreadedClass("WheelController")
 {
 	w_left = NULL;
 	w_right = NULL;
@@ -20,24 +20,24 @@ void WheelController::InitWheels(boost::asio::io_service &io, bool useDummyPorts
 	using boost::property_tree::ptree;
 	ptree pt;
 	if (useDummyPorts) {
-		w_left = new SoftwareWheel();
-		w_right = new SoftwareWheel();
-		w_back = new SoftwareWheel();
+		w_left = new SoftwareWheel("left");
+		w_right = new SoftwareWheel("right");
+		w_back = new SoftwareWheel("back");
 
 	}
 	else {
 		read_ini("conf/ports.ini", pt);
 
 		std::cout << "left wheel " << std::to_string(ID_WHEEL_LEFT) << " " << pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)) << std::endl;
-		w_left = new SerialWheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200);
+		w_left = new SerialWheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_LEFT)), 115200, "left");
 
 
 		std::cout << "right wheel " << std::to_string(ID_WHEEL_RIGHT) << " " << pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)) << std::endl;
-		w_right = new SerialWheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200);
+		w_right = new SerialWheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_RIGHT)), 115200, "right");
 
 
 		std::cout << "back wheel " << std::to_string(ID_WHEEL_BACK) << " " << pt.get<std::string>(std::to_string(ID_WHEEL_BACK)) << std::endl;
-		w_back = new SerialWheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_BACK)), 115200);
+		w_back = new SerialWheel(io, pt.get<std::string>(std::to_string(ID_WHEEL_BACK)), 115200, "back");
 		std::cout << "wheels done" << std::endl;
 
 	}
@@ -66,6 +66,8 @@ void WheelController::DestroyWheels()
 };
 WheelController::~WheelController()
 {
+	Stop();
+	WaitForStop();
 	DestroyWheels();
 }
 void WheelController::Forward(int speed) {
@@ -197,7 +199,7 @@ void WheelController::CalculateRobotSpeed()
 	}
 	double s = (b - a) / (c - a);
 	double directionInRad = atan(((cos(v) - cos(u)) - s * (cos(w) - cos(u))) / (s * (sin(w) - sin(u)) - (sin(v) - sin(u))));
-	if (directionInRad < 0) directionInRad += 2 * PI;
+	//if (directionInRad < 0) directionInRad += 2 * PI;
 	actualSpeed.heading = directionInRad / PI * 180;
 	actualSpeed.velocity = (a - c) / ((cos(u) - cos(w)) * cos(directionInRad) + (sin(u) - sin(w)) * sin(directionInRad));
 	actualSpeed.rotation = c - (actualSpeed.velocity  * cos(w - directionInRad));
@@ -217,9 +219,10 @@ const Speed &  WheelController::GetActualSpeed()
 std::string WheelController::GetDebugInfo(){
 
 	std::ostringstream oss;
+	oss.precision(4);
 	oss << "[WheelController] target: " << "velocity: " << targetSpeed.velocity << ", heading: " << targetSpeed.heading << ", rotate: " << targetSpeed.rotation << "|";
 	oss << "[WheelController] target: " << "actual  : " << actualSpeed.velocity << ", heading: " << actualSpeed.heading << ", rotate: " << actualSpeed.rotation << "|";
-	oss << "[WheelController] pos: " << "x: " << robotPos.x << ", y: " << robotPos.y << ", r: " << robotPos.z;
+	//oss << "[WheelController] pos: " << "x: " << robotPos.x << ", y: " << robotPos.y << ", r: " << robotPos.z;
 	return oss.str();
 }
 
@@ -227,6 +230,9 @@ std::string WheelController::GetDebugInfo(){
 void WheelController::Run()
 {
 	while (!stop_thread) {
+		CalculateRobotSpeed();
 		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // do not poll serial to fast
 	}
+	std::cout << "WheelController stoping" << std::endl;
+	
 }

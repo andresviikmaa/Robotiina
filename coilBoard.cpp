@@ -35,11 +35,12 @@ bool CoilBoard::BallInTribbler(){
 void CoilBoard::Run(){
 	writeString("c\n");
 	while (!stop_thread){
+	
 		std::string line = readLineAsync(10);
 		if(line == "true" || line == "false"/* && !forcedNotInTribbler*/){
-			std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << line << std::endl;
+			//std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << line << std::endl;
 			int newcount = ballInTribblerCount + ((line == "true") ? 1 : -1);
-			std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << newcount << " " << line << std::endl;
+			//std::cout << "ballInTribblerCount " << ballInTribblerCount << " " << newcount << " " << line << std::endl;
 			ballInTribblerCount = std::min(20, std::max(-20, newcount));
  		}
 		//Pinging
@@ -71,6 +72,8 @@ void CoilBoard::Run(){
 	}
 	writeString("d\n");
 	writeString("m0\n");
+	std::cout << "CoilBoard stoping" << std::endl;
+	
 }
 
 

@@ -90,12 +90,16 @@ Robot::~Robot()
 {
 	if (camera)
 		delete camera;
-    if(wheels)
-        delete wheels;
-	if (finder)
-		delete finder;
+	std::cout << "coilBoard " << coilBoard << std::endl;
 	if (coilBoard)
 		delete coilBoard;
+	std::cout << "wheels " << wheels << std::endl;
+	if(wheels)
+        delete wheels;
+	std::cout << "finder " << finder << std::endl;
+	if (finder)
+		delete finder;
+	std::cout << "arduino " << arduino << std::endl;
 	if (arduino)
 		delete arduino;
 
@@ -149,6 +153,7 @@ bool Robot::Launch(int argc, char* argv[])
 //					std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
 
 					coilBoard = new CoilBoard(io, port);
+					//coilBoard = new CoilGun();
 
 //					arduino = new ArduinoBoard(io, port2);
 				}
@@ -200,8 +205,6 @@ void Robot::Run()
 		boost::filesystem::create_directories(captureDir);
 	}
 	*/
-	coilBoard->Start();
-	arduino->Start();
 	IAutoPilot *autoPilot = new NewAutoPilot(wheels, coilBoard, arduino);
 
 	//RobotTracker tracker(wheels);
@@ -321,12 +324,18 @@ void Robot::Run()
 		/* STEP 7. feed these variables to Autopilot	  */
 		/**************************************************/
 		std::ostringstream oss;
+		oss.precision(4);
+
 		oss << "[Robot] State: " << STATE_LABELS[state];
 		oss << ", Ball: " << (ballFound ? "yes" : "no");
 		oss << ", Gate: " << (targetGatePos != NULL ? "yes" : "no");
 		oss << ", trib: " << (ballInTribbler ? "yes" : "no");
 		oss << ", Sight: " << (!sightObstructed ? "yes" : "no");
-//		oss << "|[NewAutoPilot] Ball Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
+		oss << "|[Robot] Ball Pos: (" << ballPos.distance << "," << ballPos.horizontalAngle << "," << ballPos.horizontalDev << ")";
+		if(targetGatePos != NULL)
+			oss << "|[Robot] Gate Pos: (" << targetGatePos->distance << "," << targetGatePos->horizontalAngle << "," << targetGatePos->horizontalDev << ")";
+		else
+			oss << "|[Robot] Gate Pos: - ";
 //		oss << "Gate Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
 
 
@@ -435,7 +444,7 @@ void Robot::Run()
 		else if (STATE_MANUAL_CONTROL == state) {
 			START_DIALOG
 				createButton("Move Left", [this] {this->wheels->Drive(20, 90); });
-				createButton("Move Right", [this]{this->wheels->Drive(20, 270); });
+				createButton("Move Right", [this]{this->wheels->Drive(20, -90); });
 				createButton("Move Forward", [this]{this->wheels->Drive(20, 0); });
 				createButton("Move Back", [this]{this->wheels->Drive(-20, 0); });
 				createButton("Rotate Right", [this]{this->wheels->Rotate(0, 10); });
@@ -509,6 +518,7 @@ void Robot::Run()
     }
     
 	delete autoPilot;
+	
 	if (outputVideo != NULL) {
 		delete outputVideo;
 	}

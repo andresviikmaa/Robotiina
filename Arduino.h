@@ -10,7 +10,7 @@ class ButtonClickListener
 	virtual void OnGateButtonClicked() = 0;
 };
 
-class Arduino : public ThreadedClass
+class Arduino
 {
 protected:
 	cv::Point3i sonars = {100,100,100};
@@ -27,7 +27,7 @@ public:
 };
 
 
-class ArduinoBoard : public Arduino, SimpleSerial
+class ArduinoBoard : public Arduino, ThreadedClass, SimpleSerial
 {
 private:
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
@@ -35,7 +35,7 @@ private:
 
 public:
 	static Arduino Create();
-	ArduinoBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
+	ArduinoBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200)  : ThreadedClass("Arduino"), SimpleSerial(io_service, port, baud_rate) {
 		stop_thread = false;
 		ballInTribbler = false;
 	};

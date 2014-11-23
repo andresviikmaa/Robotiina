@@ -7,18 +7,19 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include "ThreadedClass.h"
 
-class CoilGun: public ThreadedClass
+class CoilGun
 {
 public:
-	CoilGun(){};
-	virtual ~CoilGun(){};
 	virtual void ToggleTribbler(bool start){};
 	virtual bool BallInTribbler(){ return rand() % 100 > 95 ; };
 	virtual void Kick() {};
-	void Run(){};
+	virtual ~CoilGun() {
+		std::cout << "~CoilGun" << std::endl;
+	}
+	
 };
 
-class CoilBoard : public CoilGun, SimpleSerial
+class CoilBoard : public CoilGun, public SimpleSerial, public ThreadedClass
 {
 private:
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
@@ -32,18 +33,20 @@ private:
 	//bool forcedNotInTribbler = false;
 
 public:
-	CoilBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
-		stop_thread = false;
+	CoilBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate), ThreadedClass("CoilBoard") {
 		ballInTribbler = false;
 		ballInTribblerCount = 0;
+		kick = false;
+		Start();
 	};
-	virtual ~CoilBoard(){
-		writeString("d\n");//discharge
-	}
 	void Kick();
 	void ToggleTribbler(bool start);
 	bool BallInTribbler();
 	void Run();
+	virtual ~CoilBoard() {
+		std::cout << "~CoilBoard" << std::endl;
+		WaitForStop();
+	}
 
 };
 

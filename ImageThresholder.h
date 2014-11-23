@@ -14,7 +14,7 @@ public:
 			});
 		}
 	}
-	ImageThresholder(ThresholdedImages &images, HSVColorRangeMap &objectMap) : thresholdedImages(images), objectMap(objectMap){};
+	ImageThresholder(ThresholdedImages &images, HSVColorRangeMap &objectMap) : ThreadedClass("ImageThresholder"), thresholdedImages(images), objectMap(objectMap){};
 	~ImageThresholder(){};
 
 	void Run(){};

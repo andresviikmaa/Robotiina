@@ -8,7 +8,7 @@
 class BasicWheel : public ThreadedClass
 {
 public:
-	BasicWheel();
+	BasicWheel(const std::string &name);
 	virtual ~BasicWheel();
 	void SetSpeed(int given_speed);
 	int GetSpeed() {
@@ -46,6 +46,8 @@ protected:
 
 class SoftwareWheel : public BasicWheel
 {
+public:
+	SoftwareWheel(const std::string &name) : BasicWheel(name){}
 protected:
 	int max_acceleration = 500;
 	double stop_time = 1600;
@@ -54,12 +56,12 @@ protected:
 };
 
 
-class SerialWheel : public BasicWheel, SimpleSerial
+class SerialWheel : public SimpleSerial, public BasicWheel
 {
 protected:
 	void UpdateSpeed();
 public:
-	SerialWheel(boost::asio::io_service &io_service, std::string port = "port", unsigned int baud_rate = 115200) : SimpleSerial(io_service, port, baud_rate) {
+	SerialWheel(boost::asio::io_service &io_service, std::string port = "port", unsigned int baud_rate = 115200, const std::string &name="") : SimpleSerial(io_service, port, baud_rate), BasicWheel(name) {
 	};
 	virtual ~SerialWheel();
 
