@@ -477,7 +477,9 @@ void Robot::Run()
 
 		//TODO: fix putText newline thing
 		std::vector<std::string> subtitles2;
-		boost::split(subtitles2, subtitles.str(), boost::is_any_of("|"));
+		std::string subtitles3 = subtitles.str();
+
+		boost::split(subtitles2, subtitles3, boost::is_any_of("|"));
 
 		int j = 0;
 		for (auto s : subtitles2) {
