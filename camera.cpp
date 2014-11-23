@@ -52,7 +52,8 @@ const cv::Mat &Camera::Capture()
 	if (frame.size().height > 0) {
 		frame.copyTo(lastframe);
 	}
-	lastframe.copyTo(buffer);
+	//lastframe.copyTo(buffer);
+	cv::flip(lastframe,buffer,-1);
 	return buffer;
 }
 const cv::Mat &Camera::CaptureHSV() {
