@@ -129,7 +129,7 @@ NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	auto &coilgun = NewAutoPilot.coilgun;
 
 	//Ball is close and center
-	if ((lastBallLocation.distance < target.distance) && abs(lastBallLocation.horizontalDev) <= 8) {
+	if ((lastBallLocation.distance < target.distance) && abs(lastBallLocation.horizontalDev) <= 5) {
 		return DRIVEMODE_CATCH_BALL;
 	} 
 	//Ball is close and not center
