@@ -110,6 +110,7 @@ public:
 class Kick : public DriveInstruction
 {
 public:
+	virtual void onEnter(const NewAutoPilot& NewAutoPilot);
 	Kick() : DriveInstruction("KICK"){};
 	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt);
 };

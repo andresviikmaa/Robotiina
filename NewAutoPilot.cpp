@@ -67,6 +67,7 @@ NewDriveMode Idle::step(const NewAutoPilot& NewAutoPilot, double dt)
 /*BEGIN LocateBall*/
 void LocateBall::onEnter(const NewAutoPilot& NewAutoPilot)
 {
+	NewAutoPilot.coilgun->ToggleTribbler(false);
 	rotateStart = boost::posix_time::microsec_clock::local_time();
 }
 
@@ -116,7 +117,7 @@ void DriveToBall::onEnter(const NewAutoPilot& NewAutoPilot)
 {
 	NewAutoPilot.coilgun->ToggleTribbler(false);
 	start = NewAutoPilot.lastBallLocation;
-	target = { 370, 0, 0 };
+	target = { 300, 0, 0 };
 }
 
 NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
@@ -128,7 +129,7 @@ NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	auto &wheels = NewAutoPilot.wheels;
 	auto &coilgun = NewAutoPilot.coilgun;
 
-	if (lastBallLocation.distance < target.distance) {
+	if ((lastBallLocation.distance < target.distance) && abs(lastBallLocation.horizontalDev) <= 8) {
 		return DRIVEMODE_CATCH_BALL;
 	} else {
 	
@@ -136,16 +137,16 @@ NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 
 	//rotate calculation for ball
 	rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
-	/*
-
+	
+/*
 	if (lastBallLocation.distance <= desiredDistance){
 		coilgun->ToggleTribbler(true);
-		if (abs(lastBallLocation.horizontalDev) < -8) {
+		if (abs(lastBallLocation.horizontalDev) > 8) {
 			wheels->Rotate(0, rotate);
 		}
 	}
 	//if ball is not close 
-	else {*/
+	else */{
 		coilgun->ToggleTribbler(false);
 		//speed calculation
 		if (lastBallLocation.distance > 700){
@@ -156,6 +157,7 @@ NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 		}
 		speed = 30;
 		wheels->DriveRotate(speed, -lastBallLocation.horizontalAngle, -rotate);
+	}
 	}
 	return DRIVEMODE_DRIVE_TO_BALL;
 
@@ -179,15 +181,18 @@ NewDriveMode CatchBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	auto &wheels = NewAutoPilot.wheels;
 	auto &coilgun = NewAutoPilot.coilgun;
 
+		wheels->DriveRotate(40, 0, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
 	if (NewAutoPilot.ballInTribbler) {
 		return DRIVEMODE_LOCATE_GATE;
 	}
-	else if (abs(lastBallLocation.horizontalDev) > 8) {
+	/*else if (abs(lastBallLocation.horizontalDev) > 8) {
 		double rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
 		wheels->Rotate(0, -rotate);
 		return DRIVEMODE_LOCATE_BALL;
 	}
-	else if (catchDuration > 2000) { //trying to catch ball for 2 seconds
+	else */ if (catchDuration > 2000) { //trying to catch ball for 2 seconds
 		return DRIVEMODE_LOCATE_BALL;
 
 	}
@@ -236,7 +241,7 @@ NewDriveMode AimGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 
 
 	//Turn robot to gate
-	if (abs(lastGateLocation.horizontalDev) > 30) {
+	if (abs(lastGateLocation.horizontalAngle) < 30) {
 		if (sightObstructed) { //then move sideways
 			wheels->Drive(50, -90);
 			std::chrono::milliseconds dura(400);
@@ -249,8 +254,10 @@ NewDriveMode AimGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 	}
 	else {
 		//rotate calculation for gate
-		int rotate = lastGateLocation.horizontalAngle  * 1.25 + 5;
-		wheels->Rotate(0, rotate);
+		//int rotate = lastGateLocation.horizontalAngle  * 1.25 + 5;
+		int rotate = lastGateLocation.horizontalAngle  * 0.4 + 3;
+	
+		wheels->Rotate(0, -rotate);
 	}
 
 
@@ -268,6 +275,10 @@ NewDriveMode Kick::step(const NewAutoPilot& NewAutoPilot, double dt)
 	std::this_thread::sleep_for(std::chrono::milliseconds(500)); //half second wait.
 	return DRIVEMODE_LOCATE_BALL;
 
+}
+void Kick::onEnter(const NewAutoPilot& NewAutoPilot)
+{
+	NewAutoPilot.coilgun->ToggleTribbler(false);
 }
 
 /*BEGIN RecoverCrash*/
