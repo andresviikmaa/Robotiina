@@ -6,7 +6,6 @@
 #include "wheelcontroller.h"
 #include "coilBoard.h"
 #include "objectfinder.h"
-#include "MouseFinder.h"
 #include "dialog.h"
 #include "wheel.h"
 #include "ComPortScanner.h"
@@ -77,7 +76,7 @@ void dance_step(float time, float &move1, float &move2) {
 
 /* END DANCE MOVES */
 
-Robot::Robot(boost::asio::io_service &io) : Dialog("Robotiina"), io(io), camera(0), wheels(0), finder(0), coilBoard(0),arduino(0)
+Robot::Robot(boost::asio::io_service &io) : Dialog("Robotiina"), io(io), camera(0), wheels(0), coilBoard(0),arduino(0)
 {
 	
 	last_state = STATE_END_OF_GAME;
@@ -96,9 +95,6 @@ Robot::~Robot()
 	std::cout << "wheels " << wheels << std::endl;
 	if(wheels)
         delete wheels;
-	std::cout << "finder " << finder << std::endl;
-	if (finder)
-		delete finder;
 	std::cout << "arduino " << arduino << std::endl;
 	if (arduino)
 		delete arduino;
@@ -115,11 +111,6 @@ bool Robot::Launch(int argc, char* argv[])
 	else
 		camera = new Camera(0);
 	std::cout << "Done" << std::endl;
-
-	if (config.count("locate_cursor"))
-		finder = new MouseFinder();
-	else
-		finder = new ObjectFinder();
 
 	wheels = new WheelController();
 	captureFrames = config.count("capture-frames") > 0;
@@ -212,6 +203,7 @@ void Robot::Run()
 	ImageThresholder thresholder(thresholdedImages, objectThresholds);
 	ObjectFinder gate1Finder;
 	ObjectFinder gate2Finder;
+	ObjectFinder finder;
 
 	VideoRecorder videoRecorder("videos/", 30, frameBGR.size());
 
@@ -224,6 +216,7 @@ void Robot::Run()
 	cv::Point3i sonars = {100,100,100};
 	bool somethingOnWay = false;
 	bool autoPilotEnabled = false;
+	int mouseControl = 0;
 
 	try {
 		CalibrationConfReader calibrator;
@@ -275,7 +268,7 @@ void Robot::Run()
 		thresholder.WaitForStop();
 
 		if (detectBorders) {
-			finder->IsolateField(thresholdedImages, frameHSV, frameBGR);
+			finder.IsolateField(thresholdedImages, frameHSV, frameBGR);
 		};
 
 		/**************************************************/
@@ -300,7 +293,10 @@ void Robot::Run()
 		bool gate1Found = gate2Finder.Locate(thresholdedImages, frameHSV, frameBGR, GATE1, gate1Pos);
 		bool gate2Found = gate1Finder.Locate(thresholdedImages, frameHSV, frameBGR, GATE2, gate2Pos);
 
-		bool ballFound = finder->Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos);
+		bool ballFound = mouseControl != 1 ?
+			finder.Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos)
+			: finder.LocateCursor(frameBGR, cv::Point2i(mouseX, mouseY), BALL, ballPos);
+
 		ObjectPosition *targetGatePos = 0;
 		if (targetGate == GATE1 && gate1Found) targetGatePos = &gate1Pos;
 		else if (targetGate == GATE2 && gate2Found) targetGatePos = &gate2Pos;
@@ -353,7 +349,10 @@ void Robot::Run()
 				STATE_BUTTON("(A)utoCalibrate objects", STATE_AUTOCALIBRATE)
 				//STATE_BUTTON("(M)anualCalibrate objects", STATE_CALIBRATE)
 				STATE_BUTTON("(C)Change Gate [" + OBJECT_LABELS[targetGate] + "]", STATE_SELECT_GATE)
-				STATE_BUTTON("Auto(P)ilot [" + (autoPilotEnabled ? "On" :"Off") + "]", STATE_LAUNCH)
+				STATE_BUTTON("Auto(P)ilot [" + (autoPilotEnabled ? "On" : "Off") + "]", STATE_LAUNCH)
+				createButton(std::string("(M)ouse control [") + (mouseControl == 0 ? "Off" : (mouseControl == 1 ? "Ball" : "Gate")) + "]", [this, &mouseControl, &frameBGR]{
+				mouseControl = (mouseControl + 1) % 3;
+				});
 				STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
@@ -426,12 +425,14 @@ void Robot::Run()
 					this->detectBorders = !this->detectBorders;
 					this->last_state = STATE_NONE; // force dialog redraw
 				});
+				/*
 				createButton(std::string("Mouse control: ") + (dynamic_cast<MouseFinder*>(finder) == NULL ? "off" : "on"), [this]{
 					bool isMouse = dynamic_cast<MouseFinder*>(finder) != NULL;
 					delete this->finder;
 					this->finder = isMouse ? new ObjectFinder() : new MouseFinder();
 					this->last_state = STATE_NONE;
 				});
+				*/
 				STATE_BUTTON("(B)ack", STATE_NONE)
 				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
 			END_DIALOG
@@ -494,7 +495,7 @@ void Robot::Run()
 
 		int j = 0;
 		for (auto s : subtitles2) {
-			cv::putText(display, s, cv::Point(10, display.rows - 240 + j), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+			cv::putText(display, s, cv::Point(10, display.rows - 140 + j), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 			j += 20;
 		}
 

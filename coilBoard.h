@@ -9,10 +9,22 @@
 
 class CoilGun
 {
+protected:
+	std::atomic_bool ballInTribbler;
 public:
+	CoilGun() {
+		ballInTribbler = false;
+	}
 	virtual void ToggleTribbler(bool start){};
-	virtual bool BallInTribbler(){ return rand() % 100 > 95 ; };
-	virtual void Kick() {};
+	virtual bool BallInTribbler(){ 
+		if (rand() % 100 > 95){
+			ballInTribbler = !ballInTribbler;
+		};
+		return ballInTribbler;
+	};
+	virtual void Kick() {
+		ballInTribbler = false;
+	};
 	virtual ~CoilGun() {
 		std::cout << "~CoilGun" << std::endl;
 	}
@@ -27,7 +39,6 @@ private:
 	boost::posix_time::time_duration waitDuration;
 	boost::posix_time::ptime afterKickTime = time;
 	//boost::posix_time::time_duration afterKickDuration;
-	std::atomic_bool ballInTribbler;
 	std::atomic_bool kick;
 	std::atomic_int ballInTribblerCount;
 	//bool forcedNotInTribbler = false;

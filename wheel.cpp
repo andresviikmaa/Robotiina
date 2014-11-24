@@ -72,6 +72,7 @@ int BasicWheel::GetDistanceTraveled(bool reset)
 
 BasicWheel::~BasicWheel()
 {
+	WaitForStop();
 }
 
 void SoftwareWheel::UpdateSpeed()
@@ -129,7 +130,6 @@ void SerialWheel::UpdateSpeed()
 };
 
 SerialWheel::~SerialWheel(){
-	WaitForStop();
 	SetSpeed(0);
 	UpdateSpeed();
 }

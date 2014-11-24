@@ -2,7 +2,7 @@
 #include "types.h"
 #include <functional>
 #include <boost/thread/mutex.hpp>
-
+#include <atomic>
 /*
 * No time to add QT support to OpenCV, have to make our own buttons (and dialogs)
 * */
@@ -15,6 +15,8 @@ public:
 	void clearButtons();
 protected:
     void mouseClicked(int x, int y);
+	std::atomic_int mouseX;
+	std::atomic_int mouseY;
 private:
     bool m_close = false;
     std::string m_title;

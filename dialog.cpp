@@ -10,6 +10,8 @@ Dialog::Dialog(const std::string &title, int flags/* = CV_WINDOW_AUTOSIZE*/) {
 	//	cvSetWindowProperty(m_title.c_str(), CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
 	cv::moveWindow(m_title, 0, 0);
 	cv::setMouseCallback(m_title, [](int event, int x, int y, int flags, void* self) {
+		((Dialog*)self)->mouseX = x;
+		((Dialog*)self)->mouseY = y;
 		if (event == cv::EVENT_LBUTTONUP){
 			((Dialog*)self)->mouseClicked(x, y);
 		}

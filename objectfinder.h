@@ -8,7 +8,6 @@ class ObjectFinder {
 protected:
 	virtual cv::Point2i LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target);
 	virtual cv::Point2i LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target);
-	ObjectPosition ConvertPixelToRealWorld(const cv::Point2i &point, const cv::Point2i &frame_size);
 	bool validateBall(ThresholdedImages &HSVRanges, cv::Point2d point, cv::Mat &frameHSV, cv::Mat &frameBGR);
 private:
 	void WriteInfoOnScreen(const ObjectPosition &info);
@@ -23,7 +22,9 @@ private:
 public:
 	ObjectFinder();
 	virtual bool Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos);
+	ObjectPosition ConvertPixelToRealWorld(const cv::Point2i &point, const cv::Point2i &frame_size);
 	virtual void IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR);
     virtual ~ObjectFinder(){ }
+	bool LocateCursor(cv::Mat &frameBGR, cv::Point2i cursor, OBJECT target, ObjectPosition &targetPos);
 
 };

@@ -18,7 +18,6 @@ private:
 
     ICamera *camera;
     WheelController * wheels;
-	ObjectFinder *finder;
 	CoilGun *coilBoard;
 	Arduino *arduino;
 

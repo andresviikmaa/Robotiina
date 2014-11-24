@@ -23,6 +23,18 @@ ObjectFinder::ObjectFinder()
 		write_ini("conf/camera.ini", pt);
 	};
 }
+bool ObjectFinder::LocateCursor(cv::Mat &frameBGR, cv::Point2i cursor, OBJECT target, ObjectPosition &targetPos){
+
+	cv::Scalar color(0, 0, 0);
+	cv::circle(frameBGR, cursor, 8, color, -1);
+	//std::cout << point << std::endl;
+	targetPos = ConvertPixelToRealWorld(cursor, cv::Point2i(frameBGR.cols, frameBGR.rows));
+	WriteInfoOnScreen(targetPos);
+	return true;
+
+
+}
+
 
 bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos) {
 	cv::Point2i point(-1, -1);

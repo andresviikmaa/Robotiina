@@ -185,6 +185,7 @@ NewDriveMode CatchBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	else if (abs(lastBallLocation.horizontalDev) > 8) {
 		double rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
 		wheels->Rotate(0, -rotate);
+		return DRIVEMODE_LOCATE_BALL;
 	}
 	else if (catchDuration > 2000) { //trying to catch ball for 2 seconds
 		return DRIVEMODE_LOCATE_BALL;
@@ -307,6 +308,7 @@ void NewAutoPilot::Run()
 			curDriveMode->second->onExit(*this);
 			//wheels->Stop();
 			curDriveMode = driveModes.find(newMode);
+			assert(curDriveMode != driveModes.end());
 			curDriveMode->second->onEnter(*this);
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
