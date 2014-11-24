@@ -4,6 +4,7 @@
 #include "Arduino.h"
 #include "wheelcontroller.h"
 #include <thread>
+#define sign(x) (x > 0) - (x < 0)
 
 std::pair<NewDriveMode, DriveInstruction*> NewDriveModes[] = {
 	std::pair<NewDriveMode, DriveInstruction*>(DRIVEMODE_IDLE, new Idle()),
@@ -116,7 +117,7 @@ void DriveToBall::onEnter(const NewAutoPilot& NewAutoPilot)
 {
 	NewAutoPilot.coilgun->ToggleTribbler(false);
 	start = NewAutoPilot.lastBallLocation;
-	target = { 300, 0, 0 };
+	target = { 350, 0, 0 };
 }
 
 NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
@@ -129,26 +130,28 @@ NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	auto &coilgun = NewAutoPilot.coilgun;
 
 	//Ball is close and center
-	if ((lastBallLocation.distance < target.distance) && abs(lastBallLocation.horizontalDev) <= 5) {
+	if ((lastBallLocation.distance < target.distance) && abs(lastBallLocation.horizontalDev) <= 8) {
 		return DRIVEMODE_CATCH_BALL;
 	} 
 	//Ball is close and not center
 	else if (lastBallLocation.distance < target.distance){
-		rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
-		wheels->Rotate(0, -rotate);
+		rotate = abs(lastBallLocation.horizontalAngle)  * 0.46 + 3;
+		std::cout << "rotate: " << rotate << std::endl;
+		wheels->Rotate(lastBallLocation.horizontalAngle > 0,  -rotate);
 	}
 	//Ball is far away
 	else {
-		rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
+		rotate = abs(lastBallLocation.horizontalAngle)  * 0.46 + 3;
 		//speed calculation
 		if (lastBallLocation.distance > 700){
 			speed = 150;
 		}
 		else{
-			speed = lastBallLocation.distance * 0.33 - 57;
+			speed = lastBallLocation.distance * 0.4 - 136;
+			
 		}
-		speed = 30;
-		wheels->DriveRotate(speed, -lastBallLocation.horizontalAngle, -rotate);
+		//speed = 30;
+		wheels->DriveRotate(speed, -lastBallLocation.horizontalAngle, lastBallLocation.horizontalAngle > 0?-rotate:rotate);
 	}
 	return DRIVEMODE_DRIVE_TO_BALL;
 }
@@ -169,7 +172,7 @@ NewDriveMode CatchBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	auto &lastBallLocation = NewAutoPilot.lastBallLocation;
 	auto &wheels = NewAutoPilot.wheels;
 	auto &coilgun = NewAutoPilot.coilgun;
-
+	//std::cout << catchDuration << std::endl;
 	if (NewAutoPilot.ballInTribbler) {
 		return DRIVEMODE_LOCATE_GATE;
 	}
@@ -199,7 +202,7 @@ NewDriveMode LocateGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 	if (gateInSight) return DRIVEMODE_AIM_GATE;
 
 
-	wheels->Rotate(0, 15);
+	wheels->Rotate(0, 30);
 
 	return DRIVEMODE_LOCATE_GATE;
 }
@@ -220,7 +223,7 @@ NewDriveMode AimGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 
 
 	//Turn robot to gate
-	if (abs(lastGateLocation.horizontalAngle) < 30) {
+	if (abs(lastGateLocation.horizontalAngle) < 20) {
 		if (sightObstructed) { //then move sideways
 			wheels->Drive(50, -90);
 			std::chrono::milliseconds dura(400);
@@ -233,9 +236,9 @@ NewDriveMode AimGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 	else {
 		//rotate calculation for gate
 		int rotate = lastGateLocation.horizontalAngle  * 0.4 + 3;
-		wheels->Rotate(0, -rotate);
+		wheels->Rotate(0, rotate);
 	}
-	return DRIVEMODE_LOCATE_GATE;
+	return DRIVEMODE_AIM_GATE;
 
 }
 
@@ -297,6 +300,8 @@ void NewAutoPilot::Run()
 				std::cout << "Invalid drive mode from :" << old->second->name << ", reverting to locate_ball" << std::endl;
 				curDriveMode = driveModes.find(DRIVEMODE_LOCATE_BALL);;
 			}
+			std::cout << "state change :" << old->second->name << " ->" << curDriveMode->second->name << std::endl;
+
 			curDriveMode->second->onEnter(*this);
 
 

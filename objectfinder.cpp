@@ -135,7 +135,7 @@ cv::Point2i ObjectFinder::LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::M
 	cv::RotatedRect bounding_rect2 = cv::minAreaRect(contours[largest_contour_index]);
 	cv::Point2f rect_points[4]; bounding_rect2.points(rect_points);
 	int shift = bounding_rect2.size.height * 0.09 +0.2;
-	std::cout << "shift: " << shift << " height: " << bounding_rect2.size.height << std::endl;
+	//std::cout << "shift: " << shift << " height: " << bounding_rect2.size.height << std::endl;
 	for (int j = 0; j < 4; j++) {
 		line(frameBGR, rect_points[j], rect_points[(j + 1) % 4], color2, 1, 8);
 
@@ -146,7 +146,7 @@ cv::Point2i ObjectFinder::LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::M
 		cv::fitLine(points, newLine, CV_DIST_L2, 0, 0.1, 0.1);
 		//std::cout << rect_points[j] << ", " << rect_points[(j + 1) % 4] << ": " << atan2(newLine[1], newLine[0])*180/PI << std::endl;
 		if (abs(atan2(newLine[1], newLine[0]) * 180 / PI) < 45) {
-			newLine[3] += shift; // shift line down
+			//newLine[3] += shift; // shift line down
 			drawLine(frameBGR, HSVRanges[BALL], 1, newLine, 1, cv::Scalar(0, 255 * (1 + 0.3), 0));
 		}
 
