@@ -80,13 +80,14 @@ NewDriveMode LocateBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	if (ballInTribbler) return DRIVEMODE_LOCATE_GATE;
 	if (ballInSight) return DRIVEMODE_DRIVE_TO_BALL;
 
-	wheels->Stop();
-	return DRIVEMODE_LOCATE_BALL;
+	//wheels->Stop();
+	//return DRIVEMODE_LOCATE_BALL;
 
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateStart).total_milliseconds();
 
 	if (rotateDuration < 5700){
+	std::cout << "locate ball, rotating" << std::endl;
 		wheels->Rotate(1, 15);
 		return DRIVEMODE_LOCATE_BALL;
 	}
@@ -103,9 +104,10 @@ NewDriveMode LocateHome::step(const NewAutoPilot& NewAutoPilot, double dt)
 /*BEGIN DriveToHome*/
 NewDriveMode DriveToHome::step(const NewAutoPilot& NewAutoPilot, double dt)
 {
-	NewAutoPilot.wheels->Forward(-70);
-	std::chrono::milliseconds dura(1000);
+	NewAutoPilot.wheels->Forward(-40);
+	std::chrono::milliseconds dura(300);
 	std::this_thread::sleep_for(dura);
+	NewAutoPilot.wheels->Forward(0);
 
 	return DRIVEMODE_LOCATE_BALL;
 }
@@ -114,7 +116,7 @@ void DriveToBall::onEnter(const NewAutoPilot& NewAutoPilot)
 {
 	NewAutoPilot.coilgun->ToggleTribbler(false);
 	start = NewAutoPilot.lastBallLocation;
-	target = { 270, 0, 0 };
+	target = { 370, 0, 0 };
 }
 
 NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
@@ -152,6 +154,7 @@ NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 		else{
 			speed = lastBallLocation.distance * 0.33 - 57;
 		}
+		speed = 30;
 		wheels->DriveRotate(speed, -lastBallLocation.horizontalAngle, -rotate);
 	}
 	return DRIVEMODE_DRIVE_TO_BALL;
@@ -179,9 +182,9 @@ NewDriveMode CatchBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	if (NewAutoPilot.ballInTribbler) {
 		return DRIVEMODE_LOCATE_GATE;
 	}
-	else if (abs(lastBallLocation.horizontalDev) < -8) {
+	else if (abs(lastBallLocation.horizontalDev) > 8) {
 		double rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
-		wheels->Rotate(0, rotate);
+		wheels->Rotate(0, -rotate);
 	}
 	else if (catchDuration > 2000) { //trying to catch ball for 2 seconds
 		return DRIVEMODE_LOCATE_BALL;
@@ -232,9 +235,9 @@ NewDriveMode AimGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 
 
 	//Turn robot to gate
-	if (abs(lastGateLocation.horizontalDev) < 30) {
+	if (abs(lastGateLocation.horizontalDev) > 30) {
 		if (sightObstructed) { //then move sideways
-			wheels->Drive(50, 270);
+			wheels->Drive(50, -90);
 			std::chrono::milliseconds dura(400);
 			std::this_thread::sleep_for(dura);
 			return DRIVEMODE_LOCATE_GATE;
