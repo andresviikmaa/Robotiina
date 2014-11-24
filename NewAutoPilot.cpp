@@ -128,13 +128,18 @@ NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	auto &wheels = NewAutoPilot.wheels;
 	auto &coilgun = NewAutoPilot.coilgun;
 
+	//Ball is close and center
 	if ((lastBallLocation.distance < target.distance) && abs(lastBallLocation.horizontalDev) <= 8) {
 		return DRIVEMODE_CATCH_BALL;
 	} 
-	else {
-		//rotate calculation for ball
+	//Ball is close and not center
+	else if (lastBallLocation.distance < target.distance){
 		rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
-		coilgun->ToggleTribbler(false);
+		wheels->Rotate(0, -rotate);
+	}
+	//Ball is far away
+	else {
+		rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
 		//speed calculation
 		if (lastBallLocation.distance > 700){
 			speed = 150;
@@ -170,10 +175,6 @@ NewDriveMode CatchBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	}
 	else if (catchDuration > 2000) { //trying to catch ball for 2 seconds
 		return DRIVEMODE_LOCATE_BALL;
-	}
-	else if (abs(lastBallLocation.horizontalDev) > 8) { //If ball is not center
-		double rotate = lastBallLocation.horizontalAngle  * 0.4 + 3;
-		wheels->Rotate(0, -rotate);
 	}
 	else {
 		NewAutoPilot.wheels->DriveRotate(40, 0, 0);
