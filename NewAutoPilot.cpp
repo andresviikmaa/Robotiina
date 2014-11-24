@@ -302,14 +302,18 @@ void NewAutoPilot::Run()
 			boost::posix_time::time_duration::tick_type dt = (time - lastStep).total_milliseconds();
 			newMode = curDriveMode->second->step(*this, dt);
 		}
-
+		auto old = curDriveMode;
 		if (newMode != curDriveMode->first){
 			boost::mutex::scoped_lock lock(mutex);
 			curDriveMode->second->onExit(*this);
 			//wheels->Stop();
 			curDriveMode = driveModes.find(newMode);
-			assert(curDriveMode != driveModes.end());
+			if (curDriveMode == driveModes.end()) {
+				std::cout << "Invalid drive mode from :" << old->second->name << ", reverting to locate_ball" << std::endl;
+				curDriveMode = driveModes.find(DRIVEMODE_LOCATE_BALL);;
+			}
 			curDriveMode->second->onEnter(*this);
+
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
