@@ -157,7 +157,7 @@ cv::Point2i ObjectFinder::LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::M
 }
 
 cv::Point2i ObjectFinder::LocateBallOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
-	int smallestBallArea = 10;
+	int smallestBallArea = 4;
 	cv::Point2d center(-1, -1);
 	cv::Mat imgThresholded = HSVRanges[target]; // reference counted, I think
 	cv::Mat dst(imgThresholded.rows, imgThresholded.cols, CV_8U, cv::Scalar::all(0));

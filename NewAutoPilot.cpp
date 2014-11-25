@@ -117,7 +117,7 @@ void DriveToBall::onEnter(const NewAutoPilot& NewAutoPilot)
 {
 	NewAutoPilot.coilgun->ToggleTribbler(false);
 	start = NewAutoPilot.lastBallLocation;
-	target = { 350, 0, 0 };
+	target = { 390, 0, 0 };
 }
 
 NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
@@ -132,22 +132,25 @@ NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	//Ball is close and center
 	if ((lastBallLocation.distance < target.distance) && abs(lastBallLocation.horizontalDev) <= 8) {
 		return DRIVEMODE_CATCH_BALL;
+		coilgun->ToggleTribbler(true);
 	} 
 	//Ball is close and not center
 	else if (lastBallLocation.distance < target.distance){
 		rotate = abs(lastBallLocation.horizontalAngle)  * 0.46 + 3;
 		std::cout << "rotate: " << rotate << std::endl;
 		wheels->Rotate(lastBallLocation.horizontalAngle > 0,  -rotate);
+		coilgun->ToggleTribbler(true);
 	}
 	//Ball is far away
 	else {
 		rotate = abs(lastBallLocation.horizontalAngle)  * 0.46 + 3;
+		coilgun->ToggleTribbler(false);
 		//speed calculation
 		if (lastBallLocation.distance > 700){
 			speed = 150;
 		}
 		else{
-			speed = lastBallLocation.distance * 0.4 - 136;
+			speed = lastBallLocation.distance * 0.474 - 182;
 			
 		}
 		//speed = 30;
@@ -160,6 +163,7 @@ void CatchBall::onEnter(const NewAutoPilot& NewAutoPilot)
 {
 	NewAutoPilot.coilgun->ToggleTribbler(true);
 	catchStart = boost::posix_time::microsec_clock::local_time();
+	NewAutoPilot.wheels->Stop();
 }
 void CatchBall::onExit(const NewAutoPilot& NewAutoPilot)
 {

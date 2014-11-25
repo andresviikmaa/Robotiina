@@ -33,7 +33,7 @@ Camera::Camera(int device)
 	}
 	frameSize = cv::Size((int)cap->get(CV_CAP_PROP_FRAME_WIDTH),    // Acquire input size
 		(int)cap->get(CV_CAP_PROP_FRAME_HEIGHT));
-	flip = true;
+	flip = false;
 	/*
 	cap->set(CV_CAP_PROP_EXPOSURE, -5);
 	cap->set(CV_CAP_PROP_BRIGHTNESS, 0);
