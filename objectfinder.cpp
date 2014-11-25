@@ -148,6 +148,7 @@ cv::Point2i ObjectFinder::LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::M
 		if (abs(atan2(newLine[1], newLine[0]) * 180 / PI) < 45) {
 			//newLine[3] += shift; // shift line down
 			drawLine(frameBGR, HSVRanges[BALL], 1, newLine, 1, cv::Scalar(0, 255 * (1 + 0.3), 0));
+			drawLine(frameBGR, HSVRanges[SIGHT_MASK], 1, newLine, 1, cv::Scalar(0, 255 * (1 + 0.3), 0));
 		}
 
 	}

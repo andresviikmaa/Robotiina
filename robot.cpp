@@ -279,10 +279,12 @@ void Robot::Run()
 		bool sightObstructed = false;
 		cv::Mat selected(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
 		cv::Mat mask(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
-		cv::line(mask, cv::Point(frameBGR.cols / 3, 0), cv::Point(frameBGR.cols / 3, frameBGR.rows - 100), cv::Scalar(255, 255, 255), 40);
-		thresholdedImages[BALL].copyTo(selected, mask); // perhaps use field and inner border
-		//cv::imshow("mmm", selected);
-		sightObstructed = countNonZero(selected) > 10;
+		cv::Mat	tmp(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
+		cv::line(mask, cv::Point(frameBGR.cols / 2, 100), cv::Point(frameBGR.cols / 2,  frameBGR.rows  - 100), cv::Scalar(255, 255, 255), 40);
+		tmp = 255 - (thresholdedImages[INNER_BORDER] + thresholdedImages[FIELD]);
+		tmp.copyTo(selected, mask); // perhaps use field and inner border
+		thresholdedImages[SIGHT_MASK] = selected;
+		//sightObstructed = countNonZero(selected) > 10;
 
 		/**************************************************/
 		/* STEP 4. extract closest ball and gate positions*/
@@ -302,6 +304,13 @@ void Robot::Run()
 		else if (targetGate == GATE2 && gate2Found) targetGatePos = &gate2Pos;
 		// else leave to NULL
 
+		// step 3.2
+		int count = countNonZero(thresholdedImages[SIGHT_MASK]);
+		std::ostringstream osstr;
+		osstr << "nonzero :" << count;
+		sightObstructed = count > 300;
+		cv::putText(thresholdedImages[SIGHT_MASK], osstr.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::imshow("mmm", thresholdedImages[SIGHT_MASK]);
 
 		/**************************************************/
 		/* STEP 5. check if ball is in tribbler			  */
