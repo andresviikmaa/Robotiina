@@ -378,8 +378,43 @@ void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickn
 	cv::line(img, startPoint, endPoint, color, thickness, 8, 0);
 
 }
-
 void ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR) {
+
+
+	std::vector<cv::Vec4i> lines;
+	cv::HoughLinesP(HSVRanges[INNER_BORDER], lines, 1, CV_PI / 180, 50, 50, 10);
+//	cv::HoughLinesP(HSVRanges[INNER_BORDER] + HSVRanges[FIELD], lines, 1, CV_PI / 180, 50, 50, 10);
+
+	std::vector<cv::Vec4i> lines2;
+	cv::HoughLinesP(HSVRanges[OUTER_BORDER], lines2, 1, CV_PI / 180, 50, 50, 10);
+
+	cv::Vec4f newLine1;
+	cv::Vec4f newLine2;
+	//std::cout << rect_points[j] << ", " << rect_points[(j + 1) % 4] << ": " << atan2(newLine[1], newLine[0])*180/PI << std::endl;
+
+	for (auto l1 : lines2){
+		std::vector<cv::Point2i> points;
+		points.push_back(cv::Point(l1[0], l1[1]));
+		points.push_back(cv::Point(l1[2], l1[3]));
+		cv::fitLine(points, newLine1, CV_DIST_L2, 0, 0.1, 0.1);
+		for (auto l2 : lines){
+			std::vector<cv::Point2i> points2;
+			points2.push_back(cv::Point(l2[0], l2[1]));
+			points2.push_back(cv::Point(l2[2], l2[3]));
+			cv::fitLine(points2, newLine2, CV_DIST_L2, 0, 0.1, 0.1);
+			if (abs(atan2(newLine1[1], newLine1[0]) - atan2(newLine2[1], newLine2[0])) < 0.1) { // almost parallel
+				//cv::line(frameBGR, cv::Point(l1[0], l1[1]), cv::Point(l1[2], l1[3]), cv::Scalar(255, 0, 255), 3, CV_AA);
+				drawLine(frameBGR, HSVRanges[BALL], 1, newLine1, 1, cv::Scalar(255 * (1 + 0.3), 0, 0));
+
+			}
+		}
+	}
+
+
+
+}
+
+void ObjectFinder::IsolateFieldOld(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR) {
 
 	cv::Mat innerThresholded = HSVRanges[INNER_BORDER];
 	cv::Mat outerThresholded = HSVRanges[OUTER_BORDER];

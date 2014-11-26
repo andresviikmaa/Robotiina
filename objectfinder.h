@@ -24,7 +24,8 @@ public:
 	virtual bool Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos);
 	ObjectPosition ConvertPixelToRealWorld(const cv::Point2i &point, const cv::Point2i &frame_size);
 	virtual void IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR);
-    virtual ~ObjectFinder(){ }
+	virtual void IsolateFieldOld(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR);
+	virtual ~ObjectFinder(){ }
 	bool LocateCursor(cv::Mat &frameBGR, cv::Point2i cursor, OBJECT target, ObjectPosition &targetPos);
 
 };

@@ -4,7 +4,7 @@ Dialog::Dialog(const std::string &title, int flags/* = CV_WINDOW_AUTOSIZE*/) {
 
     m_title = title;
     int baseLine;
-    m_buttonHeight = cv::getTextSize("Ajig6", cv::FONT_HERSHEY_DUPLEX, 1.5, 1, &baseLine).height * 2;
+    m_buttonHeight = cv::getTextSize("Ajig6", cv::FONT_HERSHEY_DUPLEX, 1.2, 1, &baseLine).height * 2;
 
 	cv::namedWindow(m_title, CV_WINDOW_FULLSCREEN);
 	//	cvSetWindowProperty(m_title.c_str(), CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
@@ -40,7 +40,7 @@ int Dialog::show(const cv::Mat background) {
 
     int i = 0;
     for (const auto& button : m_buttons) {
-        cv::putText(image, std::get<0>(button), cv::Point(30, (++i)*m_buttonHeight ), cv::FONT_HERSHEY_DUPLEX, 1.5, cv::Scalar(255,255,255));
+        cv::putText(image, std::get<0>(button), cv::Point(30, (++i)*m_buttonHeight ), cv::FONT_HERSHEY_DUPLEX, 1.2, cv::Scalar(255,255,255));
 
     }
 	cv::imshow(m_title, image);

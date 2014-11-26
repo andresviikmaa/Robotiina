@@ -1,6 +1,6 @@
 #include "types.h"
 #include "dialog.h"
-#include <boost/atomic.hpp>
+#include <atomic>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread/mutex.hpp>
@@ -23,8 +23,8 @@ private:
 
 	HSVColorRangeMap objectThresholds;
     //STATE state = STATE_NONE;
-    boost::atomic<STATE> state;
-	boost::atomic<STATE> last_state;
+    std::atomic<STATE> state;
+	std::atomic<STATE> last_state;
 	bool ParseOptions(int argc, char* argv[]);
 
 	void Run();

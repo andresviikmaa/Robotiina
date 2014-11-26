@@ -33,7 +33,8 @@ createButton(std::string("") + name, [&](){ this->SetState(new_state); });
 createButton(name, [&]() function_body);
 #define START_DIALOG if (state != last_state) { \
 clearButtons();
-#define END_DIALOG }
+#define END_DIALOG last_state = (STATE)state; \
+}
 
 std::pair<OBJECT, std::string> objects[] = {
 	std::pair<OBJECT, std::string>(BALL, "Ball"),
@@ -286,6 +287,7 @@ void Robot::Run()
 		thresholdedImages[SIGHT_MASK] = selected;
 		//sightObstructed = countNonZero(selected) > 10;
 
+
 		/**************************************************/
 		/* STEP 4. extract closest ball and gate positions*/
 		/**************************************************/
@@ -310,7 +312,7 @@ void Robot::Run()
 		osstr << "nonzero :" << count;
 		sightObstructed = count > 300;
 		cv::putText(thresholdedImages[SIGHT_MASK], osstr.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
-		cv::imshow("mmm", thresholdedImages[SIGHT_MASK]);
+		//cv::imshow("mmm", thresholdedImages[SIGHT_MASK]);
 
 		/**************************************************/
 		/* STEP 5. check if ball is in tribbler			  */
@@ -345,7 +347,7 @@ void Robot::Run()
 
 
 		if (autoPilotEnabled) {
-			autoPilot->UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay);
+			autoPilot->UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay);			
 		}
 
 		/**************************************************/
@@ -360,9 +362,15 @@ void Robot::Run()
 				STATE_BUTTON("(C)Change Gate [" + OBJECT_LABELS[targetGate] + "]", STATE_SELECT_GATE)
 				STATE_BUTTON("Auto(P)ilot [" + (autoPilotEnabled ? "On" : "Off") + "]", STATE_LAUNCH)
 				createButton(std::string("(M)ouse control [") + (mouseControl == 0 ? "Off" : (mouseControl == 1 ? "Ball" : "Gate")) + "]", [this, &mouseControl, &frameBGR]{
-				mouseControl = (mouseControl + 1) % 3;
+					mouseControl = (mouseControl + 1) % 3;
+					this->last_state = STATE_END_OF_GAME; // force dialog redraw
 				});
-				STATE_BUTTON("(D)ance", STATE_DANCE)
+				createButton(std::string("Border detection: ") + (detectBorders ? "on" : "off"), [this]{
+					this->detectBorders = !this->detectBorders;
+					this->last_state = STATE_END_OF_GAME; // force dialog redraw
+				});
+
+//				STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
 				STATE_BUTTON("Manual (C)ontrol", STATE_MANUAL_CONTROL)
@@ -409,6 +417,10 @@ void Robot::Run()
 					}
 					//SetState(STATE_SELECT_GATE);
 					autoPilotEnabled = !autoPilotEnabled;
+					if (!autoPilotEnabled) {
+						coilBoard->ToggleTribbler(false);
+						wheels->Stop();
+					}
 					SetState(STATE_NONE);
 				}
 				catch (...){
