@@ -238,11 +238,12 @@ void Robot::Run()
 	cv::Mat blue(frameBGR.rows, frameBGR.cols, frameBGR.type(), cv::Scalar(236, 137, 48));
 	cv::Mat orange(frameBGR.rows, frameBGR.cols, frameBGR.type(), cv::Scalar(48, 154, 236));
 
+	cv::Mat display_empty(frameBGR.rows + 160, frameBGR.cols + 200, frameBGR.type(), cv::Scalar(0));
 	cv::Mat display(frameBGR.rows + 160, frameBGR.cols + 200, frameBGR.type(), cv::Scalar(0));
 	cv::Mat display_roi = display(cv::Rect(0, 0, frameBGR.cols, frameBGR.rows)); // region of interest
 	while (true)
     {
-		
+		display_empty.copyTo(display);
 		time = boost::posix_time::microsec_clock::local_time();
 		boost::posix_time::time_duration::tick_type dt = (time - lastStepTime).total_milliseconds();
 		boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateTime).total_milliseconds();
