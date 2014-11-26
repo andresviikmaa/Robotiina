@@ -8,7 +8,7 @@ void ArduinoBoard::Run(){
 		std::chrono::milliseconds dura(120);
 		//std::cout << "start" << std::endl;
 		
-		writeString("snr0\n");
+		writeString("snr1\n");
 		std::this_thread::sleep_for(dura);
 		sonars.x = atoi(readLineAsync(800).c_str());
 		//std::cout << "snr0: " << sonars.x << std::endl;
@@ -20,7 +20,7 @@ void ArduinoBoard::Run(){
 		//std::cout << "snr2: " << sonars.y << std::endl;
 	
 
-		sonars.z = -1;
+		sonars.z= -1;
 	}
 }
 

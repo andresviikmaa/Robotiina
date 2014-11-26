@@ -57,7 +57,7 @@ protected:
 	void WriteInfoOnScreen();
 public:
 	AutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino);
-	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, bool borderDistance);
+	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance);
 	void Run();
 	virtual ~AutoPilot();
 	std::string GetDebugInfo();

@@ -154,7 +154,7 @@ private:
 	std::atomic_bool ballInTribbler;
 	std::atomic_bool sightObstructed;
 	std::atomic_bool somethingOnWay;
-	std::atomic_bool borderDistance;
+	std::atomic_int borderDistance;
 
 
 	std::atomic_bool stop_thread;
@@ -180,7 +180,7 @@ protected:
 	void WriteInfoOnScreen();
 public:
 	NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino);
-	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, bool borderDistance);
+	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance);
 	void Run();
 	virtual ~NewAutoPilot();
 	std::string GetDebugInfo();

@@ -359,8 +359,8 @@ void drawLine(cv::Mat & img, cv::Mat & img2, cv::Vec4f line, int thickness, CvSc
 		points.push_back(cv::Point2i(img.cols - 1, 0));
 	}
 
-	points.push_back(startPoint);
 	points.push_back(endPoint);
+	points.push_back(startPoint);
 
 	if (points.size() > 2) {
 		if (nightVision) {

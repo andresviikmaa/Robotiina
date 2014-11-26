@@ -49,7 +49,7 @@ class SoftwareWheel : public BasicWheel
 public:
 	SoftwareWheel(const std::string &name) : BasicWheel(name){}
 protected:
-	int max_acceleration = 500;
+	int max_acceleration = 1000;
 	double stop_time = 1600;
 	boost::posix_time::ptime stallStart;
 	void UpdateSpeed();
@@ -60,6 +60,7 @@ class SerialWheel : public SimpleSerial, public BasicWheel
 {
 protected:
 	void UpdateSpeed();
+	int max_acceleration = 500;
 public:
 	SerialWheel(boost::asio::io_service &io_service, std::string port = "port", unsigned int baud_rate = 115200, const std::string &name="") : SimpleSerial(io_service, port, baud_rate), BasicWheel(name) {
 	};

@@ -39,7 +39,7 @@ NewAutoPilot::NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *a
 	threads.create_thread(boost::bind(&NewAutoPilot::Run, this));
 }
 
-void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, bool borderDistance)
+void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance)
 {
 	boost::mutex::scoped_lock lock(mutex);
 	ballInSight = ballLocation != NULL;
@@ -118,7 +118,8 @@ void DriveToBall::onEnter(const NewAutoPilot& NewAutoPilot)
 {
 	NewAutoPilot.coilgun->ToggleTribbler(false);
 	start = NewAutoPilot.lastBallLocation;
-	target = { 390, 0, 0 };
+	//Desired distance
+	target = { 340, 0, 0 };
 }
 
 NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
@@ -132,30 +133,32 @@ NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 
 	//Ball is close and center
 	if ((lastBallLocation.distance < target.distance) && abs(lastBallLocation.horizontalDev) <= 8) {
-		return DRIVEMODE_CATCH_BALL;
+		wheels->Stop();
 		coilgun->ToggleTribbler(true);
+		return DRIVEMODE_CATCH_BALL;
 	} 
 	//Ball is close and not center
 	else if (lastBallLocation.distance < target.distance){
-		rotate = abs(lastBallLocation.horizontalAngle)  * 0.46 + 3;
+		rotate = abs(lastBallLocation.horizontalAngle) * 0.4 + 3;
+
 		std::cout << "rotate: " << rotate << std::endl;
-		wheels->Rotate(lastBallLocation.horizontalAngle > 0,  -rotate);
+		wheels->Rotate(lastBallLocation.horizontalAngle > 0,  lastBallLocation.horizontalAngle < 0?rotate:-rotate);
 		coilgun->ToggleTribbler(true);
 	}
 	//Ball is far away
 	else {
-		rotate = abs(lastBallLocation.horizontalAngle)  * 0.46 + 3;
+		rotate = abs(lastBallLocation.horizontalAngle) * 0.4 + 3;
+
 		coilgun->ToggleTribbler(false);
 		//speed calculation
 		if (lastBallLocation.distance > 700){
 			speed = 150;
 		}
 		else{
-			speed = lastBallLocation.distance * 0.474 - 182;
-			
+			speed = lastBallLocation.distance * 0.29 - 94;
 		}
-		//speed = 30;
-		wheels->DriveRotate(speed, -lastBallLocation.horizontalAngle, lastBallLocation.horizontalAngle > 0?-rotate:rotate);
+		speed = 50;
+		wheels->DriveRotate(speed, -lastBallLocation.horizontalAngle, lastBallLocation.horizontalAngle < 0?rotate:-rotate);
 	}
 	return DRIVEMODE_DRIVE_TO_BALL;
 }
@@ -228,8 +231,9 @@ NewDriveMode AimGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 
 
 	//Turn robot to gate
-	if (abs(lastGateLocation.horizontalAngle) < 20) {
-		if (sightObstructed) { //then move sideways
+	if (abs(lastGateLocation.horizontalAngle) < 3) {
+		std::cout << NewAutoPilot.borderDistance << std::endl;
+		if (sightObstructed && NewAutoPilot.borderDistance > 600) { //then move sideways
 			wheels->Drive(50, -90);
 			std::chrono::milliseconds dura(400);
 			std::this_thread::sleep_for(dura);
@@ -240,8 +244,8 @@ NewDriveMode AimGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 	}
 	else {
 		//rotate calculation for gate
-		int rotate = lastGateLocation.horizontalAngle  * 0.4 + 3;
-		wheels->Rotate(0, rotate);
+		int rotate = abs(lastGateLocation.horizontalAngle) * 0.4 + 3;
+		wheels->Rotate(0, lastGateLocation.horizontalAngle < 0?-rotate:rotate);
 	}
 	return DRIVEMODE_AIM_GATE;
 
@@ -270,9 +274,12 @@ NewDriveMode RecoverCrash::step(const NewAutoPilot& NewAutoPilot, double dt)
 	auto targetSpeed = NewAutoPilot.wheels->GetTargetSpeed();
 
 	//Backwards
-	NewAutoPilot.wheels->Drive(-targetSpeed.velocity, 180 - targetSpeed.heading);
+	NewAutoPilot.wheels->Drive(50, 180 - targetSpeed.heading);
 	std::chrono::milliseconds dura(1000);
 	std::this_thread::sleep_for(dura);
+	NewAutoPilot.wheels->Rotate(1, 50);
+	std::this_thread::sleep_for(dura);
+	
 	NewAutoPilot.wheels->Stop();
 
 	return DRIVEMODE_LOCATE_BALL;
@@ -287,9 +294,9 @@ void NewAutoPilot::Run()
 		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) {
 			newMode = DRIVEMODE_IDLE;
 		}
-		//else if (wheels->IsStalled() && curDriveMode->first != DRIVEMODE_RECOVER_CRASH){
-		//	newMode = DRIVEMODE_RECOVER_CRASH;
-		//}
+		else if (somethingOnWay && curDriveMode->first != DRIVEMODE_RECOVER_CRASH){
+			newMode = DRIVEMODE_RECOVER_CRASH;
+		}
 		else {
 			boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 			boost::posix_time::time_duration::tick_type dt = (time - lastStep).total_milliseconds();

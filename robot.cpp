@@ -143,18 +143,18 @@ bool Robot::Launch(int argc, char* argv[])
 					ptree pt;
 					read_ini("conf/ports.ini", pt);
 					std::string port = pt.get<std::string>(std::to_string(ID_COILGUN));
-//					std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
+					std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
 
 					coilBoard = new CoilBoard(io, port);
 					//coilBoard = new CoilGun();
 
-//					arduino = new ArduinoBoard(io, port2);
+					arduino = new ArduinoBoard(io, port2);
 				}
 				else {
 					coilBoard = new CoilGun();
-//					arduino = new Arduino();
+					arduino = new Arduino();
 				}
-				arduino = new Arduino();
+//				arduino = new Arduino();
 	
 			}
 		}
@@ -222,6 +222,7 @@ void Robot::Run()
 	bool nightVision = true;
 	bool detectBorders = true;
 	ObjectPosition borderDistance = { INT_MAX, 0, 0 };
+	bool notEnoughtGreen = false;
 
 	try {
 		CalibrationConfReader calibrator;
@@ -291,8 +292,8 @@ void Robot::Run()
 		cv::Mat selected(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
 		cv::Mat mask(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
 		cv::Mat	tmp(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
-		cv::line(mask, cv::Point(frameBGR.cols / 2, 100), cv::Point(frameBGR.cols / 2,  frameBGR.rows  - 100), cv::Scalar(255, 255, 255), 40);
-		tmp = 255 - (thresholdedImages[INNER_BORDER] + thresholdedImages[FIELD]);
+		cv::line(mask, cv::Point(frameBGR.cols / 2, 200), cv::Point(frameBGR.cols / 2,  frameBGR.rows  - 100), cv::Scalar(255, 255, 255), 80);
+		tmp = 255 - (thresholdedImages[INNER_BORDER] + thresholdedImages[OUTER_BORDER] + thresholdedImages[FIELD]);
 		tmp.copyTo(selected, mask); // perhaps use field and inner border
 		thresholdedImages[SIGHT_MASK] = selected;
 		//sightObstructed = countNonZero(selected) > 10;
@@ -336,9 +337,9 @@ void Robot::Run()
 		int count = countNonZero(thresholdedImages[SIGHT_MASK]);
 		std::ostringstream osstr;
 		osstr << "nonzero :" << count;
-		sightObstructed = count > 300;
+		sightObstructed = count > 900;
 		cv::putText(thresholdedImages[SIGHT_MASK], osstr.str(), cv::Point(20, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
-		//cv::imshow("mmm", thresholdedImages[SIGHT_MASK]);
+		cv::imshow("mmm", thresholdedImages[SIGHT_MASK]);
 
 		/**************************************************/
 		/* STEP 5. check if ball is in tribbler			  */
@@ -349,9 +350,11 @@ void Robot::Run()
 		/**************************************************/
 		sonars = arduino->GetSonarReadings();
 		somethingOnWay = (
-			(sonars.x < 15 && sonars.x > 0) ||
-			(sonars.y < 15 && sonars.y > 0) ||
-			(sonars.z < 15 && sonars.z > 0));
+			(sonars.x < 11 && sonars.x > 0) ||
+			(sonars.y < 11 && sonars.y > 0) ||
+			(sonars.z < 11 && sonars.z > 0));
+		notEnoughtGreen = countNonZero(thresholdedImages[FIELD]) < 640 * 120;
+		somethingOnWay |= notEnoughtGreen;
 
 		/**************************************************/
 		/* STEP 7. feed these variables to Autopilot	  */
@@ -495,12 +498,12 @@ void Robot::Run()
         }
 		else if (STATE_MANUAL_CONTROL == state) {
 			START_DIALOG
-				createButton("Move Left", [this] {this->wheels->Drive(20, 90); });
-				createButton("Move Right", [this]{this->wheels->Drive(20, -90); });
-				createButton("Move Forward", [this]{this->wheels->Drive(20, 0); });
-				createButton("Move Back", [this]{this->wheels->Drive(-20, 0); });
-				createButton("Rotate Right", [this]{this->wheels->Rotate(0, 10); });
-				createButton("Rotate Left", [this]{this->wheels->Rotate(1, 10); });
+				createButton("Move Left", [this] {this->wheels->Drive(190, 90); });
+				createButton("Move Right", [this]{this->wheels->Drive(190, -90); });
+				createButton("Move Forward", [this]{this->wheels->Drive(190, 0); });
+				createButton("Move Back", [this]{this->wheels->Drive(-190, 0); });
+				createButton("Rotate Right", [this]{this->wheels->Rotate(0, 70); });
+				createButton("Rotate Left", [this]{this->wheels->Rotate(1, 70); });
 				STATE_BUTTON("Back", STATE_NONE)
 			END_DIALOG
 		}
@@ -540,6 +543,7 @@ void Robot::Run()
 		cv::putText(display, std::string("Gate:") + (targetGatePos != NULL ? "yes" : "no"), cv::Point(display.cols - 140, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		cv::putText(display, std::string("Trib:") + (ballInTribbler ? "yes" : "no"), cv::Point(display.cols - 140, 100), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		cv::putText(display, std::string("Sight:") + (sightObstructed ? "obst" : "free"), cv::Point(display.cols - 140, 120), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::putText(display, std::string("OnWay:") + (somethingOnWay ? "yes" : "no"), cv::Point(display.cols - 140, 140), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 
 		cv::putText(display, "Ball" , cv::Point(display.cols - 140, 180), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		cv::putText(display, "dist: " + std::to_string(ballPos.distance), cv::Point(display.cols - 140, 200), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));

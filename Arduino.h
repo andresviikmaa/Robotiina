@@ -27,7 +27,7 @@ public:
 };
 
 
-class ArduinoBoard : public Arduino, ThreadedClass, SimpleSerial
+class ArduinoBoard : public Arduino, SimpleSerial, ThreadedClass
 {
 private:
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
@@ -38,8 +38,10 @@ public:
 	ArduinoBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200)  : ThreadedClass("Arduino"), SimpleSerial(io_service, port, baud_rate) {
 		stop_thread = false;
 		ballInTribbler = false;
+		Start();
 	};
 	virtual ~ArduinoBoard(){
+		WaitForStop();
 	}
 	void Run();
 

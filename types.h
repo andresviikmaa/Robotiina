@@ -41,7 +41,7 @@ enum OBJECT_ID {
 	ID_WHEEL_RIGHT = 2,
 	ID_WHEEL_BACK = 3,
 	ID_COILGUN = 4,
-//	ID_AUDRINO = 5,
+	ID_AUDRINO = 5,
 	ID_OBJECT_COUNT
 };
 enum OBJECT
@@ -78,7 +78,7 @@ public:
 class IAutoPilot
 {
 public:
-	virtual void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, bool borderDistance) = 0;
+	virtual void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance) = 0;
 	virtual std::string GetDebugInfo() = 0;
 	virtual ~IAutoPilot(){}
 };

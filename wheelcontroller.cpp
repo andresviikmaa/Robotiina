@@ -123,7 +123,7 @@ cv::Point3d WheelController::CalculateWheelSpeeds(double velocity, double direct
 {
 	return cv::Point3d(
 		(velocity*cos((150 - direction) * PI / 180.0)) + rotate,
-		(velocity*cos((30 - direction)  * PI / 180.0)) + rotate,
+		((velocity*cos((30 - direction)  * PI / 180.0)) + rotate),
 		(velocity*cos((270 - direction)  * PI / 180.0)) + rotate
 	);
 }

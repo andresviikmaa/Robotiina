@@ -26,7 +26,7 @@ AutoPilot::AutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino
 	threads.create_thread(boost::bind(&AutoPilot::Run, this));
 }
 
-void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, bool borderDistance)
+void AutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance)
 {
 	boost::mutex::scoped_lock lock(mutex);
 	ballInSight = ballLocation != NULL;
