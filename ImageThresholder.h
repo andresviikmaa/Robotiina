@@ -10,7 +10,9 @@ public:
 		for (auto &object : objectList) {
 			threads.create_thread([&frameHSV, object, this]{
 				auto r = objectMap[object];
-				inRange(frameHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), thresholdedImages[object]);
+				do {
+					inRange(frameHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), thresholdedImages[object]);
+				} while (thresholdedImages[object].size().height == 0);
 			});
 		}
 	}

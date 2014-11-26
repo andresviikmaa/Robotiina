@@ -32,7 +32,6 @@ private:
 protected:
 	boost::asio::io_service &io;
 	OBJECT targetGate= NUMBER_OF_OBJECTS; //uselected
-	bool detectBorders = false;
 	bool captureFrames = false;
 
 public:

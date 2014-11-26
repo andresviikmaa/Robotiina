@@ -2,7 +2,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <math.h>
-void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickness, CvScalar color);
+void drawLine(cv::Mat & img, cv::Mat & img2, cv::Vec4f line, int thickness, CvScalar color, bool nightVision = false);
 
 ObjectFinder::ObjectFinder()
 {
@@ -147,8 +147,8 @@ cv::Point2i ObjectFinder::LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::M
 		//std::cout << rect_points[j] << ", " << rect_points[(j + 1) % 4] << ": " << atan2(newLine[1], newLine[0])*180/PI << std::endl;
 		if (abs(atan2(newLine[1], newLine[0]) * 180 / PI) < 45) {
 			//newLine[3] += shift; // shift line down
-			drawLine(frameBGR, HSVRanges[BALL], 1, newLine, 1, cv::Scalar(0, 255 * (1 + 0.3), 0));
-			drawLine(frameBGR, HSVRanges[SIGHT_MASK], 1, newLine, 1, cv::Scalar(0, 255 * (1 + 0.3), 0));
+			drawLine(frameBGR, HSVRanges[BALL], newLine, 1, cv::Scalar(0, 255 * (1 + 0.3), 0));
+			drawLine(frameBGR, HSVRanges[SIGHT_MASK], newLine, 1, cv::Scalar(0, 255 * (1 + 0.3), 0));
 		}
 
 	}
@@ -337,9 +337,8 @@ bool ObjectFinder::validateBall(ThresholdedImages &HSVRanges, cv::Point2d endPoi
 	return !(behindLineCount >= 4);
 }
 
-void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickness, CvScalar color)
+void drawLine(cv::Mat & img, cv::Mat & img2, cv::Vec4f line, int thickness, CvScalar color, bool nightVision/* = false*/)
 {
-	//std::cout << "drawLine: " << dir << std::endl;
 	double theMult = std::max(img.cols, img.rows);
 	// calculate start point
 	cv::Point startPoint;
@@ -353,43 +352,54 @@ void drawLine(cv::Mat & img, cv::Mat & img2, int dir, cv::Vec4f line, int thickn
 	// draw overlay of bottom lines on image
 	cv::clipLine(cv::Size(img.cols, img.rows), startPoint, endPoint);
 	std::vector <cv::Point2i> points;
-
-	if (dir == 0) {
-		if (endPoint.x == img.cols-1) return; // invalid, cuts out bottom half
-
-		points.push_back(cv::Point2i(img.cols - 1, 0));
+	if (startPoint.x == 0) {
 		points.push_back(cv::Point2i(0, 0));
-		points.push_back(cv::Point2i(0, img.rows - 1));
-		points.push_back(startPoint);
-		points.push_back(endPoint);
-		//cv::fillConvexPoly(img, points, cv::Scalar(0, 255, 0));
-		cv::fillConvexPoly(img2, points, cv::Scalar(0, 255, 0));
 	}
-	else if (dir == 1) {
-		points.push_back(cv::Point2i(0, 0));
+	if (endPoint.x == img.cols - 1) {
 		points.push_back(cv::Point2i(img.cols - 1, 0));
-		points.push_back(cv::Point2i(img.cols - 1, img.rows - 1));
-		points.push_back(endPoint);
-		points.push_back(startPoint);
-		//cv::fillConvexPoly(img, points, cv::Scalar(0, 255, 0));
-		cv::fillConvexPoly(img2, points, cv::Scalar(0, 255, 0));
+	}
 
+	points.push_back(startPoint);
+	points.push_back(endPoint);
+
+	if (points.size() > 2) {
+		if (nightVision) {
+			cv::fillConvexPoly(img, points, cv::Scalar(0, 0, 0));
+		}
+		cv::fillConvexPoly(img2, points, cv::Scalar(0, 0, 0));
+	}
+	else {
+		std::cout << "unable to fill line: " << startPoint << ", " << endPoint << std::endl;
 	}
 	cv::line(img, startPoint, endPoint, color, thickness, 8, 0);
+	return;
+	
 
 }
-void ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR) {
+void ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, bool detectBothBorders/* = false*/, bool nightVision/* = false*/) {
 
 
 	std::vector<cv::Vec4i> lines;
-	cv::HoughLinesP(HSVRanges[INNER_BORDER], lines, 1, CV_PI / 180, 50, 50, 10);
-//	cv::HoughLinesP(HSVRanges[INNER_BORDER] + HSVRanges[FIELD], lines, 1, CV_PI / 180, 50, 50, 10);
-
 	std::vector<cv::Vec4i> lines2;
-	cv::HoughLinesP(HSVRanges[OUTER_BORDER], lines2, 1, CV_PI / 180, 50, 50, 10);
 
 	cv::Vec4f newLine1;
 	cv::Vec4f newLine2;
+
+	cv::HoughLinesP(HSVRanges[OUTER_BORDER], lines2, 1, CV_PI / 180, 50, 50, 10);
+	if (!detectBothBorders){
+		for (auto l2 : lines2){
+			std::vector<cv::Point2i> points2;
+			points2.push_back(cv::Point(l2[0], l2[1]));
+			points2.push_back(cv::Point(l2[2], l2[3]));
+			cv::fitLine(points2, newLine2, CV_DIST_L2, 0, 0.1, 0.1);
+			drawLine(frameBGR, HSVRanges[BALL], newLine2, 1, cv::Scalar(255 * (1 + 0.3), 0, 0), nightVision);
+		}
+		return;
+	}
+	cv::HoughLinesP(HSVRanges[INNER_BORDER], lines, 1, CV_PI / 180, 50, 50, 10);
+//	cv::HoughLinesP(HSVRanges[INNER_BORDER] + HSVRanges[FIELD], lines, 1, CV_PI / 180, 50, 50, 10);
+
+
 	//std::cout << rect_points[j] << ", " << rect_points[(j + 1) % 4] << ": " << atan2(newLine[1], newLine[0])*180/PI << std::endl;
 
 	for (auto l1 : lines2){
@@ -404,7 +414,7 @@ void ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV,
 			cv::fitLine(points2, newLine2, CV_DIST_L2, 0, 0.1, 0.1);
 			if (abs(atan2(newLine1[1], newLine1[0]) - atan2(newLine2[1], newLine2[0])) < 0.1) { // almost parallel
 				//cv::line(frameBGR, cv::Point(l1[0], l1[1]), cv::Point(l1[2], l1[3]), cv::Scalar(255, 0, 255), 3, CV_AA);
-				drawLine(frameBGR, HSVRanges[BALL], 1, newLine1, 1, cv::Scalar(255 * (1 + 0.3), 0, 0));
+				drawLine(frameBGR, HSVRanges[BALL], newLine1, 1, cv::Scalar(255 * (1 + 0.3), 0, 0), nightVision);
 
 			}
 		}
@@ -527,7 +537,7 @@ void ObjectFinder::IsolateFieldOld(ThresholdedImages &HSVRanges, cv::Mat &frameH
 		if (points.size() > 3) {
 			cv::Vec4f newLine;
 			cv::fitLine(points, newLine, CV_DIST_L2, 0, 0.1, 0.1);
-			drawLine(frameBGR, frameHSV, dir, newLine, 2+dir, cv::Scalar(0, 255*(dir+0.3), 0));
+			drawLine(frameBGR, frameHSV, newLine,1, cv::Scalar(0, 255*(dir+0.3), 0));
 		}
 		//break;
 	}

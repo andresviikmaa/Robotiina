@@ -33,8 +33,9 @@ createButton(std::string("") + name, [&](){ this->SetState(new_state); });
 createButton(name, [&]() function_body);
 #define START_DIALOG if (state != last_state) { \
 clearButtons();
-#define END_DIALOG last_state = (STATE)state; \
-}
+#define END_DIALOG } \
+last_state = (STATE)state; 
+
 
 std::pair<OBJECT, std::string> objects[] = {
 	std::pair<OBJECT, std::string>(BALL, "Ball"),
@@ -218,6 +219,8 @@ void Robot::Run()
 	bool somethingOnWay = false;
 	bool autoPilotEnabled = false;
 	int mouseControl = 0;
+	bool nightVision = true;
+	bool detectBorders = true;
 
 	try {
 		CalibrationConfReader calibrator;
@@ -230,7 +233,13 @@ void Robot::Run()
 
 	}
 
+	cv::Mat green(frameBGR.rows, frameBGR.cols, frameBGR.type(), cv::Scalar(21, 188, 80));
+	cv::Mat yellow(frameBGR.rows, frameBGR.cols, frameBGR.type(), cv::Scalar(61, 255, 244));
+	cv::Mat blue(frameBGR.rows, frameBGR.cols, frameBGR.type(), cv::Scalar(236, 137, 48));
+	cv::Mat orange(frameBGR.rows, frameBGR.cols, frameBGR.type(), cv::Scalar(48, 154, 236));
 
+	cv::Mat display(frameBGR.rows + 160, frameBGR.cols + 200, frameBGR.type(), cv::Scalar(0));
+	cv::Mat display_roi = display(cv::Rect(0, 0, frameBGR.cols, frameBGR.rows)); // region of interest
 	while (true)
     {
 		
@@ -261,16 +270,15 @@ void Robot::Run()
 		/**************************************************/
 
 		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
-
+		if (!nightVision) {
+			frameBGR.copyTo(display_roi);
+		}
 		/**************************************************/
 		/*	STEP 2. thresholding in parallel	          */
 		/**************************************************/
 		thresholder.Start(frameHSV, { BALL, GATE1, GATE2, INNER_BORDER, OUTER_BORDER, FIELD });
 		thresholder.WaitForStop();
 
-		if (detectBorders) {
-			finder.IsolateField(thresholdedImages, frameHSV, frameBGR);
-		};
 
 		/**************************************************/
 		/*	STEP 3. check that path to gate is clean      */
@@ -287,6 +295,18 @@ void Robot::Run()
 		thresholdedImages[SIGHT_MASK] = selected;
 		//sightObstructed = countNonZero(selected) > 10;
 
+		// copy thresholded images before they are destroyed
+		if (nightVision) {
+			green.copyTo(display_roi, thresholdedImages[FIELD]);
+			green.copyTo(display_roi, thresholdedImages[INNER_BORDER]);
+			orange.copyTo(display_roi, thresholdedImages[BALL]);
+			yellow.copyTo(display_roi, thresholdedImages[GATE2]);
+			blue.copyTo(display_roi, thresholdedImages[GATE1]);
+		}
+
+		if (detectBorders) {
+			finder.IsolateField(thresholdedImages, frameHSV, display_roi, false, nightVision);
+		};
 
 		/**************************************************/
 		/* STEP 4. extract closest ball and gate positions*/
@@ -294,12 +314,12 @@ void Robot::Run()
 		ObjectPosition ballPos, gate1Pos, gate2Pos;
 		//Cut out gate contour.	
 
-		bool gate1Found = gate2Finder.Locate(thresholdedImages, frameHSV, frameBGR, GATE1, gate1Pos);
-		bool gate2Found = gate1Finder.Locate(thresholdedImages, frameHSV, frameBGR, GATE2, gate2Pos);
+		bool gate1Found = gate2Finder.Locate(thresholdedImages, frameHSV, display_roi, GATE1, gate1Pos);
+		bool gate2Found = gate1Finder.Locate(thresholdedImages, frameHSV, display_roi, GATE2, gate2Pos);
 
 		bool ballFound = mouseControl != 1 ?
-			finder.Locate(thresholdedImages, frameHSV, frameBGR, BALL, ballPos)
-			: finder.LocateCursor(frameBGR, cv::Point2i(mouseX, mouseY), BALL, ballPos);
+			finder.Locate(thresholdedImages, frameHSV, display_roi, BALL, ballPos)
+			: finder.LocateCursor(display_roi, cv::Point2i(mouseX, mouseY), BALL, ballPos);
 
 		ObjectPosition *targetGatePos = 0;
 		if (targetGate == GATE1 && gate1Found) targetGatePos = &gate1Pos;
@@ -365,10 +385,14 @@ void Robot::Run()
 					mouseControl = (mouseControl + 1) % 3;
 					this->last_state = STATE_END_OF_GAME; // force dialog redraw
 				});
-				createButton(std::string("Border detection: ") + (detectBorders ? "on" : "off"), [this]{
-					this->detectBorders = !this->detectBorders;
-					this->last_state = STATE_END_OF_GAME; // force dialog redraw
-				});
+			createButton(std::string("Border detection: ") + (detectBorders ? "on" : "off"), [this, &detectBorders]{
+				detectBorders = !detectBorders;
+				this->last_state = STATE_END_OF_GAME; // force dialog redraw
+			});
+			createButton(std::string("Night vision: ") + (nightVision ? "on" : "off"), [this, &nightVision]{
+				nightVision = !nightVision;
+				this->last_state = STATE_END_OF_GAME; // force dialog redraw
+			});
 
 //				STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(D)ance", STATE_DANCE)
@@ -442,8 +466,8 @@ void Robot::Run()
 
 					this->last_state = STATE_NONE; // force dialog redraw
 				});
-				createButton(std::string("Border detection: ") + (detectBorders ? "on" : "off"), [this]{
-					this->detectBorders = !this->detectBorders;
+				createButton(std::string("Border detection: ") + (detectBorders ? "on" : "off"), [this, &detectBorders]{
+					detectBorders = !detectBorders;
 					this->last_state = STATE_NONE; // force dialog redraw
 				});
 				/*
@@ -501,8 +525,6 @@ void Robot::Run()
 		subtitles << "|" << wheels->GetDebugInfo();
 		subtitles << "|" << arduino->GetDebugInfo();
 
-		cv::Mat display(frameBGR.rows + 160, frameBGR.cols + 200, frameBGR.type(), cv::Scalar::all(0));
-		frameBGR.copyTo(display(cv::Rect(0, 0, frameBGR.cols, frameBGR.rows)));
 
 		cv::putText(display, "fps:" + std::to_string(fps), cv::Point(display.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		//assert(STATE_END_OF_GAME != state);
