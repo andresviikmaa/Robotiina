@@ -78,7 +78,7 @@ public:
 class IAutoPilot
 {
 public:
-	virtual void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay) = 0;
+	virtual void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, bool borderDistance) = 0;
 	virtual std::string GetDebugInfo() = 0;
 	virtual ~IAutoPilot(){}
 };

@@ -376,7 +376,7 @@ void drawLine(cv::Mat & img, cv::Mat & img2, cv::Vec4f line, int thickness, CvSc
 	
 
 }
-void ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, bool detectBothBorders/* = false*/, bool nightVision/* = false*/) {
+int ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, bool detectBothBorders/* = false*/, bool nightVision/* = false*/) {
 
 
 	std::vector<cv::Vec4i> lines;
@@ -384,7 +384,7 @@ void ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV,
 
 	cv::Vec4f newLine1;
 	cv::Vec4f newLine2;
-
+	float distance = INT_MAX;
 	cv::HoughLinesP(HSVRanges[OUTER_BORDER], lines2, 1, CV_PI / 180, 50, 50, 10);
 	if (!detectBothBorders){
 		for (auto l2 : lines2){
@@ -393,8 +393,9 @@ void ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV,
 			points2.push_back(cv::Point(l2[2], l2[3]));
 			cv::fitLine(points2, newLine2, CV_DIST_L2, 0, 0.1, 0.1);
 			drawLine(frameBGR, HSVRanges[BALL], newLine2, 1, cv::Scalar(255 * (1 + 0.3), 0, 0), nightVision);
+			distance = std::min(distance, newLine2[3] - (frameHSV.cols / 2)*newLine2[1]);
 		}
-		return;
+		return distance;
 	}
 	cv::HoughLinesP(HSVRanges[INNER_BORDER], lines, 1, CV_PI / 180, 50, 50, 10);
 //	cv::HoughLinesP(HSVRanges[INNER_BORDER] + HSVRanges[FIELD], lines, 1, CV_PI / 180, 50, 50, 10);
@@ -420,6 +421,7 @@ void ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV,
 		}
 	}
 
+	return distance;
 
 
 }

@@ -221,6 +221,7 @@ void Robot::Run()
 	int mouseControl = 0;
 	bool nightVision = true;
 	bool detectBorders = true;
+	ObjectPosition borderDistance = { INT_MAX, 0, 0 };
 
 	try {
 		CalibrationConfReader calibrator;
@@ -306,7 +307,11 @@ void Robot::Run()
 		}
 
 		if (detectBorders) {
-			finder.IsolateField(thresholdedImages, frameHSV, display_roi, false, nightVision);
+			float y = finder.IsolateField(thresholdedImages, frameHSV, display_roi, false, nightVision);
+			finder.LocateCursor(display_roi, cv::Point2i(frameBGR.cols /2, y), BALL, borderDistance);
+		}
+		else {
+			borderDistance = { INT_MAX, 0, 0 };
 		};
 
 		/**************************************************/
@@ -368,7 +373,7 @@ void Robot::Run()
 
 
 		if (autoPilotEnabled) {
-			autoPilot->UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay);			
+			autoPilot->UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay, borderDistance.distance);			
 		}
 
 		/**************************************************/
@@ -521,15 +526,37 @@ void Robot::Run()
 		}
 		 
 		subtitles.str("");
-		subtitles << oss.str();
+		//subtitles << oss.str();
 		subtitles << "|" << autoPilot->GetDebugInfo();
 		subtitles << "|" << wheels->GetDebugInfo();
 		subtitles << "|" << arduino->GetDebugInfo();
 
 
-		cv::putText(display, "fps:" + std::to_string(fps), cv::Point(display.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::putText(display, "fps: " + std::to_string(fps), cv::Point(display.cols - 140, 20), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 		//assert(STATE_END_OF_GAME != state);
-		cv::putText(display, "state:" + STATE_LABELS[state], cv::Point(display.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::putText(display, "state: " + STATE_LABELS[state], cv::Point(display.cols - 140, 40), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+
+		cv::putText(display, std::string("Ball:") + (ballFound ? "yes" : "no"), cv::Point(display.cols - 140, 60), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::putText(display, std::string("Gate:") + (targetGatePos != NULL ? "yes" : "no"), cv::Point(display.cols - 140, 80), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::putText(display, std::string("Trib:") + (ballInTribbler ? "yes" : "no"), cv::Point(display.cols - 140, 100), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::putText(display, std::string("Sight:") + (sightObstructed ? "obst" : "free"), cv::Point(display.cols - 140, 120), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+
+		cv::putText(display, "Ball" , cv::Point(display.cols - 140, 180), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::putText(display, "dist: " + std::to_string(ballPos.distance), cv::Point(display.cols - 140, 200), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::putText(display, "angle :" + std::to_string(ballPos.horizontalAngle), cv::Point(display.cols - 140, 220), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		cv::putText(display, "dev: " + std::to_string(ballPos.horizontalDev), cv::Point(display.cols - 140, 240), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+
+		cv::putText(display, "border: " + std::to_string(borderDistance.distance), cv::Point(display.cols - 140, 280), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+
+		if (targetGatePos != NULL) {
+			cv::putText(display, "Gate" ,  cv::Point(display.cols - 140, 320), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+			cv::putText(display, "dist: " + std::to_string(targetGatePos->distance), cv::Point(display.cols - 140, 340), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+			cv::putText(display, "angle: " + std::to_string(targetGatePos->horizontalAngle), cv::Point(display.cols - 140, 360), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+			cv::putText(display, "dev: " + std::to_string(targetGatePos->horizontalDev), cv::Point(display.cols - 140, 380), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		}
+		else {
+			cv::putText(display, "Gate - N/A", cv::Point(display.cols - 140, 320), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		}
 
 		//TODO: fix putText newline thing
 		std::vector<std::string> subtitles2;
@@ -548,12 +575,12 @@ void Robot::Run()
 		double velocity = 0, direction = 0, rotate = 0;
 		auto speed = wheels->GetTargetSpeed();
 
-
+		/*
 		//Draw circle
 		cv::Scalar colorCircle(133, 33, 55);
 		cv::circle(display, center, 60, colorCircle, 2);
+		*/
 		show(display);
-
 		if (cv::waitKey(1) == 27) {
 			std::cout << "exiting program" << std::endl;
 			break;
