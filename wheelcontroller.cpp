@@ -86,6 +86,8 @@ void WheelController::Drive(double velocity, double direction)
 
 void WheelController::DriveRotate(double velocity, double direction, double rotate)
 {
+	//std::cout << "DriveRotate: " << velocity << std::endl;
+
 	if (abs(velocity) > 190){
 		if (velocity > 0){
 			velocity = 190;
@@ -113,6 +115,8 @@ void WheelController::DriveRotate(double velocity, double direction, double rota
 	targetSpeed.rotation = rotate;
 
 	directControl = false;
+	updateSpeed = true;
+	lastUpdate = boost::posix_time::microsec_clock::local_time();
 
 	
 }
@@ -232,11 +236,16 @@ void WheelController::Run()
 {
 	while (!stop_thread) {
 		CalculateRobotSpeed();
+		boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+		if (!updateSpeed && (now - lastUpdate).total_milliseconds() > 500) {
+			targetSpeed = {0,0,0};
+		}
+		updateSpeed = false;
 		Speed speed = targetSpeed;
-//#define LIMIT_ACCELERATION
+#define LIMIT_ACCELERATION
 #ifdef LIMIT_ACCELERATION
-		double dt = (double)(time - lastStep).total_milliseconds() / 1000.0;
-		if (dt < 0.0000001) return;
+		double dt = (double)(now - lastStep).total_milliseconds() / 1000.0;
+		if (dt < 0.0000001) continue;
 
 		if (abs(actualSpeed.velocity) > 1000) {
 			std::cout << "to big actual velocity: " << actualSpeed.velocity << "wheel speeds: " << GetWheelSpeeds() << std::endl;
@@ -255,7 +264,7 @@ void WheelController::Run()
 		w_left->SetSpeed(speeds.x);
 		w_right->SetSpeed(speeds.y);
 		w_back->SetSpeed(speeds.z);
-
+		lastStep = now;
 		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // do not poll serial to fast
 	}
 	std::cout << "WheelController stoping" << std::endl;

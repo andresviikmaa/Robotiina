@@ -4,6 +4,7 @@
 #include "types.h"
 #include <boost/timer/timer.hpp>
 #include "ThreadedClass.h"
+#include <atomic>
 
 class WheelController: ThreadedClass {
 private:
@@ -17,7 +18,8 @@ private:
 	boost::posix_time::ptime stallTime = boost::posix_time::microsec_clock::local_time() + boost::posix_time::seconds(60);
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::ptime lastStep = time;
-
+	boost::posix_time::ptime lastUpdate = time;
+	std::atomic_bool updateSpeed;
 protected:
 	cv::Point3d CalculateWheelSpeeds(double velocity, double direction, double rotate);
 	void CalculateRobotSpeed(); // reverse calc
