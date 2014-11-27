@@ -233,7 +233,7 @@ void WheelController::Run()
 	while (!stop_thread) {
 		CalculateRobotSpeed();
 		Speed speed = targetSpeed;
-#define LIMIT_ACCELERATION
+//#define LIMIT_ACCELERATION
 #ifdef LIMIT_ACCELERATION
 		double dt = (double)(time - lastStep).total_milliseconds() / 1000.0;
 		if (dt < 0.0000001) return;
@@ -247,7 +247,7 @@ void WheelController::Run()
 		double sign = (dv > 0) - (dv < 0);
 		double acc = dv / dt;
 
-		acc = sign * std::min(abs(acc), 500.0);
+		acc = sign * std::min(fabs(acc), 500.0);
 		speed.velocity = acc*dt + actualSpeed.velocity;
 #endif
 		auto speeds = CalculateWheelSpeeds(speed.velocity, speed.heading, speed.rotation);

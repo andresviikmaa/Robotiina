@@ -17,7 +17,7 @@ public:
 	virtual ~Arduino(){}
 	void Run(){};
 	const cv::Point3i &GetSonarReadings(){ return sonars; }
-	int getStart() { return strt; };
+	int getStart() { int tmp= strt; strt=0; return tmp;};
 	int getGate() { return gte;  };
 	virtual bool BallInTribbler(){ throw std::runtime_error("Not implemented"); };
 	std::string GetDebugInfo();
@@ -36,7 +36,7 @@ public:
 	ArduinoBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200)  : ThreadedClass("Arduino"), SimpleSerial(io_service, port, baud_rate) {
 		stop_thread = false;
 		ballInTribbler = false;
-		Start();
+		//Start();
 	};
 	virtual ~ArduinoBoard(){
 		WaitForStop();

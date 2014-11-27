@@ -28,11 +28,11 @@ private:
 public:
 	const std::string name;
 	DriveInstruction(const std::string name) : name(name){};
-	virtual void onEnter(const NewAutoPilot& NewAutoPilot){
+	virtual void onEnter(NewAutoPilot&NewAutoPilot){
 		actionStart = boost::posix_time::microsec_clock::local_time();
 	};
-	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt) = 0;
-	virtual void onExit(const NewAutoPilot& NewAutoPilot){};
+	virtual NewDriveMode step(NewAutoPilot&NewAutoPilot, double dt) = 0;
+	virtual void onExit(NewAutoPilot& NewAutoPilot){};
 
 };
 class Idle : public DriveInstruction
@@ -41,8 +41,9 @@ private:
 	boost::posix_time::ptime idleStart;
 public:
 	Idle() : DriveInstruction("IDLE"){};
-	virtual void onEnter(const NewAutoPilot& NewAutoPilot);
-	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt);
+	virtual void onEnter(NewAutoPilot&NewAutoPilot);
+	virtual void onExit(NewAutoPilot& NewAutoPilot);
+	virtual NewDriveMode step(NewAutoPilot&NewAutoPilot, double dt);
 };
 
 class LocateBall : public DriveInstruction
@@ -51,22 +52,22 @@ private:
 	boost::posix_time::ptime rotateStart;
 public:
 	LocateBall() : DriveInstruction("LOCATE_BALL"){};
-	virtual void onEnter(const NewAutoPilot& NewAutoPilot);
-	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt);
+	virtual void onEnter(NewAutoPilot&NewAutoPilot);
+	virtual NewDriveMode step(NewAutoPilot&NewAutoPilot, double dt);
 };
 
 class LocateHome : public DriveInstruction
 {
 public:
 	LocateHome() : DriveInstruction("LOCATE_HOME"){};
-	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt);
+	virtual NewDriveMode step(NewAutoPilot&NewAutoPilot, double dt);
 };
 
 class DriveToHome : public DriveInstruction
 {
 public:
 	DriveToHome() : DriveInstruction("DRIVE_TO_HOME"){};
-	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt);
+	virtual NewDriveMode step(NewAutoPilot&NewAutoPilot, double dt);
 };
 
 
@@ -76,9 +77,9 @@ private:
 	boost::posix_time::ptime catchStart;
 public:
 	CatchBall() : DriveInstruction("CATCH_BALL"){};
-	virtual void onEnter(const NewAutoPilot& NewAutoPilot);
-	virtual void onExit(const NewAutoPilot& NewAutoPilot);
-	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt);
+	virtual void onEnter(NewAutoPilot&NewAutoPilot);
+	virtual void onExit(NewAutoPilot& NewAutoPilot);
+	virtual NewDriveMode step(NewAutoPilot&NewAutoPilot, double dt);
 };
 
 class DriveToBall : public DriveInstruction
@@ -92,8 +93,8 @@ private:
 	int desiredDistance = 210;
 public:
 	DriveToBall() : DriveInstruction("DRIVE_TO_BALL"){};
-	virtual void onEnter(const NewAutoPilot& NewAutoPilot);
-	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt);
+	virtual void onEnter(NewAutoPilot&NewAutoPilot);
+	virtual NewDriveMode step(NewAutoPilot&NewAutoPilot, double dt);
 };
 
 
@@ -101,29 +102,29 @@ class LocateGate : public DriveInstruction
 {
 public:
 	LocateGate() : DriveInstruction("LOCATE_GATE"){};
-	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt);
+	virtual NewDriveMode step(NewAutoPilot&NewAutoPilot, double dt);
 };
 
 class AimGate : public DriveInstruction
 {
 public:
 	AimGate() : DriveInstruction("AIM_GATE"){};
-	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt);
+	virtual NewDriveMode step(NewAutoPilot&NewAutoPilot, double dt);
 };
 
 class Kick : public DriveInstruction
 {
 public:
-	virtual void onEnter(const NewAutoPilot& NewAutoPilot);
+	virtual void onEnter(NewAutoPilot&NewAutoPilot);
 	Kick() : DriveInstruction("KICK"){};
-	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt);
+	virtual NewDriveMode step(NewAutoPilot&NewAutoPilot, double dt);
 };
 
 class RecoverCrash : public DriveInstruction
 {
 public:
 	RecoverCrash() : DriveInstruction("RECOVER_CRASH"){};
-	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt);
+	virtual NewDriveMode step(NewAutoPilot&NewAutoPilot, double dt);
 };
 
 class CoilGun;
@@ -145,6 +146,7 @@ class NewAutoPilot: public IAutoPilot
 public:
 	std::map<NewDriveMode, DriveInstruction*> driveModes;
 	std::atomic_bool testMode;
+	std::atomic_bool chekcCrash;
 
 private:
 	std::map<NewDriveMode, DriveInstruction*>::iterator curDriveMode;
@@ -162,6 +164,7 @@ private:
 	std::atomic_bool sightObstructed;
 	std::atomic_bool somethingOnWay;
 	std::atomic_int borderDistance;
+	
 
 
 	std::atomic_bool stop_thread;

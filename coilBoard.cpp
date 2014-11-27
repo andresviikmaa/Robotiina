@@ -35,6 +35,8 @@ bool CoilBoard::BallInTribbler(){
 void CoilBoard::Run(){
 	writeString("c\n");
 	while (!stop_thread){
+	try
+	{
 	
 		std::string line = readLineAsync(10);
 		if(line == "true" || line == "false"/* && !forcedNotInTribbler*/){
@@ -70,8 +72,23 @@ void CoilBoard::Run(){
 		std::chrono::milliseconds dura(10);
 		std::this_thread::sleep_for(dura);
 	}
+	catch (...){
+		std::cout << "Error writing or reading coilboard " << std::endl;
+		stop_thread = true;
+	}
+
+	}
+	try
+	{
+
 	writeString("d\n");
 	writeString("m0\n");
+	}
+	catch (...){
+		std::cout << "Error writing or reading coliboard (try 2) " << std::endl;
+		stop_thread = true;
+	}
+
 	std::cout << "CoilBoard stoping" << std::endl;
 	
 }

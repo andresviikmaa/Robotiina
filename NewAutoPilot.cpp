@@ -4,7 +4,6 @@
 #include "Arduino.h"
 #include "wheelcontroller.h"
 #include <thread>
-#define sign(x) (x > 0) - (x < 0)
 
 std::pair<NewDriveMode, DriveInstruction*> NewDriveModes[] = {
 	std::pair<NewDriveMode, DriveInstruction*>(DRIVEMODE_IDLE, new Idle()),
@@ -35,6 +34,7 @@ NewAutoPilot::NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *a
 	ballInTribbler = false;
 	sightObstructed = false;
 	somethingOnWay = false;
+	chekcCrash = false;
 
 	threads.create_thread(boost::bind(&NewAutoPilot::Run, this));
 }
@@ -50,30 +50,38 @@ void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gat
 	this->sightObstructed = sightObstructed;
 	this->somethingOnWay = somethingOnWay;
 	this->borderDistance = borderDistance;
-
+	
 	lastUpdate = boost::posix_time::microsec_clock::local_time();
 	if (driveMode == DRIVEMODE_IDLE) driveMode = DRIVEMODE_LOCATE_BALL;
+	chekcCrash = true;
 }
 
 /*BEGIN Idle*/
-void Idle::onEnter(const NewAutoPilot& NewAutoPilot)
+void Idle::onEnter(NewAutoPilot&NewAutoPilot)
 {
 	idleStart = NewAutoPilot.lastUpdate;
+	NewAutoPilot.chekcCrash = false;
 }
 
-NewDriveMode Idle::step(const NewAutoPilot& NewAutoPilot, double dt)
+void Idle::onExit(NewAutoPilot& NewAutoPilot)
+{
+	idleStart = NewAutoPilot.lastUpdate;
+	NewAutoPilot.chekcCrash = true;
+}
+
+NewDriveMode Idle::step(NewAutoPilot&NewAutoPilot, double dt)
 {
 	return (idleStart - NewAutoPilot.lastUpdate).total_milliseconds() == 0 ? DRIVEMODE_IDLE : DRIVEMODE_DRIVE_TO_BALL;
 }
 
 /*BEGIN LocateBall*/
-void LocateBall::onEnter(const NewAutoPilot& NewAutoPilot)
+void LocateBall::onEnter(NewAutoPilot&NewAutoPilot)
 {
 	NewAutoPilot.coilgun->ToggleTribbler(false);
 	rotateStart = boost::posix_time::microsec_clock::local_time();
 }
 
-NewDriveMode LocateBall::step(const NewAutoPilot& NewAutoPilot, double dt)
+NewDriveMode LocateBall::step(NewAutoPilot&NewAutoPilot, double dt)
 {
 	auto &ballInTribbler = NewAutoPilot.ballInTribbler;
 	auto &ballInSight = NewAutoPilot.ballInSight;
@@ -100,13 +108,13 @@ NewDriveMode LocateBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	}
 }
 /*BEGIN LocateHome*/
-NewDriveMode LocateHome::step(const NewAutoPilot& NewAutoPilot, double dt)
+NewDriveMode LocateHome::step(NewAutoPilot&NewAutoPilot, double dt)
 {
 	return DRIVEMODE_LOCATE_BALL;
 }
 
 /*BEGIN DriveToHome*/
-NewDriveMode DriveToHome::step(const NewAutoPilot& NewAutoPilot, double dt)
+NewDriveMode DriveToHome::step(NewAutoPilot&NewAutoPilot, double dt)
 {
 	NewAutoPilot.wheels->Forward(-40);
 	std::chrono::milliseconds dura(300);
@@ -116,7 +124,7 @@ NewDriveMode DriveToHome::step(const NewAutoPilot& NewAutoPilot, double dt)
 	return DRIVEMODE_LOCATE_BALL;
 }
 /*BEGIN DriveToBall*/
-void DriveToBall::onEnter(const NewAutoPilot& NewAutoPilot)
+void DriveToBall::onEnter(NewAutoPilot&NewAutoPilot)
 {
 	NewAutoPilot.coilgun->ToggleTribbler(false);
 	start = NewAutoPilot.lastBallLocation;
@@ -124,7 +132,7 @@ void DriveToBall::onEnter(const NewAutoPilot& NewAutoPilot)
 	target = { 340, 0, 0 };
 }
 
-NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
+NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
 {
 	if (!NewAutoPilot.ballInSight) return DRIVEMODE_LOCATE_BALL;
 	if (NewAutoPilot.ballInTribbler) return DRIVEMODE_LOCATE_GATE;
@@ -165,17 +173,17 @@ NewDriveMode DriveToBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	return DRIVEMODE_DRIVE_TO_BALL;
 }
 /*BEGIN CatchBall*/
-void CatchBall::onEnter(const NewAutoPilot& NewAutoPilot)
+void CatchBall::onEnter(NewAutoPilot&NewAutoPilot)
 {
 	NewAutoPilot.coilgun->ToggleTribbler(true);
 	catchStart = boost::posix_time::microsec_clock::local_time();
 	NewAutoPilot.wheels->Stop();
 }
-void CatchBall::onExit(const NewAutoPilot& NewAutoPilot)
+void CatchBall::onExit(NewAutoPilot& NewAutoPilot)
 {
 	//NewAutoPilot.coilgun->ToggleTribbler(false);
 }
-NewDriveMode CatchBall::step(const NewAutoPilot& NewAutoPilot, double dt)
+NewDriveMode CatchBall::step(NewAutoPilot&NewAutoPilot, double dt)
 {
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::time_duration::tick_type catchDuration = (time - catchStart).total_milliseconds();
@@ -197,7 +205,7 @@ NewDriveMode CatchBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 /*END CatchBall*/
 
 /*BEGIN LocateGate*/
-NewDriveMode LocateGate::step(const NewAutoPilot& NewAutoPilot, double dt)
+NewDriveMode LocateGate::step(NewAutoPilot&NewAutoPilot, double dt)
 {
 	auto &gateInSight = NewAutoPilot.gateInSight;
 	auto &coilgun = NewAutoPilot.coilgun;
@@ -218,7 +226,7 @@ NewDriveMode LocateGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 	return DRIVEMODE_LOCATE_GATE;
 }
 /*BEGIN AimGate*/
-NewDriveMode AimGate::step(const NewAutoPilot& NewAutoPilot, double dt)
+NewDriveMode AimGate::step(NewAutoPilot&NewAutoPilot, double dt)
 {
 
 	auto &gateInSight = NewAutoPilot.gateInSight;
@@ -259,7 +267,7 @@ NewDriveMode AimGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 }
 
 /*BEGIN Kick*/
-NewDriveMode Kick::step(const NewAutoPilot& NewAutoPilot, double dt)
+NewDriveMode Kick::step(NewAutoPilot&NewAutoPilot, double dt)
 {
 	NewAutoPilot.coilgun->ToggleTribbler(false);
 	NewAutoPilot.wheels->Stop();
@@ -269,13 +277,13 @@ NewDriveMode Kick::step(const NewAutoPilot& NewAutoPilot, double dt)
 	return DRIVEMODE_LOCATE_BALL;
 
 }
-void Kick::onEnter(const NewAutoPilot& NewAutoPilot)
+void Kick::onEnter(NewAutoPilot&NewAutoPilot)
 {
 	NewAutoPilot.coilgun->ToggleTribbler(false);
 }
 
 /*BEGIN RecoverCrash*/
-NewDriveMode RecoverCrash::step(const NewAutoPilot& NewAutoPilot, double dt)
+NewDriveMode RecoverCrash::step(NewAutoPilot&NewAutoPilot, double dt)
 {
 	double velocity2 = 0, direction2 = 0, rotate2 = 0;
 	auto targetSpeed = NewAutoPilot.wheels->GetTargetSpeed();
@@ -301,10 +309,10 @@ void NewAutoPilot::Run()
 	NewDriveMode newMode = curDriveMode->first;
 	curDriveMode->second->onEnter(*this);
 	while (!stop_thread){
-		if ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000) {
+		if (!testMode && ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000)) {
 			newMode = DRIVEMODE_IDLE;
 		}
-		else if (somethingOnWay && curDriveMode->first != DRIVEMODE_RECOVER_CRASH){
+		else if (chekcCrash && !testMode && somethingOnWay && curDriveMode->first != DRIVEMODE_RECOVER_CRASH){
 			newMode = DRIVEMODE_RECOVER_CRASH;
 		}
 		else {

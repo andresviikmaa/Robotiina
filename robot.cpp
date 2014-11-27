@@ -392,7 +392,13 @@ void Robot::Run()
 
 		int gate = arduino->getGate();
 		int start = arduino->getStart();
-		if (gate > -1) targetGate = gate == 0 ? GATE1 : GATE2;
+		if (gate > -1) {
+			OBJECT newGate = gate == 0 ? GATE1 : GATE2;
+			if(newGate != targetGate){
+				targetGate = newGate;
+				last_state = STATE_END_OF_GAME;
+			}
+		}
 		if (start == 1) {
 			autoPilotEnabled = !autoPilotEnabled;
 			last_state = STATE_END_OF_GAME;

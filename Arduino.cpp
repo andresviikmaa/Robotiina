@@ -23,7 +23,6 @@ void ArduinoBoard::Run(){
 		writeString("strt\n");
 		std::this_thread::sleep_for(dura);
 		strt = atoi(readLineAsync(800).c_str());
-
 		writeString("gte\n");
 		std::this_thread::sleep_for(dura);
 		gte = atoi(readLineAsync(800).c_str());
