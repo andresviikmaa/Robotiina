@@ -78,6 +78,7 @@ NewDriveMode LocateBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 	auto &ballInTribbler = NewAutoPilot.ballInTribbler;
 	auto &ballInSight = NewAutoPilot.ballInSight;
 	auto &wheels = NewAutoPilot.wheels;
+	auto &lastBallLocation = NewAutoPilot.lastBallLocation;
 	
 
 	if (ballInTribbler) return DRIVEMODE_LOCATE_GATE;
@@ -88,9 +89,10 @@ NewDriveMode LocateBall::step(const NewAutoPilot& NewAutoPilot, double dt)
 
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateStart).total_milliseconds();
+	int s = sign((int)lastBallLocation.horizontalAngle);
 
 	if (rotateDuration < 5700){
-		wheels->Rotate(1, 15);
+		wheels->DriveRotate(0, 0, s*15);
 		return DRIVEMODE_LOCATE_BALL;
 	}
 	else {
@@ -209,8 +211,9 @@ NewDriveMode LocateGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 	if (!ballInTribbler) return DRIVEMODE_LOCATE_BALL;
 	if (gateInSight) return DRIVEMODE_AIM_GATE;
 
+	int s = sign((int)lastGateLocation.horizontalAngle);
 
-	wheels->Rotate(0, 30);
+	wheels->DriveRotate(0, 0, s*30);
 
 	return DRIVEMODE_LOCATE_GATE;
 }
@@ -229,13 +232,16 @@ NewDriveMode AimGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 	if (!ballInTribbler) return DRIVEMODE_LOCATE_BALL;
 	if (!gateInSight) return DRIVEMODE_LOCATE_GATE;
 
+	if ((boost::posix_time::microsec_clock::local_time() - actionStart).total_milliseconds() > 1500) {
+		return DRIVEMODE_KICK;
+	}
+	int dir = sign(lastGateLocation.horizontalAngle);
 
 	//Turn robot to gate
 	if (abs(lastGateLocation.horizontalAngle) < 3) {
-		std::cout << NewAutoPilot.borderDistance << std::endl;
-		if (sightObstructed && NewAutoPilot.borderDistance > 600) { //then move sideways
-			wheels->Drive(50, -90);
-			std::chrono::milliseconds dura(400);
+		if (sightObstructed && NewAutoPilot.borderDistance > 600) { //then move sideways away from gate
+			wheels->Drive(50,  dir * 90);
+			std::chrono::milliseconds dura(400); // do we need to sleep?
 			std::this_thread::sleep_for(dura);
 		}
 		else {
@@ -244,8 +250,9 @@ NewDriveMode AimGate::step(const NewAutoPilot& NewAutoPilot, double dt)
 	}
 	else {
 		//rotate calculation for gate
-		int rotate = abs(lastGateLocation.horizontalAngle) * 0.4 + 3;
-		wheels->Rotate(0, lastGateLocation.horizontalAngle < 0?-rotate:rotate);
+		//int rotate = abs(lastGateLocation.horizontalAngle) * 0.4 + 3; // +3 makes no sense we should aim straight
+		int rotate = 0 - lastGateLocation.horizontalAngle * 0.4; // should we rotate oposite way?
+		wheels->DriveRotate(0, 0, rotate); 
 	}
 	return DRIVEMODE_AIM_GATE;
 
@@ -284,6 +291,9 @@ NewDriveMode RecoverCrash::step(const NewAutoPilot& NewAutoPilot, double dt)
 
 	return DRIVEMODE_LOCATE_BALL;
 }
+void NewAutoPilot::setTestMode(NewDriveMode mode) {
+	testDriveMode = mode;
+}
 
 void NewAutoPilot::Run()
 {
@@ -303,6 +313,9 @@ void NewAutoPilot::Run()
 			newMode = curDriveMode->second->step(*this, dt);
 		}
 		auto old = curDriveMode;
+		
+		if (testMode) newMode = testDriveMode;
+
 		if (newMode != curDriveMode->first){
 			boost::mutex::scoped_lock lock(mutex);
 			curDriveMode->second->onExit(*this);

@@ -20,7 +20,7 @@ void VideoRecorder::Start()
 #ifdef WIN32
 	int ex = -1;
 #else
-	int ex = CV_FOURCC('M', 'J', 'P', 'G'); //CV_FOURCC('F', 'M', 'P', '4');
+	int ex = CV_FOURCC('x','v','i','d'); //CV_FOURCC('F', 'M', 'P', '4');
 #endif
 	boost::posix_time::ptime captureStart = boost::posix_time::microsec_clock::local_time();
 	fileName = outputDir + boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time());

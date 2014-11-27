@@ -22,11 +22,15 @@ class NewAutoPilot;
 
 class DriveInstruction
 {
-	friend class NewAutoPilot;
-	const std::string name;
+protected:
+	boost::posix_time::ptime actionStart;
+private:
 public:
+	const std::string name;
 	DriveInstruction(const std::string name) : name(name){};
-	virtual void onEnter(const NewAutoPilot& NewAutoPilot){};
+	virtual void onEnter(const NewAutoPilot& NewAutoPilot){
+		actionStart = boost::posix_time::microsec_clock::local_time();
+	};
 	virtual NewDriveMode step(const NewAutoPilot& NewAutoPilot, double dt) = 0;
 	virtual void onExit(const NewAutoPilot& NewAutoPilot){};
 
@@ -138,8 +142,11 @@ class NewAutoPilot: public IAutoPilot
 	friend class AimGate;
 	friend class Kick;
 	friend class RecoverCrash;
-private:
+public:
 	std::map<NewDriveMode, DriveInstruction*> driveModes;
+	std::atomic_bool testMode;
+
+private:
 	std::map<NewDriveMode, DriveInstruction*>::iterator curDriveMode;
 	WheelController *wheels;
 	CoilGun *coilgun;
@@ -167,6 +174,7 @@ private:
 	boost::posix_time::ptime lastUpdate = time;
 	NewDriveMode lastDriveMode = DRIVEMODE_IDLE;
 	NewDriveMode driveMode = DRIVEMODE_IDLE;
+	NewDriveMode testDriveMode = DRIVEMODE_IDLE;
 
 protected:
 	//	NewDriveMode DriveToBall();
@@ -181,6 +189,7 @@ protected:
 public:
 	NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino);
 	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance);
+	void setTestMode(NewDriveMode mode);
 	void Run();
 	virtual ~NewAutoPilot();
 	std::string GetDebugInfo();

@@ -121,17 +121,17 @@ cv::Point2i ObjectFinder::LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::M
 		assert(false);
 	}
 
-	/* old:
+	
 	//Cutting out gate from ball frame	
 	bounding_rect = cv::boundingRect(contours[largest_contour_index]);
 	bounding_rect.height = bounding_rect.height * growGateHeight;
 	rectangle(HSVRanges[BALL], bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
 	//for clear visual:
 	rectangle(frameBGR, bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
-
+	/*
 	cv::Scalar color4(255, 0, 0);
 	new:
-	*/
+	
 	cv::RotatedRect bounding_rect2 = cv::minAreaRect(contours[largest_contour_index]);
 	cv::Point2f rect_points[4]; bounding_rect2.points(rect_points);
 	int shift = bounding_rect2.size.height * 0.09 +0.2;
@@ -152,6 +152,7 @@ cv::Point2i ObjectFinder::LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::M
 		}
 
 	}
+	*/
 	//std::cout << "-----------------" << std::endl;
 	// find out lowest line
 	return center;
@@ -358,7 +359,14 @@ void drawLine(cv::Mat & img, cv::Mat & img2, cv::Vec4f line, int thickness, CvSc
 	if (endPoint.x == img.cols - 1) {
 		points.push_back(cv::Point2i(img.cols - 1, 0));
 	}
-
+	if (points.size() == 0) {
+		if (startPoint.y == 0 && endPoint.y == img.rows - 1) {
+			points.push_back(cv::Point2i(img.cols - 1, 0));
+		}
+		else if (startPoint.y == img.rows - 1 && endPoint.y == 0) {
+			points.push_back(cv::Point2i(0, 0));
+		}
+	}
 	points.push_back(endPoint);
 	points.push_back(startPoint);
 
@@ -385,13 +393,18 @@ int ObjectFinder::IsolateField(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, 
 	cv::Vec4f newLine1;
 	cv::Vec4f newLine2;
 	float distance = INT_MAX;
-	cv::HoughLinesP(HSVRanges[OUTER_BORDER], lines2, 1, CV_PI / 180, 50, 50, 10);
+	//Canny(HSVRanges[OUTER_BORDER], HSVRanges[OUTER_BORDER], 50, 200, 3);
+	//cv::imshow("aaa", HSVRanges[OUTER_BORDER]);
+	cv::HoughLinesP(HSVRanges[OUTER_BORDER], lines2, 1, CV_PI / 180, 80, 30, 10);
+	double last_angle = 999;
 	if (!detectBothBorders){
 		for (auto l2 : lines2){
 			std::vector<cv::Point2i> points2;
 			points2.push_back(cv::Point(l2[0], l2[1]));
 			points2.push_back(cv::Point(l2[2], l2[3]));
 			cv::fitLine(points2, newLine2, CV_DIST_L2, 0, 0.1, 0.1);
+			if (last_angle != 999 && abs(last_angle - atan2(newLine2[1], newLine2[0]) * 180 / PI) < 15) continue; // same border
+			last_angle = atan2(newLine2[1], newLine2[0]) * 180 / PI;
 			drawLine(frameBGR, HSVRanges[BALL], newLine2, 1, cv::Scalar(255 * (1 + 0.3), 0, 0), nightVision);
 			distance = std::min(distance, newLine2[3] - (frameHSV.cols / 2)*newLine2[1]);
 		}

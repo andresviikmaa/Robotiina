@@ -15,6 +15,9 @@ private:
 	BasicWheel * w_right;
 	BasicWheel * w_back;
 	boost::posix_time::ptime stallTime = boost::posix_time::microsec_clock::local_time() + boost::posix_time::seconds(60);
+	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
+	boost::posix_time::ptime lastStep = time;
+
 protected:
 	cv::Point3d CalculateWheelSpeeds(double velocity, double direction, double rotate);
 	void CalculateRobotSpeed(); // reverse calc

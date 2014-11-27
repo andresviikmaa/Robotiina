@@ -105,16 +105,13 @@ void WheelController::DriveRotate(double velocity, double direction, double rota
 		}
 			
 	}
+	//double sign = (velocity > 0) - (velocity < 0);
+	//velocity = sign*std::min(190.0, abs(velocity + rotate)) - rotate;
 
 	targetSpeed.velocity = velocity; // sin(direction* PI / 180.0)* velocity + rotate;
 	targetSpeed.heading = direction; //cos(direction* PI / 180.0)* velocity + rotate,
 	targetSpeed.rotation = rotate;
 
-	auto speeds = CalculateWheelSpeeds(velocity, direction, rotate);
-	//std::cout << "wheel speeds, left: " << speeds.x << ", right: " << speeds.y << ", back: " << speeds.z << std::endl;
-	w_left->SetSpeed(speeds.x);
-	w_right->SetSpeed(speeds.y);
-	w_back->SetSpeed(speeds.z);
 	directControl = false;
 
 	
@@ -221,7 +218,11 @@ std::string WheelController::GetDebugInfo(){
 	std::ostringstream oss;
 	oss.precision(4);
 	oss << "[WheelController] target: " << "velocity: " << targetSpeed.velocity << ", heading: " << targetSpeed.heading << ", rotate: " << targetSpeed.rotation << "|";
-	oss << "[WheelController] target: " << "actual  : " << actualSpeed.velocity << ", heading: " << actualSpeed.heading << ", rotate: " << actualSpeed.rotation << "|";
+	oss << "[WheelController] actual: " << "velocity: " << actualSpeed.velocity << ", heading: " << actualSpeed.heading << ", rotate: " << actualSpeed.rotation << "|";
+	cv::Point3d speeds = GetWheelSpeeds();
+	auto speeds2 = CalculateWheelSpeeds(targetSpeed.velocity, targetSpeed.heading, targetSpeed.rotation);
+	oss << "[Wheels] target: " << "left  : " << speeds2.x << ", right: " << speeds2.y << ", back: " << speeds2.z << "|";
+	oss << "[Wheels] actual: " << "left  : " << speeds.x << ", right: " << speeds.y << ", back: " << speeds.x << "|";
 	//oss << "[WheelController] pos: " << "x: " << robotPos.x << ", y: " << robotPos.y << ", r: " << robotPos.z;
 	return oss.str();
 }
@@ -231,6 +232,30 @@ void WheelController::Run()
 {
 	while (!stop_thread) {
 		CalculateRobotSpeed();
+		Speed speed = targetSpeed;
+#define LIMIT_ACCELERATION
+#ifdef LIMIT_ACCELERATION
+		double dt = (double)(time - lastStep).total_milliseconds() / 1000.0;
+		if (dt < 0.0000001) return;
+
+		if (abs(actualSpeed.velocity) > 1000) {
+			std::cout << "to big actual velocity: " << actualSpeed.velocity << "wheel speeds: " << GetWheelSpeeds() << std::endl;
+			actualSpeed.velocity = 0;
+
+		}
+		double dv = targetSpeed.velocity - actualSpeed.velocity;
+		double sign = (dv > 0) - (dv < 0);
+		double acc = dv / dt;
+
+		acc = sign * std::min(abs(acc), 500.0);
+		speed.velocity = acc*dt + actualSpeed.velocity;
+#endif
+		auto speeds = CalculateWheelSpeeds(speed.velocity, speed.heading, speed.rotation);
+		//std::cout << "wheel speeds, left: " << speeds.x << ", right: " << speeds.y << ", back: " << speeds.z << std::endl;
+		w_left->SetSpeed(speeds.x);
+		w_right->SetSpeed(speeds.y);
+		w_back->SetSpeed(speeds.z);
+
 		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // do not poll serial to fast
 	}
 	std::cout << "WheelController stoping" << std::endl;

@@ -3,16 +3,35 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
-AutoCalibrator::AutoCalibrator()
+AutoCalibrator::AutoCalibrator(cv::Point frame_size) :frame_size(frame_size)
 {
     range = {{0,179},{0,255},{0,255}};
+	reset();
 };
-void AutoCalibrator::LoadImage(cv::Mat &image)
+bool AutoCalibrator::LoadFrame(cv::Mat &image)
 {
-    ColorCalibrator::LoadImage(image);
+	image.copyTo(this->image, mask);
+    //ColorCalibrator::LoadImage(image);
+
     //float data[6][3] = {{1, 0, 0/*blue*/}, {0, 0, 1 /* orange*/}, {1 ,1, 0 /* yellow*/}, {0,1, 0}/*green*/, {1,1,1}, {0,0,0}};
 	//bestLabels = cv::Mat(6, 3, CV_32F, &data); //BGR
-    DetectThresholds(32);
+	frames++;
+	if (frames >= max_image_count) {
+		DetectThresholds(32);
+		return true;
+	}
+	mask = cv::Mat(frame_size.y, frame_size.x, CV_8U, cv::Scalar::all(0));
+	if (frames == 1) {
+		cv::rectangle(mask, cv::Point(frame_size.x / 2, 0), cv::Point(frame_size.x, frame_size.y / 2), cv::Scalar::all(255), -1);
+	}
+	else if (frames == 2) {
+		cv::rectangle(mask, cv::Point(0, frame_size.y / 2), cv::Point(frame_size.x/2, frame_size.y), cv::Scalar::all(255), -1);
+	}
+	else if (frames == 3) {
+		cv::rectangle(mask, cv::Point(frame_size.x / 2, frame_size.y / 2), cv::Point(frame_size.x, frame_size.y), cv::Scalar::all(255), -1);
+	}
+
+	return false;
 };
 
 HSVColorRange AutoCalibrator::GetObjectThresholds (int index, const std::string &name)

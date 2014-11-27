@@ -65,6 +65,7 @@ enum STATE
 	STATE_REMOTE_CONTROL,
 	STATE_MANUAL_CONTROL,
 	STATE_DANCE,
+	STATE_TEST,
 	STATE_TEST_COILGUN,
 	STATE_END_OF_GAME /* leave this last*/
 };
@@ -85,3 +86,6 @@ public:
 extern std::map<OBJECT, std::string> OBJECT_LABELS;
 typedef std::map<OBJECT, HSVColorRange> HSVColorRangeMap;
 typedef std::map<OBJECT, cv::Mat> ThresholdedImages;
+
+
+#define sign(x) ((x > 0) - (x < 0))

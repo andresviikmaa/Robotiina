@@ -60,6 +60,7 @@ std::pair<STATE, std::string> states[] = {
 	std::pair<STATE, std::string>(STATE_REMOTE_CONTROL, "Remote Control"),
 //	std::pair<STATE, std::string>(STATE_CRASH, "Crash"),
 	std::pair<STATE, std::string>(STATE_RUN, "Autopilot"),
+	std::pair<STATE, std::string>(STATE_TEST, "Test"),
 	std::pair<STATE, std::string>(STATE_MANUAL_CONTROL, "Manual Control"),
 	std::pair<STATE, std::string>(STATE_TEST_COILGUN, "Test CoilGun"),
 	std::pair<STATE, std::string>(STATE_SELECT_GATE, "Select Gate"),
@@ -198,7 +199,7 @@ void Robot::Run()
 		boost::filesystem::create_directories(captureDir);
 	}
 	*/
-	IAutoPilot *autoPilot = new NewAutoPilot(wheels, coilBoard, arduino);
+	NewAutoPilot autoPilot(wheels, coilBoard, arduino);
 
 	//RobotTracker tracker(wheels);
 	ThresholdedImages thresholdedImages;
@@ -243,6 +244,8 @@ void Robot::Run()
 	cv::Mat display_empty(frameBGR.rows + 160, frameBGR.cols + 200, frameBGR.type(), cv::Scalar(0));
 	cv::Mat display(frameBGR.rows + 160, frameBGR.cols + 200, frameBGR.type(), cv::Scalar(0));
 	cv::Mat display_roi = display(cv::Rect(0, 0, frameBGR.cols, frameBGR.rows)); // region of interest
+	AutoCalibrator calibrator(frameBGR.size());
+
 	while (true)
     {
 		display_empty.copyTo(display);
@@ -273,8 +276,16 @@ void Robot::Run()
 		/**************************************************/
 
 		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
-		if (!nightVision) {
-			frameBGR.copyTo(display_roi);
+		cv::GaussianBlur(frameHSV, frameHSV, cv::Size(11, 11), 4);
+
+		if (!nightVision || state == STATE_AUTOCALIBRATE) {
+			if (state == STATE_AUTOCALIBRATE) {
+				cv::Mat mask(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
+				frameBGR.copyTo(display_roi, calibrator.mask);
+			}
+			else {
+				frameBGR.copyTo(display_roi);
+			}
 		}
 		/**************************************************/
 		/*	STEP 2. thresholding in parallel	          */
@@ -299,14 +310,14 @@ void Robot::Run()
 		//sightObstructed = countNonZero(selected) > 10;
 
 		// copy thresholded images before they are destroyed
-		if (nightVision) {
+		if (nightVision && state != STATE_AUTOCALIBRATE) {
 			green.copyTo(display_roi, thresholdedImages[FIELD]);
 			green.copyTo(display_roi, thresholdedImages[INNER_BORDER]);
 			orange.copyTo(display_roi, thresholdedImages[BALL]);
 			yellow.copyTo(display_roi, thresholdedImages[GATE2]);
 			blue.copyTo(display_roi, thresholdedImages[GATE1]);
 		}
-
+	
 		if (detectBorders) {
 			float y = finder.IsolateField(thresholdedImages, frameHSV, display_roi, false, nightVision);
 			finder.LocateCursor(display_roi, cv::Point2i(frameBGR.cols /2, y), BALL, borderDistance);
@@ -375,8 +386,8 @@ void Robot::Run()
 //		oss << "Gate Pos: (" << lastBallLocation.distance << "," << lastBallLocation.horizontalAngle << "," << lastBallLocation.horizontalDev << ")";
 
 
-		if (autoPilotEnabled) {
-			autoPilot->UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay, borderDistance.distance);			
+		if (autoPilotEnabled || autoPilot.testMode) {
+			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay, borderDistance.distance);			
 		}
 
 		/**************************************************/
@@ -386,10 +397,12 @@ void Robot::Run()
 		/* Main UI */
 		if (STATE_NONE == state) {
 			START_DIALOG
+				autoPilot.testMode = false;
 				STATE_BUTTON("(A)utoCalibrate objects", STATE_AUTOCALIBRATE)
 				//STATE_BUTTON("(M)anualCalibrate objects", STATE_CALIBRATE)
 				STATE_BUTTON("(C)Change Gate [" + OBJECT_LABELS[targetGate] + "]", STATE_SELECT_GATE)
 				STATE_BUTTON("Auto(P)ilot [" + (autoPilotEnabled ? "On" : "Off") + "]", STATE_LAUNCH)
+				STATE_BUTTON("(T)est Autopilot", STATE_TEST)
 				createButton(std::string("(M)ouse control [") + (mouseControl == 0 ? "Off" : (mouseControl == 1 ? "Ball" : "Gate")) + "]", [this, &mouseControl, &frameBGR]{
 					mouseControl = (mouseControl + 1) % 3;
 					this->last_state = STATE_END_OF_GAME; // force dialog redraw
@@ -411,15 +424,24 @@ void Robot::Run()
 				STATE_BUTTON("E(x)it", STATE_END_OF_GAME)
 			END_DIALOG
 		}
-		else if (STATE_CALIBRATE == state || STATE_AUTOCALIBRATE == state) {
+		else if (STATE_AUTOCALIBRATE == state) {
+			START_DIALOG
+				calibrator.reset();
+				createButton("Take a screenshot", [this, &frameBGR, &calibrator]{
+					if (calibrator.LoadFrame(frameBGR)) {
+						this->SetState(STATE_CALIBRATE);
+					};
+
+				});
+			STATE_BUTTON("BACK", STATE_NONE)
+			END_DIALOG
+		}
+		else if (STATE_CALIBRATE == state) {
 			START_DIALOG
 				for (int i = 0; i < NUMBER_OF_OBJECTS; i++) {
 					// objectThresholds[(OBJECT) i] = calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT) i]);
-					createButton(OBJECT_LABELS[(OBJECT)i], [this, i, &frameBGR]{
-						ColorCalibrator* calibrator = STATE_AUTOCALIBRATE == state ? new AutoCalibrator() : new ColorCalibrator();
-						calibrator->LoadImage(frameBGR);
-						this->objectThresholds[(OBJECT)i] = calibrator->GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
-						delete calibrator;
+					createButton(OBJECT_LABELS[(OBJECT)i], [this, i, &frameBGR, &calibrator]{
+						this->objectThresholds[(OBJECT)i] = calibrator.GetObjectThresholds(i, OBJECT_LABELS[(OBJECT)i]);
 					});
 				}
 				STATE_BUTTON("BACK", STATE_NONE)
@@ -496,6 +518,17 @@ void Robot::Run()
 //			autoPilot->UpdateState(ballFound ? &ballPos : NULL, targetGatePos, sightObstructed);
 			
         }
+		else if (STATE_TEST == state) {
+			START_DIALOG
+				autoPilot.testMode = true;
+				for (const auto d : autoPilot.driveModes) {
+					createButton(d.second->name, [this, &frameBGR, &calibrator, &autoPilot, d]{
+						autoPilot.setTestMode(d.first);
+					});
+				}
+			STATE_BUTTON("BACK", STATE_NONE)
+				END_DIALOG
+		}
 		else if (STATE_MANUAL_CONTROL == state) {
 			START_DIALOG
 				createButton("Move Left", [this] {this->wheels->Drive(190, 90); });
@@ -530,7 +563,7 @@ void Robot::Run()
 		 
 		subtitles.str("");
 		//subtitles << oss.str();
-		subtitles << "|" << autoPilot->GetDebugInfo();
+		subtitles << "|" << autoPilot.GetDebugInfo();
 		subtitles << "|" << wheels->GetDebugInfo();
 		subtitles << "|" << arduino->GetDebugInfo();
 
@@ -592,9 +625,7 @@ void Robot::Run()
 		frames++;
 
     }
-    
-	delete autoPilot;
-	
+    	
 	if (outputVideo != NULL) {
 		delete outputVideo;
 	}
