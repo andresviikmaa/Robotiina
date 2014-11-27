@@ -346,8 +346,14 @@ void Robot::Run()
 			cv::Mat selected(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
 			cv::Mat mask(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
 			cv::Mat	tmp(frameBGR.rows, frameBGR.cols, CV_8U, cv::Scalar::all(0));
-			cv::line(mask, cv::Point(frameBGR.cols / 2, 200), cv::Point(frameBGR.cols / 2, frameBGR.rows - 100), cv::Scalar(255, 255, 255), 80);
-			tmp = 255 - (thresholdedImages[INNER_BORDER] + thresholdedImages[OUTER_BORDER] + thresholdedImages[FIELD]);
+			//cv::line(mask, cv::Point(frameBGR.cols / 2, 200), cv::Point(frameBGR.cols / 2 - 40, frameBGR.rows - 100), cv::Scalar(255, 255, 255), 40);
+			//cv::line(mask, cv::Point(frameBGR.cols / 2, 200), cv::Point(frameBGR.cols / 2 + 40, frameBGR.rows - 100), cv::Scalar(255, 255, 255), 40);
+			std::vector<cv::Point2i> triangle;
+			triangle.push_back(cv::Point(frameBGR.cols / 2, 100));
+			triangle.push_back(cv::Point(frameBGR.cols / 2 - 40, frameBGR.rows - 100));
+			triangle.push_back(cv::Point(frameBGR.cols / 2 + 40, frameBGR.rows - 100));
+			cv::fillConvexPoly(mask, triangle, cv::Scalar::all(255));
+ 			tmp = 255 - (thresholdedImages[INNER_BORDER] + thresholdedImages[OUTER_BORDER] + thresholdedImages[FIELD]);
 			tmp.copyTo(selected, mask); // perhaps use field and inner border
 			thresholdedImages[SIGHT_MASK] = selected;
 			//sightObstructed = countNonZero(selected) > 10;

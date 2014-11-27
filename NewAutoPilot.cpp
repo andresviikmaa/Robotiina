@@ -99,7 +99,7 @@ NewDriveMode LocateBall::step(NewAutoPilot&NewAutoPilot, double dt)
 	int s = sign((int)lastBallLocation.horizontalAngle);
 
 	if (rotateDuration < 5700){
-		wheels->DriveRotate(0, 0, 15);
+		wheels->DriveRotate(0, 0, 25);
 		return DRIVEMODE_LOCATE_BALL;
 	}
 	else {
@@ -128,7 +128,7 @@ void DriveToBall::onEnter(NewAutoPilot&NewAutoPilot)
 	NewAutoPilot.coilgun->ToggleTribbler(false);
 	start = NewAutoPilot.lastBallLocation;
 	//Desired distance
-	target = { 360, 0, 0 };
+	target = { 350, 0, 0 };
 }
 
 NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
@@ -139,9 +139,14 @@ NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
 	auto &lastBallLocation = NewAutoPilot.lastBallLocation;
 	auto &wheels = NewAutoPilot.wheels;
 	auto &coilgun = NewAutoPilot.coilgun;
-
+	if(lastBallLocation.distance < target.distance+50){
+		coilgun->ToggleTribbler(true);
+	}
+	else{
+		coilgun->ToggleTribbler(false);
+	}
 	//Ball is close and center
-	if ((lastBallLocation.distance < target.distance) && abs(lastBallLocation.horizontalDev) <= 8) {
+	if ((lastBallLocation.distance < target.distance) && abs(lastBallLocation.horizontalDev) <= 11) {
 		wheels->Stop();
 		coilgun->ToggleTribbler(true);
 		return DRIVEMODE_CATCH_BALL;
@@ -158,7 +163,6 @@ NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
 	else {
 		rotate = abs(lastBallLocation.horizontalAngle) * 0.4;
 		rotate = 0;
-		coilgun->ToggleTribbler(false);
 		//speed calculation
 		if (lastBallLocation.distance > 700){
 			speed = 150;
@@ -242,7 +246,7 @@ NewDriveMode AimGate::step(NewAutoPilot&NewAutoPilot, double dt)
 	if (!ballInTribbler) return DRIVEMODE_LOCATE_BALL;
 	if (!gateInSight) return DRIVEMODE_LOCATE_GATE;
 
-	if ((boost::posix_time::microsec_clock::local_time() - actionStart).total_milliseconds() > 1500) {
+	if ((boost::posix_time::microsec_clock::local_time() - actionStart).total_milliseconds() > 5000) {
 		return DRIVEMODE_KICK;
 	}
 	int dir = sign(lastGateLocation.horizontalAngle);
@@ -250,9 +254,10 @@ NewDriveMode AimGate::step(NewAutoPilot&NewAutoPilot, double dt)
 	//Turn robot to gate
 	if (abs(lastGateLocation.horizontalDev) < 10) {
 		if (sightObstructed) { //then move sideways away from gate
-			wheels->Drive(50, 90);
-			//std::chrono::milliseconds dura(400); // do we need to sleep?
-			//std::this_thread::sleep_for(dura);
+			//std::cout << sightObstructed << std::endl;
+			wheels->DriveRotate(45, 90, 0);
+			std::chrono::milliseconds dura(400); // do we need to sleep?
+			std::this_thread::sleep_for(dura);
 		}
 		else {
 			return DRIVEMODE_KICK;
@@ -261,8 +266,8 @@ NewDriveMode AimGate::step(NewAutoPilot&NewAutoPilot, double dt)
 	else {
 		//rotate calculation for gate
 		//int rotate = abs(lastGateLocation.horizontalAngle) * 0.4 + 3; // +3 makes no sense we should aim straight
-		int rotate = 0 - (lastGateLocation.horizontalAngle * 0.4 + 5); // should we rotate oposite way?
-		wheels->DriveRotate(0, 0, rotate); 
+		int rotate = (abs(lastGateLocation.horizontalAngle) * 0.4 + 5); // should we rotate oposite way?
+		wheels->Rotate(lastGateLocation.horizontalAngle < 0, rotate); 
 	}
 	return DRIVEMODE_AIM_GATE;
 
