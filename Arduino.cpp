@@ -18,9 +18,16 @@ void ArduinoBoard::Run(){
 		std::this_thread::sleep_for(dura);
 		sonars.y = atoi(readLineAsync(800).c_str());
 		//std::cout << "snr2: " << sonars.y << std::endl;
-	
+		sonars.z = -1;
 
-		sonars.z= -1;
+		writeString("strt\n");
+		std::this_thread::sleep_for(dura);
+		strt = atoi(readLineAsync(800).c_str());
+
+		writeString("gte\n");
+		std::this_thread::sleep_for(dura);
+		gte = atoi(readLineAsync(800).c_str());
+
 	}
 }
 

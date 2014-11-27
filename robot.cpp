@@ -87,6 +87,7 @@ Robot::Robot(boost::asio::io_service &io) : Dialog("Robotiina"), io(io), camera(
     //wheels = new WheelController(io);
 	assert(OBJECT_LABELS.size() == NUMBER_OF_OBJECTS);
 	assert(STATE_LABELS.size() == STATE_END_OF_GAME);
+	autoPilotEnabled = false;
 }
 Robot::~Robot()
 {
@@ -218,7 +219,6 @@ void Robot::Run()
 	bool ballInTribbler = false;
 	cv::Point3i sonars = {100,100,100};
 	bool somethingOnWay = false;
-	bool autoPilotEnabled = false;
 	int mouseControl = 0;
 	bool nightVision = true;
 	bool detectBorders = true;
@@ -390,6 +390,13 @@ void Robot::Run()
 			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay, borderDistance.distance);			
 		}
 
+		int gate = arduino->getGate();
+		int start = arduino->getStart();
+		if (gate > -1) targetGate = gate == 0 ? GATE1 : GATE2;
+		if (start == 1) {
+			autoPilotEnabled = !autoPilotEnabled;
+			last_state = STATE_END_OF_GAME;
+		}
 		/**************************************************/
 		/* STEP 8. kick and drive (done in AutoPilot	  */
 		/**************************************************/
@@ -398,6 +405,7 @@ void Robot::Run()
 		if (STATE_NONE == state) {
 			START_DIALOG
 				autoPilot.testMode = false;
+				wheels->Stop();
 				STATE_BUTTON("(A)utoCalibrate objects", STATE_AUTOCALIBRATE)
 				//STATE_BUTTON("(M)anualCalibrate objects", STATE_CALIBRATE)
 				STATE_BUTTON("(C)Change Gate [" + OBJECT_LABELS[targetGate] + "]", STATE_SELECT_GATE)

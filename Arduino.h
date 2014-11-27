@@ -4,25 +4,23 @@
 #include "simpleserial.h"
 #include <boost/atomic.hpp>
 
-class ButtonClickListener
-{
-	virtual void OnStartButtonClicked() = 0;
-	virtual void OnGateButtonClicked() = 0;
-};
 
 class Arduino
 {
 protected:
-	cv::Point3i sonars = {100,100,100};
+	cv::Point3i sonars = { 100, 100, 100 };
+	IButtonClickListener *buttonListener = NULL;
+	bool strt = 0;
+	bool gte = -1;
 public:
 	Arduino(){}
 	virtual ~Arduino(){}
 	void Run(){};
-	void AddButtonListener(ButtonClickListener *buttonListener){};
 	const cv::Point3i &GetSonarReadings(){ return sonars; }
+	int getStart() { return strt; };
+	int getGate() { return gte;  };
 	virtual bool BallInTribbler(){ throw std::runtime_error("Not implemented"); };
 	std::string GetDebugInfo();
-
 
 };
 

@@ -83,6 +83,13 @@ public:
 	virtual std::string GetDebugInfo() = 0;
 	virtual ~IAutoPilot(){}
 };
+
+class IButtonClickListener
+{
+	virtual void OnStartButtonClicked() = 0;
+	virtual void OnGateButtonClicked(int selectedGate) = 0;
+};
+
 extern std::map<OBJECT, std::string> OBJECT_LABELS;
 typedef std::map<OBJECT, HSVColorRange> HSVColorRangeMap;
 typedef std::map<OBJECT, cv::Mat> ThresholdedImages;

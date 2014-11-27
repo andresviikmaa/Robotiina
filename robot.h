@@ -12,7 +12,7 @@ class CoilGun;
 class Arduino;
 
 
-class Robot: public Dialog {
+class Robot : public Dialog {
 private:
 	po::variables_map config;
 
@@ -33,6 +33,7 @@ protected:
 	boost::asio::io_service &io;
 	OBJECT targetGate= NUMBER_OF_OBJECTS; //uselected
 	bool captureFrames = false;
+	std::atomic_bool autoPilotEnabled;
 
 public:
     Robot(boost::asio::io_service &io);
@@ -50,4 +51,5 @@ public:
         state = new_state;
     }
     std::string ExecuteRemoteCommand(const std::string &command);
+
 };

@@ -141,6 +141,7 @@ void SerialWheel::UpdateSpeed()
 };
 
 SerialWheel::~SerialWheel(){
+	WaitForStop();
 	SetSpeed(0);
 	UpdateSpeed();
 }
