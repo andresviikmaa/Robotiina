@@ -39,6 +39,7 @@ bool ObjectFinder::LocateCursor(cv::Mat &frameBGR, cv::Point2i cursor, OBJECT ta
 bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target, ObjectPosition &targetPos) {
 	cv::Point2i point(-1, -1);
 	cv::Scalar color(0, 0, 0);
+	cv::Scalar color2(255, 0, 255);
 	bool resetFilter = false;
 	if (target == BALL){
 		point = LocateBallOnScreen(HSVRanges, frameHSV, frameBGR, target);
@@ -46,6 +47,7 @@ bool ObjectFinder::Locate(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::M
 	}
 	else{
 		point = LocateGateOnScreen(HSVRanges, frameHSV, frameBGR, target);
+		cv::circle(frameBGR, point, 8, color2, -1);
 	}
 	if (point.x < -1 && point.y < -1){//If ball is not valid then no predicting
 		lastPosition = point;

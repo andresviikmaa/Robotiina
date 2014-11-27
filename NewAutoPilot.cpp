@@ -128,7 +128,7 @@ void DriveToBall::onEnter(NewAutoPilot&NewAutoPilot)
 	NewAutoPilot.coilgun->ToggleTribbler(false);
 	start = NewAutoPilot.lastBallLocation;
 	//Desired distance
-	target = { 340, 0, 0 };
+	target = { 360, 0, 0 };
 }
 
 NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
@@ -157,6 +157,7 @@ NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
 	//Ball is far away
 	else {
 		rotate = abs(lastBallLocation.horizontalAngle) * 0.4;
+		rotate = 0;
 		coilgun->ToggleTribbler(false);
 		//speed calculation
 		if (lastBallLocation.distance > 700){
@@ -164,6 +165,9 @@ NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
 		}
 		else{
 			speed = lastBallLocation.distance * 0.29 - 94;
+		}
+		if(speed > 100){
+			speed=100;
 		}
 		wheels->DriveRotate(speed, -lastBallLocation.horizontalAngle, lastBallLocation.horizontalAngle < 0?rotate:-rotate);
 	}
@@ -244,11 +248,11 @@ NewDriveMode AimGate::step(NewAutoPilot&NewAutoPilot, double dt)
 	int dir = sign(lastGateLocation.horizontalAngle);
 
 	//Turn robot to gate
-	if (abs(lastGateLocation.horizontalAngle) < 3) {
-		if (sightObstructed && NewAutoPilot.borderDistance > 600) { //then move sideways away from gate
-			wheels->Drive(50,  dir * 90);
-			std::chrono::milliseconds dura(400); // do we need to sleep?
-			std::this_thread::sleep_for(dura);
+	if (abs(lastGateLocation.horizontalDev) < 10) {
+		if (sightObstructed) { //then move sideways away from gate
+			wheels->Drive(50, 90);
+			//std::chrono::milliseconds dura(400); // do we need to sleep?
+			//std::this_thread::sleep_for(dura);
 		}
 		else {
 			return DRIVEMODE_KICK;
@@ -257,7 +261,7 @@ NewDriveMode AimGate::step(NewAutoPilot&NewAutoPilot, double dt)
 	else {
 		//rotate calculation for gate
 		//int rotate = abs(lastGateLocation.horizontalAngle) * 0.4 + 3; // +3 makes no sense we should aim straight
-		int rotate = 0 - lastGateLocation.horizontalAngle * 0.4; // should we rotate oposite way?
+		int rotate = 0 - (lastGateLocation.horizontalAngle * 0.4 + 5); // should we rotate oposite way?
 		wheels->DriveRotate(0, 0, rotate); 
 	}
 	return DRIVEMODE_AIM_GATE;
