@@ -99,7 +99,7 @@ NewDriveMode LocateBall::step(NewAutoPilot&NewAutoPilot, double dt)
 	int s = sign((int)lastBallLocation.horizontalAngle);
 
 	if (rotateDuration < 5700){
-		wheels->DriveRotate(0, 0, s*15);
+		wheels->DriveRotate(0, 0, 15);
 		return DRIVEMODE_LOCATE_BALL;
 	}
 	else {
@@ -148,16 +148,15 @@ NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
 	} 
 	//Ball is close and not center
 	else if (lastBallLocation.distance < target.distance){
-		rotate = abs(lastBallLocation.horizontalAngle) * 0.4;
+		rotate = abs(lastBallLocation.horizontalAngle) * 0.4 + 5;
 
 		//std::cout << "rotate: " << rotate << std::endl;
-		wheels->Rotate(lastBallLocation.horizontalAngle > 0, rotate);
+		wheels->Rotate(lastBallLocation.horizontalAngle < 0, rotate);
 		coilgun->ToggleTribbler(true);
 	}
 	//Ball is far away
 	else {
-		rotate = abs(lastBallLocation.horizontalAngle) * 0.2;
-		rotate = 0;
+		rotate = abs(lastBallLocation.horizontalAngle) * 0.4;
 		coilgun->ToggleTribbler(false);
 		//speed calculation
 		if (lastBallLocation.distance > 700){
@@ -166,7 +165,6 @@ NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
 		else{
 			speed = lastBallLocation.distance * 0.29 - 94;
 		}
-		speed = 50;
 		wheels->DriveRotate(speed, -lastBallLocation.horizontalAngle, lastBallLocation.horizontalAngle < 0?rotate:-rotate);
 	}
 	return DRIVEMODE_DRIVE_TO_BALL;

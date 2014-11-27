@@ -440,7 +440,7 @@ void Robot::Run()
 			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay, borderDistance.distance);			
 		}
 
-		int gate = arduino->getGate();
+	/*	int gate = arduino->getGate();
 		int start = arduino->getStart();
 		if (gate > -1) {
 			OBJECT newGate = gate == 0 ? GATE1 : GATE2;
@@ -452,7 +452,8 @@ void Robot::Run()
 		if (start == 1) {
 			autoPilotEnabled = !autoPilotEnabled;
 			last_state = STATE_END_OF_GAME;
-		}
+		}*/
+		
 		/**************************************************/
 		/* STEP 8. kick and drive (done in AutoPilot	  */
 		/**************************************************/
