@@ -145,18 +145,18 @@ bool Robot::Launch(int argc, char* argv[])
 					ptree pt;
 					read_ini("conf/ports.ini", pt);
 					std::string port = pt.get<std::string>(std::to_string(ID_COILGUN));
-					std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
+					//std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
 
 					coilBoard = new CoilBoard(io, port);
 					//coilBoard = new CoilGun();
 
-					arduino = new ArduinoBoard(io, port2);
+					//arduino = new ArduinoBoard(io, port2);
 				}
 				else {
 					coilBoard = new CoilGun();
 					arduino = new Arduino();
 				}
-//				arduino = new Arduino();
+				arduino = new Arduino();
 	
 			}
 		}
@@ -220,8 +220,8 @@ void Robot::Run()
 	cv::Point3i sonars = {100,100,100};
 	bool somethingOnWay = false;
 	int mouseControl = 0;
-	bool nightVision = true;
-	bool detectBorders = true;
+	bool nightVision = false;
+	bool detectBorders = false;
 	ObjectPosition borderDistance = { INT_MAX, 0, 0 };
 	bool notEnoughtGreen = false;
 
@@ -545,12 +545,12 @@ void Robot::Run()
 		}
 		else if (STATE_MANUAL_CONTROL == state) {
 			START_DIALOG
-				createButton("Move Left", [this] {this->wheels->Drive(190, 90); });
-				createButton("Move Right", [this]{this->wheels->Drive(190, -90); });
-				createButton("Move Forward", [this]{this->wheels->Drive(190, 0); });
-				createButton("Move Back", [this]{this->wheels->Drive(-190, 0); });
-				createButton("Rotate Right", [this]{this->wheels->Rotate(0, 70); });
-				createButton("Rotate Left", [this]{this->wheels->Rotate(1, 70); });
+				createButton("Move Left", [this] {this->wheels->Drive(60, 90); });
+				createButton("Move Right", [this]{this->wheels->Drive(60, -90); });
+				createButton("Move Forward", [this]{this->wheels->Drive(60, 0); });
+				createButton("Move Back", [this]{this->wheels->Drive(-60, 0); });
+				createButton("Rotate Right", [this]{this->wheels->Rotate(0, 30); });
+				createButton("Rotate Left", [this]{this->wheels->Rotate(1, 30); });
 				STATE_BUTTON("Back", STATE_NONE)
 			END_DIALOG
 		}
@@ -617,7 +617,7 @@ void Robot::Run()
 
 		int j = 0;
 		for (auto s : subtitles2) {
-			cv::putText(display, s, cv::Point(10, display.rows - 140 + j), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+			cv::putText(display, s, cv::Point(10, display.rows - 340 + j), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 			j += 20;
 		}
 

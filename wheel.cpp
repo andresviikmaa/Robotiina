@@ -107,23 +107,11 @@ void SerialWheel::UpdateSpeed()
 {
 	try
 	{
-		double dt = (double)(time - lastStep).total_milliseconds() / 1000.0;
-		if (dt < 0.0000001) return;
 
-		last_speed = actual_speed;
-
-		double dv = target_speed - actual_speed;
-		double sign = (dv > 0) - (dv < 0);
-		double acc = dv / dt;
-		acc = sign * std::min((int)abs(acc), max_acceleration);
-		double dv2 = acc * dt;
-		//if (abs(dv2) < 20 && abs(dv) > 20) dv2 =  sign*20;
-		int new_target_speed = actual_speed + dv2;
-		new_target_speed = target_speed;
 		if (update_speed){
 			lastUpdate = boost::posix_time::microsec_clock::local_time();
 			std::ostringstream oss;
-			oss << "sd" << new_target_speed << "\n";
+			oss << "sd" << target_speed << "\n";
 			writeString(oss.str());
 			update_speed = false;
 		}

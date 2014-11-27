@@ -59,6 +59,8 @@ void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gat
 void Idle::onEnter(NewAutoPilot&NewAutoPilot)
 {
 	idleStart = NewAutoPilot.lastUpdate;
+	NewAutoPilot.wheels->Stop();
+	NewAutoPilot.coilgun->ToggleTribbler(false);
 }
 
 void Idle::onExit(NewAutoPilot& NewAutoPilot)
@@ -146,16 +148,16 @@ NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
 	} 
 	//Ball is close and not center
 	else if (lastBallLocation.distance < target.distance){
-		rotate = abs(lastBallLocation.horizontalAngle) * 0.4 + 3;
+		rotate = abs(lastBallLocation.horizontalAngle) * 0.4;
 
-		std::cout << "rotate: " << rotate << std::endl;
-		wheels->Rotate(lastBallLocation.horizontalAngle > 0,  lastBallLocation.horizontalAngle < 0?rotate:-rotate);
+		//std::cout << "rotate: " << rotate << std::endl;
+		wheels->Rotate(lastBallLocation.horizontalAngle > 0, rotate);
 		coilgun->ToggleTribbler(true);
 	}
 	//Ball is far away
 	else {
-		rotate = abs(lastBallLocation.horizontalAngle) * 0.4 + 3;
-
+		rotate = abs(lastBallLocation.horizontalAngle) * 0.2;
+		rotate = 0;
 		coilgun->ToggleTribbler(false);
 		//speed calculation
 		if (lastBallLocation.distance > 700){
@@ -215,11 +217,12 @@ NewDriveMode LocateGate::step(NewAutoPilot&NewAutoPilot, double dt)
 
 	if (!ballInTribbler) return DRIVEMODE_LOCATE_BALL;
 	if (gateInSight) return DRIVEMODE_AIM_GATE;
-
+	wheels->Rotate(0, 30);
+	/*
 	int s = sign((int)lastGateLocation.horizontalAngle);
 
 	wheels->DriveRotate(0, 0, s*30);
-
+	*/
 	return DRIVEMODE_LOCATE_GATE;
 }
 /*BEGIN AimGate*/
@@ -304,6 +307,7 @@ void NewAutoPilot::enableTestMode(bool enable)
 {
 	setTestMode(DRIVEMODE_IDLE);
 	testMode = enable;
+	if(!testMode) wheels->Stop();
 }
 
 void NewAutoPilot::Run()
@@ -315,7 +319,7 @@ void NewAutoPilot::Run()
 		if (!testMode && ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000)) {
 			newMode = DRIVEMODE_IDLE;
 		}
-		else if (!testMode && somethingOnWay && curDriveMode->first != DRIVEMODE_RECOVER_CRASH && curDriveMode->first != DRIVEMODE_IDLE){
+		else if (false && !testMode && somethingOnWay && curDriveMode->first != DRIVEMODE_RECOVER_CRASH && curDriveMode->first != DRIVEMODE_IDLE){
 			newMode = DRIVEMODE_RECOVER_CRASH;
 		}
 		else {
