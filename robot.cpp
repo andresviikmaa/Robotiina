@@ -410,7 +410,7 @@ void Robot::Run()
 		/* Main UI */
 		if (STATE_NONE == state) {
 			START_DIALOG
-				autoPilot.testMode = false;
+				autoPilot.enableTestMode(false);
 				wheels->Stop();
 				STATE_BUTTON("(A)utoCalibrate objects", STATE_AUTOCALIBRATE)
 				//STATE_BUTTON("(M)anualCalibrate objects", STATE_CALIBRATE)
@@ -534,7 +534,7 @@ void Robot::Run()
         }
 		else if (STATE_TEST == state) {
 			START_DIALOG
-				autoPilot.testMode = true;
+				autoPilot.enableTestMode(true);
 				for (const auto d : autoPilot.driveModes) {
 					createButton(d.second->name, [this, &frameBGR, &calibrator, &autoPilot, d]{
 						autoPilot.setTestMode(d.first);

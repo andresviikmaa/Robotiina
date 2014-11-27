@@ -34,7 +34,6 @@ NewAutoPilot::NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *a
 	ballInTribbler = false;
 	sightObstructed = false;
 	somethingOnWay = false;
-	chekcCrash = false;
 
 	threads.create_thread(boost::bind(&NewAutoPilot::Run, this));
 }
@@ -50,28 +49,26 @@ void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gat
 	this->sightObstructed = sightObstructed;
 	this->somethingOnWay = somethingOnWay;
 	this->borderDistance = borderDistance;
-	
-	lastUpdate = boost::posix_time::microsec_clock::local_time();
-	if (driveMode == DRIVEMODE_IDLE) driveMode = DRIVEMODE_LOCATE_BALL;
-	chekcCrash = true;
+	if (!testMode) {
+		lastUpdate = boost::posix_time::microsec_clock::local_time();
+		if (driveMode == DRIVEMODE_IDLE) driveMode = DRIVEMODE_LOCATE_BALL;
+	}
 }
 
 /*BEGIN Idle*/
 void Idle::onEnter(NewAutoPilot&NewAutoPilot)
 {
 	idleStart = NewAutoPilot.lastUpdate;
-	NewAutoPilot.chekcCrash = false;
 }
 
 void Idle::onExit(NewAutoPilot& NewAutoPilot)
 {
 	idleStart = NewAutoPilot.lastUpdate;
-	NewAutoPilot.chekcCrash = true;
 }
 
 NewDriveMode Idle::step(NewAutoPilot&NewAutoPilot, double dt)
 {
-	return (idleStart - NewAutoPilot.lastUpdate).total_milliseconds() == 0 ? DRIVEMODE_IDLE : DRIVEMODE_DRIVE_TO_BALL;
+	return (idleStart - NewAutoPilot.lastUpdate).total_milliseconds() > 0 ? DRIVEMODE_IDLE : DRIVEMODE_DRIVE_TO_BALL;
 }
 
 /*BEGIN LocateBall*/
@@ -299,8 +296,14 @@ NewDriveMode RecoverCrash::step(NewAutoPilot&NewAutoPilot, double dt)
 
 	return DRIVEMODE_LOCATE_BALL;
 }
-void NewAutoPilot::setTestMode(NewDriveMode mode) {
+void NewAutoPilot::setTestMode(NewDriveMode mode) 
+{
 	testDriveMode = mode;
+}
+void NewAutoPilot::enableTestMode(bool enable)
+{
+	setTestMode(DRIVEMODE_IDLE);
+	testMode = enable;
 }
 
 void NewAutoPilot::Run()
@@ -312,7 +315,7 @@ void NewAutoPilot::Run()
 		if (!testMode && ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000)) {
 			newMode = DRIVEMODE_IDLE;
 		}
-		else if (chekcCrash && !testMode && somethingOnWay && curDriveMode->first != DRIVEMODE_RECOVER_CRASH){
+		else if (!testMode && somethingOnWay && curDriveMode->first != DRIVEMODE_RECOVER_CRASH && curDriveMode->first != DRIVEMODE_IDLE){
 			newMode = DRIVEMODE_RECOVER_CRASH;
 		}
 		else {

@@ -146,7 +146,6 @@ class NewAutoPilot: public IAutoPilot
 public:
 	std::map<NewDriveMode, DriveInstruction*> driveModes;
 	std::atomic_bool testMode;
-	std::atomic_bool chekcCrash;
 
 private:
 	std::map<NewDriveMode, DriveInstruction*>::iterator curDriveMode;
@@ -164,7 +163,7 @@ private:
 	std::atomic_bool sightObstructed;
 	std::atomic_bool somethingOnWay;
 	std::atomic_int borderDistance;
-	
+
 
 
 	std::atomic_bool stop_thread;
@@ -193,6 +192,7 @@ public:
 	NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino);
 	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance);
 	void setTestMode(NewDriveMode mode);
+	void enableTestMode(bool enable);
 	void Run();
 	virtual ~NewAutoPilot();
 	std::string GetDebugInfo();
