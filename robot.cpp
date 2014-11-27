@@ -349,9 +349,9 @@ void Robot::Run()
 			//cv::line(mask, cv::Point(frameBGR.cols / 2, 200), cv::Point(frameBGR.cols / 2 - 40, frameBGR.rows - 100), cv::Scalar(255, 255, 255), 40);
 			//cv::line(mask, cv::Point(frameBGR.cols / 2, 200), cv::Point(frameBGR.cols / 2 + 40, frameBGR.rows - 100), cv::Scalar(255, 255, 255), 40);
 			std::vector<cv::Point2i> triangle;
-			triangle.push_back(cv::Point(frameBGR.cols / 2, 100));
-			triangle.push_back(cv::Point(frameBGR.cols / 2 - 40, frameBGR.rows - 100));
-			triangle.push_back(cv::Point(frameBGR.cols / 2 + 40, frameBGR.rows - 100));
+			triangle.push_back(cv::Point(frameBGR.cols / 2, 50));
+			triangle.push_back(cv::Point(frameBGR.cols / 2 - 80, frameBGR.rows - 100));
+			triangle.push_back(cv::Point(frameBGR.cols / 2 + 80, frameBGR.rows - 100));
 			cv::fillConvexPoly(mask, triangle, cv::Scalar::all(255));
  			tmp = 255 - (thresholdedImages[INNER_BORDER] + thresholdedImages[OUTER_BORDER] + thresholdedImages[FIELD]);
 			tmp.copyTo(selected, mask); // perhaps use field and inner border

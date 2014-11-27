@@ -156,7 +156,7 @@ NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
 
 		//std::cout << "rotate: " << rotate << std::endl;
 		//wheels->Rotate(lastBallLocation.horizontalAngle < 0, rotate);
-		wheels->DriveRotate(15, 0, lastBallLocation.horizontalAngle < 0 ? rotate : -rotate);
+		wheels->DriveRotate(10, 0, lastBallLocation.horizontalAngle < 0 ? rotate : -rotate);
 		coilgun->ToggleTribbler(true);
 	}
 	//Ball is far away
