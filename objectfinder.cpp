@@ -128,6 +128,9 @@ cv::Point2i ObjectFinder::LocateGateOnScreen(ThresholdedImages &HSVRanges, cv::M
 	rectangle(HSVRanges[BALL], bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
 	//for clear visual:
 	rectangle(frameBGR, bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
+	if (HSVRanges.find(SIGHT_MASK) != HSVRanges.end()) {
+		rectangle(HSVRanges[SIGHT_MASK], bounding_rect.tl(), bounding_rect.br(), color, -1, 8, 0);
+	}
 	/*
 	cv::Scalar color4(255, 0, 0);
 	new:

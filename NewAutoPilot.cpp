@@ -221,7 +221,7 @@ NewDriveMode LocateGate::step(NewAutoPilot&NewAutoPilot, double dt)
 	/*
 	int s = sign((int)lastGateLocation.horizontalAngle);
 
-	wheels->DriveRotate(0, 0, s*30);
+	wheels->Rotate(lastGateLocation.horizontalAngle > 0, 30);
 	*/
 	return DRIVEMODE_LOCATE_GATE;
 }

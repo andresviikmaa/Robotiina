@@ -6,6 +6,7 @@
 #define deg150 (150.0 * PI / 180.0)
 #define deg30 (30.0 * PI / 180.0)
 #define deg270 (270.0 * PI / 180.0)
+//#define LIMIT_ACCELERATION
 
 WheelController::WheelController() : ThreadedClass("WheelController")
 {
@@ -113,12 +114,12 @@ void WheelController::DriveRotate(double velocity, double direction, double rota
 	targetSpeed.velocity = velocity; // sin(direction* PI / 180.0)* velocity + rotate;
 	targetSpeed.heading = direction; //cos(direction* PI / 180.0)* velocity + rotate,
 	targetSpeed.rotation = rotate;
-
+#ifndef LIMIT_ACCELERATION
 		auto speeds = CalculateWheelSpeeds(targetSpeed.velocity, targetSpeed.heading, targetSpeed.rotation);
 		w_left->SetSpeed(speeds.x);
 		w_right->SetSpeed(speeds.y);
 		w_back->SetSpeed(speeds.z);
-
+#endif
 	directControl = false;
 	updateSpeed = true;
 	lastUpdate = boost::posix_time::microsec_clock::local_time();
@@ -241,16 +242,13 @@ void WheelController::Run()
 {
 	while (!stop_thread) {
 		CalculateRobotSpeed();
-		/*
-		continue;
+#ifdef LIMIT_ACCELERATION
 		boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
 		if (!updateSpeed && (now - lastUpdate).total_milliseconds() > 500) {
 			targetSpeed = {0,0,0};
 		}
 		updateSpeed = false;
 		Speed speed = targetSpeed;
-//#define LIMIT_ACCELERATION
-#ifdef LIMIT_ACCELERATION
 		double dt = (double)(now - lastStep).total_milliseconds() / 1000.0;
 		if (dt < 0.0000001) continue;
 
@@ -265,14 +263,14 @@ void WheelController::Run()
 
 		acc = sign * std::min(fabs(acc), 500.0);
 		speed.velocity = acc*dt + actualSpeed.velocity;
-#endif
+
 		auto speeds = CalculateWheelSpeeds(speed.velocity, speed.heading, speed.rotation);
 		//std::cout << "wheel speeds, left: " << speeds.x << ", right: " << speeds.y << ", back: " << speeds.z << std::endl;
 		w_left->SetSpeed(speeds.x);
 		w_right->SetSpeed(speeds.y);
 		w_back->SetSpeed(speeds.z);
 		lastStep = now;
-		*/
+#endif
 		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // do not poll serial to fast
 	}
 	std::cout << "WheelController stoping" << std::endl;
