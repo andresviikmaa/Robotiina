@@ -86,6 +86,7 @@
     <ClInclude Include="Arduino.h" />
     <ClInclude Include="autocalibrator.h" />
     <ClInclude Include="AutoPilot.h" />
+    <ClInclude Include="BallFinder.h" />
     <ClInclude Include="blockingreader.h" />
     <ClInclude Include="calibrationconfreader.h" />
     <ClInclude Include="camera.h" />
@@ -93,6 +94,7 @@
     <ClInclude Include="colorcalibrator.h" />
     <ClInclude Include="ComPortScanner.h" />
     <ClInclude Include="dialog.h" />
+    <ClInclude Include="GateFinder.h" />
     <ClInclude Include="ImageThresholder.h" />
     <ClInclude Include="kalmanFilter.h" />
     <ClInclude Include="MouseFinder.h" />
@@ -113,12 +115,14 @@
     <ClCompile Include="Arduino.cpp" />
     <ClCompile Include="autocalibrator.cpp" />
     <ClCompile Include="AutoPilot.cpp" />
+    <ClCompile Include="BallFinder.cpp" />
     <ClCompile Include="calibrationconfreader.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="coilBoard.cpp" />
     <ClCompile Include="colorcalibrator.cpp" />
     <ClCompile Include="ComPortScanner.cpp" />
     <ClCompile Include="dialog.cpp" />
+    <ClCompile Include="GateFinder.cpp" />
     <ClCompile Include="kalmanFilter.cpp" />
     <ClCompile Include="MouseFinder.cpp" />
     <ClCompile Include="NewAutoPilot.cpp" />

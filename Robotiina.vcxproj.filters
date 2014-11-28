@@ -67,6 +67,12 @@
     <ClCompile Include="Arduino.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BallFinder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GateFinder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="autocalibrator.h">
@@ -142,6 +148,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Arduino.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BallFinder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GateFinder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
