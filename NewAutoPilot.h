@@ -173,7 +173,7 @@ private:
 	boost::posix_time::ptime rotateTime = time;
 
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
-	boost::posix_time::ptime lastUpdate = time;
+	boost::posix_time::ptime lastUpdate = time - boost::posix_time::seconds(60);
 	NewDriveMode lastDriveMode = DRIVEMODE_IDLE;
 	NewDriveMode driveMode = DRIVEMODE_IDLE;
 	NewDriveMode testDriveMode = DRIVEMODE_IDLE;

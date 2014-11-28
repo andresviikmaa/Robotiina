@@ -1,9 +1,10 @@
 #include "VideoRecorder.h"
 #include <boost/filesystem.hpp>
 
-//#ifdef WIN32
+#ifdef WIN32
 #define SAVE_AS_AVI
-//#endif
+#endif
+
 VideoRecorder::VideoRecorder(const std::string &outputDir, int fps, const cv::Size &frameSize) : outputDir(outputDir), fps(fps), frameSize(frameSize)
 {
 }
