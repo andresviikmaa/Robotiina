@@ -56,36 +56,36 @@ void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gat
 }
 
 /*BEGIN Idle*/
-void Idle::onEnter(NewAutoPilot&NewAutoPilot)
+void Idle::onEnter(NewAutoPilot&newAutoPilot)
 {
-	idleStart = NewAutoPilot.lastUpdate;
-	NewAutoPilot.wheels->Stop();
-	NewAutoPilot.coilgun->ToggleTribbler(false);
+	DriveInstruction::onEnter(newAutoPilot);
+	newAutoPilot.wheels->Stop();
+	newAutoPilot.coilgun->ToggleTribbler(false);
 }
 
-void Idle::onExit(NewAutoPilot& NewAutoPilot)
+void Idle::onExit(NewAutoPilot& newAutoPilot)
 {
-	idleStart = NewAutoPilot.lastUpdate;
 }
 
-NewDriveMode Idle::step(NewAutoPilot&NewAutoPilot, double dt)
+NewDriveMode Idle::step(NewAutoPilot&newAutoPilot, double dt)
 {
-	return (idleStart - NewAutoPilot.lastUpdate).total_milliseconds() > 0 ? DRIVEMODE_IDLE : DRIVEMODE_DRIVE_TO_BALL;
+	return (actionStart - newAutoPilot.lastUpdate).total_milliseconds() > 0 ? DRIVEMODE_IDLE : DRIVEMODE_DRIVE_TO_BALL;
 }
 
 /*BEGIN LocateBall*/
-void LocateBall::onEnter(NewAutoPilot&NewAutoPilot)
+void LocateBall::onEnter(NewAutoPilot&newAutoPilot)
 {
-	NewAutoPilot.coilgun->ToggleTribbler(false);
+	DriveInstruction::onEnter(newAutoPilot);
+	newAutoPilot.coilgun->ToggleTribbler(false);
 	rotateStart = boost::posix_time::microsec_clock::local_time();
 }
 
-NewDriveMode LocateBall::step(NewAutoPilot&NewAutoPilot, double dt)
+NewDriveMode LocateBall::step(NewAutoPilot&newAutoPilot, double dt)
 {
-	auto &ballInTribbler = NewAutoPilot.ballInTribbler;
-	auto &ballInSight = NewAutoPilot.ballInSight;
-	auto &wheels = NewAutoPilot.wheels;
-	auto &lastBallLocation = NewAutoPilot.lastBallLocation;
+	auto &ballInTribbler = newAutoPilot.ballInTribbler;
+	auto &ballInSight = newAutoPilot.ballInSight;
+	auto &wheels = newAutoPilot.wheels;
+	auto &lastBallLocation = newAutoPilot.lastBallLocation;
 	
 
 	if (ballInTribbler) return DRIVEMODE_LOCATE_GATE;
@@ -107,38 +107,40 @@ NewDriveMode LocateBall::step(NewAutoPilot&NewAutoPilot, double dt)
 	}
 }
 /*BEGIN LocateHome*/
-NewDriveMode LocateHome::step(NewAutoPilot&NewAutoPilot, double dt)
+NewDriveMode LocateHome::step(NewAutoPilot&newAutoPilot, double dt)
 {
 	return DRIVEMODE_LOCATE_BALL;
 }
 
 /*BEGIN DriveToHome*/
-NewDriveMode DriveToHome::step(NewAutoPilot&NewAutoPilot, double dt)
+NewDriveMode DriveToHome::step(NewAutoPilot&newAutoPilot, double dt)
 {
-	NewAutoPilot.wheels->Forward(-40);
+	newAutoPilot.wheels->Forward(-40);
 	std::chrono::milliseconds dura(300);
 	std::this_thread::sleep_for(dura);
-	NewAutoPilot.wheels->Forward(0);
+	newAutoPilot.wheels->Forward(0);
 
 	return DRIVEMODE_LOCATE_BALL;
 }
 /*BEGIN DriveToBall*/
-void DriveToBall::onEnter(NewAutoPilot&NewAutoPilot)
+void DriveToBall::onEnter(NewAutoPilot&newAutoPilot)
 {
-	NewAutoPilot.coilgun->ToggleTribbler(false);
-	start = NewAutoPilot.lastBallLocation;
+	DriveInstruction::onEnter(newAutoPilot);
+
+	newAutoPilot.coilgun->ToggleTribbler(false);
+	start = newAutoPilot.lastBallLocation;
 	//Desired distance
 	target = { 350, 0, 0 };
 }
 
-NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
+NewDriveMode DriveToBall::step(NewAutoPilot&newAutoPilot, double dt)
 {
-	if (!NewAutoPilot.ballInSight) return DRIVEMODE_LOCATE_BALL;
-	if (NewAutoPilot.ballInTribbler) return DRIVEMODE_LOCATE_GATE;
+	if (!newAutoPilot.ballInSight) return DRIVEMODE_LOCATE_BALL;
+	if (newAutoPilot.ballInTribbler) return DRIVEMODE_LOCATE_GATE;
 
-	auto &lastBallLocation = NewAutoPilot.lastBallLocation;
-	auto &wheels = NewAutoPilot.wheels;
-	auto &coilgun = NewAutoPilot.coilgun;
+	auto &lastBallLocation = newAutoPilot.lastBallLocation;
+	auto &wheels = newAutoPilot.wheels;
+	auto &coilgun = newAutoPilot.coilgun;
 	if(lastBallLocation.distance < target.distance+50){
 		coilgun->ToggleTribbler(true);
 	}
@@ -178,46 +180,48 @@ NewDriveMode DriveToBall::step(NewAutoPilot&NewAutoPilot, double dt)
 	return DRIVEMODE_DRIVE_TO_BALL;
 }
 /*BEGIN CatchBall*/
-void CatchBall::onEnter(NewAutoPilot&NewAutoPilot)
+void CatchBall::onEnter(NewAutoPilot&newAutoPilot)
 {
-	NewAutoPilot.coilgun->ToggleTribbler(true);
+	DriveInstruction::onEnter(newAutoPilot);
+
+	newAutoPilot.coilgun->ToggleTribbler(true);
 	catchStart = boost::posix_time::microsec_clock::local_time();
-	NewAutoPilot.wheels->Stop();
+	newAutoPilot.wheels->Stop();
 }
 void CatchBall::onExit(NewAutoPilot& NewAutoPilot)
 {
-	//NewAutoPilot.coilgun->ToggleTribbler(false);
+	//newAutoPilot.coilgun->ToggleTribbler(false);
 }
-NewDriveMode CatchBall::step(NewAutoPilot&NewAutoPilot, double dt)
+NewDriveMode CatchBall::step(NewAutoPilot&newAutoPilot, double dt)
 {
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::time_duration::tick_type catchDuration = (time - catchStart).total_milliseconds();
-	auto &lastBallLocation = NewAutoPilot.lastBallLocation;
-	auto &wheels = NewAutoPilot.wheels;
-	auto &coilgun = NewAutoPilot.coilgun;
+	auto &lastBallLocation = newAutoPilot.lastBallLocation;
+	auto &wheels = newAutoPilot.wheels;
+	auto &coilgun = newAutoPilot.coilgun;
 	//std::cout << catchDuration << std::endl;
-	if (NewAutoPilot.ballInTribbler) {
+	if (newAutoPilot.ballInTribbler) {
 		return DRIVEMODE_LOCATE_GATE;
 	}
 	else if (catchDuration > 2000) { //trying to catch ball for 2 seconds
 		return DRIVEMODE_LOCATE_BALL;
 	}
 	else {
-		NewAutoPilot.wheels->DriveRotate(40, 0, 0);
+		newAutoPilot.wheels->DriveRotate(40, 0, 0);
 	}
 	return DRIVEMODE_CATCH_BALL;
 }
 /*END CatchBall*/
 
 /*BEGIN LocateGate*/
-NewDriveMode LocateGate::step(NewAutoPilot&NewAutoPilot, double dt)
+NewDriveMode LocateGate::step(NewAutoPilot&newAutoPilot, double dt)
 {
-	auto &gateInSight = NewAutoPilot.gateInSight;
-	auto &coilgun = NewAutoPilot.coilgun;
-	auto &ballInTribbler = NewAutoPilot.ballInTribbler;
-	auto &wheels = NewAutoPilot.wheels;
-	auto &sightObstructed = NewAutoPilot.sightObstructed;
-	auto &lastGateLocation = NewAutoPilot.lastGateLocation;
+	auto &gateInSight = newAutoPilot.gateInSight;
+	auto &coilgun = newAutoPilot.coilgun;
+	auto &ballInTribbler = newAutoPilot.ballInTribbler;
+	auto &wheels = newAutoPilot.wheels;
+	auto &sightObstructed = newAutoPilot.sightObstructed;
+	auto &lastGateLocation = newAutoPilot.lastGateLocation;
 
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 
@@ -232,15 +236,15 @@ NewDriveMode LocateGate::step(NewAutoPilot&NewAutoPilot, double dt)
 	return DRIVEMODE_LOCATE_GATE;
 }
 /*BEGIN AimGate*/
-NewDriveMode AimGate::step(NewAutoPilot&NewAutoPilot, double dt)
+NewDriveMode AimGate::step(NewAutoPilot&newAutoPilot, double dt)
 {
 
-	auto &gateInSight = NewAutoPilot.gateInSight;
-	auto &coilgun = NewAutoPilot.coilgun;
-	auto &ballInTribbler = NewAutoPilot.ballInTribbler;
-	auto &wheels = NewAutoPilot.wheels;
-	auto &sightObstructed = NewAutoPilot.sightObstructed;
-	auto &lastGateLocation = NewAutoPilot.lastGateLocation;
+	auto &gateInSight = newAutoPilot.gateInSight;
+	auto &coilgun = newAutoPilot.coilgun;
+	auto &ballInTribbler = newAutoPilot.ballInTribbler;
+	auto &wheels = newAutoPilot.wheels;
+	auto &sightObstructed = newAutoPilot.sightObstructed;
+	auto &lastGateLocation = newAutoPilot.lastGateLocation;
 
 
 	if (!ballInTribbler) return DRIVEMODE_LOCATE_BALL;
@@ -274,35 +278,36 @@ NewDriveMode AimGate::step(NewAutoPilot&NewAutoPilot, double dt)
 }
 
 /*BEGIN Kick*/
-NewDriveMode Kick::step(NewAutoPilot&NewAutoPilot, double dt)
+NewDriveMode Kick::step(NewAutoPilot&newAutoPilot, double dt)
 {
-	NewAutoPilot.coilgun->ToggleTribbler(false);
-	NewAutoPilot.wheels->Stop();
+	newAutoPilot.coilgun->ToggleTribbler(false);
+	newAutoPilot.wheels->Stop();
 	std::this_thread::sleep_for(std::chrono::milliseconds(50));
-	NewAutoPilot.coilgun->Kick();
+	newAutoPilot.coilgun->Kick();
 	std::this_thread::sleep_for(std::chrono::milliseconds(500)); //half second wait.
 	return DRIVEMODE_LOCATE_BALL;
 
 }
-void Kick::onEnter(NewAutoPilot&NewAutoPilot)
+void Kick::onEnter(NewAutoPilot&newAutoPilot)
 {
-	NewAutoPilot.coilgun->ToggleTribbler(false);
+	DriveInstruction::onEnter(newAutoPilot);
+	newAutoPilot.coilgun->ToggleTribbler(false);
 }
 
 /*BEGIN RecoverCrash*/
-NewDriveMode RecoverCrash::step(NewAutoPilot&NewAutoPilot, double dt)
+NewDriveMode RecoverCrash::step(NewAutoPilot&newAutoPilot, double dt)
 {
 	double velocity2 = 0, direction2 = 0, rotate2 = 0;
-	auto targetSpeed = NewAutoPilot.wheels->GetTargetSpeed();
+	auto targetSpeed = newAutoPilot.wheels->GetTargetSpeed();
 
 	//Backwards
-	NewAutoPilot.wheels->Drive(50, 180 - targetSpeed.heading);
+	newAutoPilot.wheels->Drive(50, 180 - targetSpeed.heading);
 	std::chrono::milliseconds dura(1000);
 	std::this_thread::sleep_for(dura);
-	NewAutoPilot.wheels->Rotate(1, 50);
+	newAutoPilot.wheels->Rotate(1, 50);
 	std::this_thread::sleep_for(dura);
 	
-	NewAutoPilot.wheels->Stop();
+	newAutoPilot.wheels->Stop();
 
 	return DRIVEMODE_LOCATE_BALL;
 }
