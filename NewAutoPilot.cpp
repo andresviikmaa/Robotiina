@@ -207,7 +207,9 @@ NewDriveMode CatchBall::step(NewAutoPilot&newAutoPilot, double dt)
 		return DRIVEMODE_LOCATE_BALL;
 	}
 	else {
-		newAutoPilot.wheels->DriveRotate(40, 0, 0);
+		//newAutoPilot.wheels->DriveRotate(40, 0, 0);
+		double shake = 10 * sign(sin(1 * (time - actionStart).total_milliseconds()));
+		newAutoPilot.wheels->DriveRotate(40, 0, shake);
 	}
 	return DRIVEMODE_CATCH_BALL;
 }
