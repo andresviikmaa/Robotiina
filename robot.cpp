@@ -633,7 +633,7 @@ void Robot::Run()
 			START_DIALOG
 				createButton("Move Left", [this] {this->wheels->Drive(60, 90); });
 				createButton("Move Right", [this]{this->wheels->Drive(60, -90); });
-				createButton("Move Forward", [this]{this->wheels->Drive(60, 0); });
+				createButton("Move Forward", [this]{this->wheels->Drive(190, 0); });
 				createButton("Move Back", [this]{this->wheels->Drive(-60, 0); });
 				createButton("Rotate Right", [this]{this->wheels->Rotate(0, 30); });
 				createButton("Rotate Left", [this]{this->wheels->Rotate(1, 30); });

@@ -163,8 +163,8 @@ NewDriveMode DriveToBall::step(NewAutoPilot&newAutoPilot, double dt)
 	}
 	//Ball is far away
 	else {
-		rotate = abs(lastBallLocation.horizontalAngle) * 0.4;
-		rotate = 0;
+		rotate = abs(lastBallLocation.horizontalAngle) * 0.4 +3;
+		//rotate = 0;
 		//speed calculation
 		if (lastBallLocation.distance > 700){
 			speed = 150;
@@ -175,7 +175,7 @@ NewDriveMode DriveToBall::step(NewAutoPilot&newAutoPilot, double dt)
 		if(speed > 120){
 			speed=120;
 		}
-		wheels->DriveRotate(speed, -lastBallLocation.horizontalAngle, lastBallLocation.horizontalAngle < 0?rotate:-rotate);
+		wheels->DriveRotate(speed, /*-lastBallLocation.horizontalAngle*/ 0, lastBallLocation.horizontalAngle < 0?rotate:-rotate);
 	}
 	return DRIVEMODE_DRIVE_TO_BALL;
 }
@@ -207,9 +207,14 @@ NewDriveMode CatchBall::step(NewAutoPilot&newAutoPilot, double dt)
 		return DRIVEMODE_LOCATE_BALL;
 	}
 	else {
+		double rotate = abs(lastBallLocation.horizontalAngle) * 0.4 + 5;
+
+		//std::cout << "rotate: " << rotate << std::endl;
+		//wheels->Rotate(lastBallLocation.horizontalAngle < 0, rotate);
+		newAutoPilot.wheels->DriveRotate(50, 0, lastBallLocation.horizontalAngle < 0 ? rotate : -rotate);
 		//newAutoPilot.wheels->DriveRotate(40, 0, 0);
-		double shake = 10 * sign(sin(1 * (time - actionStart).total_milliseconds()));
-		newAutoPilot.wheels->DriveRotate(40, 0, shake);
+		//double shake = 10 * sign(sin(1 * (time - actionStart).total_milliseconds()));
+		//newAutoPilot.wheels->DriveRotate(40, 0, shake);
 	}
 	return DRIVEMODE_CATCH_BALL;
 }
