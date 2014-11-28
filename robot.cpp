@@ -210,9 +210,10 @@ void Robot::Run()
 	GateFinder gate2Finder;
 	BallFinder finder;
 
-	VideoRecorder videoRecorder("videos/", 30, frameBGR.size());
 
 	frameBGR = camera->Capture();
+
+	VideoRecorder videoRecorder("videos/", 30, frameBGR.size());
 	
 	std::stringstream subtitles;
 
