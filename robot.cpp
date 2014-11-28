@@ -5,7 +5,8 @@
 #include "stillcamera.h"
 #include "wheelcontroller.h"
 #include "coilBoard.h"
-#include "objectfinder.h"
+#include "GateFinder.h"
+#include "BallFinder.h"
 #include "dialog.h"
 #include "wheel.h"
 #include "ComPortScanner.h"
@@ -205,9 +206,9 @@ void Robot::Run()
 	//RobotTracker tracker(wheels);
 	ThresholdedImages thresholdedImages;
 	ImageThresholder thresholder(thresholdedImages, objectThresholds);
-	ObjectFinder gate1Finder;
-	ObjectFinder gate2Finder;
-	ObjectFinder finder;
+	GateFinder gate1Finder;
+	GateFinder gate2Finder;
+	BallFinder finder;
 
 	VideoRecorder videoRecorder("videos/", 30, frameBGR.size());
 
@@ -481,6 +482,16 @@ void Robot::Run()
 			//				STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
+				createButton(std::string("Save video: ") + (captureFrames ? "on" : "off"), [this, &captureDir, &time, &videoRecorder, &frameBGR]{
+					if (this->captureFrames) {
+						// save old video
+					}
+
+					this->captureFrames = !this->captureFrames;
+					this->captureFrames ? videoRecorder.Start() : videoRecorder.Stop();
+
+					this->last_state = STATE_END_OF_GAME; // force dialog redraw
+				});
 				STATE_BUTTON("Settings", STATE_SETTINGS)
 				STATE_BUTTON("Manual (C)ontrol", STATE_MANUAL_CONTROL)
 				STATE_BUTTON("(T)est CoilGun", STATE_TEST_COILGUN)
