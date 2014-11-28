@@ -116,9 +116,9 @@ void WheelController::DriveRotate(double velocity, double direction, double rota
 	targetSpeed.rotation = rotate;
 #ifndef LIMIT_ACCELERATION
 		auto speeds = CalculateWheelSpeeds(targetSpeed.velocity, targetSpeed.heading, targetSpeed.rotation);
-		w_left->SetSpeed(speeds.x);
-		w_right->SetSpeed(speeds.y);
-		w_back->SetSpeed(speeds.z);
+	if (w_left != NULL) w_left->SetSpeed(speeds.x);
+	if (w_right != NULL) w_right->SetSpeed(speeds.y);
+	if (w_back != NULL) w_back->SetSpeed(speeds.z);
 #endif
 	directControl = false;
 	updateSpeed = true;
