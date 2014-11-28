@@ -210,9 +210,10 @@ void Robot::Run()
 	GateFinder gate2Finder;
 	BallFinder finder;
 
-	VideoRecorder videoRecorder("videos/", 30, frameBGR.size());
 
 	frameBGR = camera->Capture();
+
+	VideoRecorder videoRecorder("videos/", 30, frameBGR.size());
 	
 	std::stringstream subtitles;
 
@@ -703,7 +704,7 @@ void Robot::Run()
 
 		int j = 0;
 		for (auto s : subtitles2) {
-			cv::putText(display, s, cv::Point(10, display.rows - 340 + j), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+			cv::putText(display, s, cv::Point(10, display.rows - 160 + j), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 			j += 20;
 		}
 
