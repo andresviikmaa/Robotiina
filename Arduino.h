@@ -36,7 +36,7 @@ public:
 	ArduinoBoard(boost::asio::io_service &io_service, std::string port = "", unsigned int baud_rate = 115200)  : ThreadedClass("Arduino"), SimpleSerial(io_service, port, baud_rate) {
 		stop_thread = false;
 		ballInTribbler = false;
-		//Start();
+		Start();
 	};
 	virtual ~ArduinoBoard(){
 		WaitForStop();

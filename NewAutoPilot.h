@@ -131,7 +131,7 @@ class CoilGun;
 class WheelController;
 class Arduino;
 
-class NewAutoPilot: public IAutoPilot
+class NewAutoPilot /*: public IAutoPilot*/
 {
 	friend class Idle;
 	friend class DriveToBall;
@@ -163,6 +163,7 @@ private:
 	std::atomic_bool sightObstructed;
 	std::atomic_bool somethingOnWay;
 	std::atomic_int borderDistance;
+	std::atomic_int closestBallsDir;
 
 
 
@@ -190,7 +191,7 @@ protected:
 	void WriteInfoOnScreen();
 public:
 	NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino);
-	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance);
+	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance, int closestBallsDir);
 	void setTestMode(NewDriveMode mode);
 	void enableTestMode(bool enable);
 	void Run();

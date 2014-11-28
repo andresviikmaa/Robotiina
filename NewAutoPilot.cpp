@@ -34,11 +34,12 @@ NewAutoPilot::NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *a
 	ballInTribbler = false;
 	sightObstructed = false;
 	somethingOnWay = false;
+	closestBallsDir = 0;
 
 	threads.create_thread(boost::bind(&NewAutoPilot::Run, this));
 }
 
-void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance)
+void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance, int closestBallsDir)
 {
 	boost::mutex::scoped_lock lock(mutex);
 	ballInSight = ballLocation != NULL;
@@ -49,6 +50,8 @@ void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gat
 	this->sightObstructed = sightObstructed;
 	this->somethingOnWay = somethingOnWay;
 	this->borderDistance = borderDistance;
+	if (closestBallsDir != 0)
+		this->closestBallsDir = closestBallsDir;
 	if (!testMode) {
 		lastUpdate = boost::posix_time::microsec_clock::local_time();
 		if (driveMode == DRIVEMODE_IDLE) driveMode = DRIVEMODE_LOCATE_BALL;
@@ -86,7 +89,7 @@ NewDriveMode LocateBall::step(NewAutoPilot&newAutoPilot, double dt)
 	auto &ballInSight = newAutoPilot.ballInSight;
 	auto &wheels = newAutoPilot.wheels;
 	auto &lastBallLocation = newAutoPilot.lastBallLocation;
-	
+	auto &closestBallsDir = newAutoPilot.closestBallsDir;
 
 	if (ballInTribbler) return DRIVEMODE_LOCATE_GATE;
 	if (ballInSight) return DRIVEMODE_DRIVE_TO_BALL;
@@ -99,7 +102,22 @@ NewDriveMode LocateBall::step(NewAutoPilot&newAutoPilot, double dt)
 	int s = sign((int)lastBallLocation.horizontalAngle);
 
 	if (rotateDuration < 5700){
-		wheels->DriveRotate(0, 0, 25);
+		if (rotateDuration < 1000) {
+			wheels->Rotate(closestBallsDir > 0, 50);
+		}
+		else if (rotateDuration < 2500){
+			wheels->Rotate(closestBallsDir > 0, 35);
+		}
+		else if (rotateDuration < 4500) {
+			wheels->Rotate(closestBallsDir > 0, 20);
+		}
+		else if (rotateDuration < 5000) {
+			wheels->Rotate(closestBallsDir > 0, 15);
+		}
+		else{
+			wheels->Stop();
+		}
+		
 		return DRIVEMODE_LOCATE_BALL;
 	}
 	else {
@@ -126,7 +144,9 @@ NewDriveMode DriveToHome::step(NewAutoPilot&newAutoPilot, double dt)
 void DriveToBall::onEnter(NewAutoPilot&newAutoPilot)
 {
 	DriveInstruction::onEnter(newAutoPilot);
-
+	newAutoPilot.wheels->Stop();
+	std::chrono::milliseconds dura(200);
+	std::this_thread::sleep_for(dura);
 	newAutoPilot.coilgun->ToggleTribbler(false);
 	start = newAutoPilot.lastBallLocation;
 	//Desired distance
@@ -171,9 +191,6 @@ NewDriveMode DriveToBall::step(NewAutoPilot&newAutoPilot, double dt)
 		}
 		else{
 			speed = lastBallLocation.distance * 0.29 - 94;
-		}
-		if(speed > 120){
-			speed=120;
 		}
 		wheels->DriveRotate(speed, /*-lastBallLocation.horizontalAngle*/ 0, lastBallLocation.horizontalAngle < 0?rotate:-rotate);
 	}
@@ -233,13 +250,18 @@ NewDriveMode LocateGate::step(NewAutoPilot&newAutoPilot, double dt)
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 
 	if (!ballInTribbler) return DRIVEMODE_LOCATE_BALL;
-	if (gateInSight) return DRIVEMODE_AIM_GATE;
-	wheels->Rotate(0, 30);
-	/*
-	int s = sign((int)lastGateLocation.horizontalAngle);
+	if (gateInSight) {
+		std::chrono::milliseconds dura(100); // do we need to sleep?
+		std::this_thread::sleep_for(dura);
+		wheels->Stop();
+		return DRIVEMODE_AIM_GATE;
+	}
+	//wheels->Rotate(0, 50);
+	
+	//int s = sign((int)lastGateLocation.horizontalAngle);
 
-	wheels->Rotate(lastGateLocation.horizontalAngle > 0, 30);
-	*/
+	wheels->Rotate(lastGateLocation.horizontalAngle < 0, 30);
+	
 	return DRIVEMODE_LOCATE_GATE;
 }
 /*BEGIN AimGate*/
@@ -338,7 +360,7 @@ void NewAutoPilot::Run()
 		if (!testMode && ((boost::posix_time::microsec_clock::local_time() - lastUpdate).total_milliseconds() > 1000)) {
 			newMode = DRIVEMODE_IDLE;
 		}
-		else if (false && !testMode && somethingOnWay && curDriveMode->first != DRIVEMODE_RECOVER_CRASH && curDriveMode->first != DRIVEMODE_IDLE){
+		else if (!testMode && somethingOnWay && curDriveMode->first != DRIVEMODE_RECOVER_CRASH && curDriveMode->first != DRIVEMODE_IDLE){
 			newMode = DRIVEMODE_RECOVER_CRASH;
 		}
 		else {

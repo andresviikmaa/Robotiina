@@ -13,7 +13,9 @@ BallFinder::~BallFinder()
 
 cv::Point2i BallFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &frameHSV, cv::Mat &frameBGR, OBJECT target) {
 	cv::Point2d notValidPosition = cv::Point2d(-1.0, -1.0);
-
+	ballCountLeft=0;
+	ballCountRight=0;
+	
 	int smallestBallArea = 4;
 	cv::Point2d center(-1, -1);
 	cv::Mat imgThresholded = HSVRanges[target]; // reference counted, I think
@@ -32,6 +34,7 @@ cv::Point2i BallFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &fr
 	}
 	//the geater the closest
 	double ball_distance = 0;
+	double ball_shift = 0;
 	double closest_distance = 0;
 	std::vector<std::pair<int, int> > ball_indexes;
 	for (int i = 0; i < contours.size(); i++) // iterate through each contour.
@@ -43,7 +46,12 @@ cv::Point2i BallFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &fr
 		else{
 			cv::Moments M = cv::moments(contours[i]);
 			ball_distance = M.m01 / M.m00;
+			ball_shift = M.m10 / M.m00;
 			ball_indexes.push_back(std::make_pair(ball_distance, i));
+			if (ball_distance > 200) {
+				if (ball_shift < 200) ballCountLeft++;
+				if (ball_shift > 440) ballCountRight++;			
+			}
 		}
 	}
 

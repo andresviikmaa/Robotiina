@@ -47,6 +47,12 @@ void VideoRecorder::Start()
 
 
 }
+void padTo(std::string &str, const size_t num, const char paddingChar = '0')
+{
+    if(num > str.size())
+    	str.insert(0, num - str.size(), paddingChar);
+}
+
 void VideoRecorder::Stop()
 {
 	if (outputVideo != NULL) {
@@ -64,7 +70,11 @@ void VideoRecorder::RecordFrame(const cv::Mat &frame, const std::string subtitle
 #ifdef SAVE_AS_AVI
 	*outputVideo << frame;
 #else
-	std::string frameName = fileName + "/" + std::to_string(frameCounter) + ".jpg";
+	
+	std::cout << std::setw (10) << 77 << std::endl;
+	std::string f = std::to_string(frameCounter);
+	padTo(f,20);
+	std::string frameName = fileName + "/" + f + ".jpg";
 	std::replace(frameName.begin(), frameName.end(), ':', '.');
 	cv::imwrite(frameName, frame);
 #endif

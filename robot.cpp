@@ -146,18 +146,18 @@ bool Robot::Launch(int argc, char* argv[])
 					ptree pt;
 					read_ini("conf/ports.ini", pt);
 					std::string port = pt.get<std::string>(std::to_string(ID_COILGUN));
-					//std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
+					std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
 
 					coilBoard = new CoilBoard(io, port);
 					//coilBoard = new CoilGun();
 
-					//arduino = new ArduinoBoard(io, port2);
+					arduino = new ArduinoBoard(io, port2);
 				}
 				else {
 					coilBoard = new CoilGun();
 					arduino = new Arduino();
 				}
-				arduino = new Arduino();
+				//arduino = new Arduino();
 	
 			}
 		}
@@ -212,8 +212,6 @@ void Robot::Run()
 
 
 	frameBGR = camera->Capture();
-
-	VideoRecorder videoRecorder("videos/", 30, frameBGR.size());
 	
 	std::stringstream subtitles;
 
@@ -276,6 +274,7 @@ void Robot::Run()
 	cv::Mat display_empty(frameBGR.rows + 160, frameBGR.cols + 200, frameBGR.type(), cv::Scalar(0));
 	cv::Mat display(frameBGR.rows + 160, frameBGR.cols + 200, frameBGR.type(), cv::Scalar(0));
 	cv::Mat display_roi = display(cv::Rect(0, 0, frameBGR.cols, frameBGR.rows)); // region of interest
+	VideoRecorder videoRecorder("videos/", 30, display.size());
 	AutoCalibrator calibrator(frameBGR.size());
 
 	while (true)
@@ -300,16 +299,17 @@ void Robot::Run()
 			lastStepTime = time;
 			frames = 0;
 		}
+#define RECORD_AFTER_PROCESSING
 #ifdef RECORD_AFTER_PROCESSING
 		if (captureFrames) {
-			videoRecorder.RecordFrame(frameBGR, subtitles.str());
+			videoRecorder.RecordFrame(display, subtitles.str());
 		}
 #endif
 		frameBGR = camera->Capture();
 		
 #ifndef RECORD_AFTER_PROCESSING
 		if (captureFrames) {
-			videoRecorder.RecordFrame(frameBGR, subtitles.str());
+			videoRecorder.RecordFrame(display, subtitles.str());
 		}
 #endif
 		//
@@ -337,6 +337,21 @@ void Robot::Run()
 		thresholder.Start(frameHSV, { BALL, GATE1, GATE2, INNER_BORDER, OUTER_BORDER, FIELD });
 		thresholder.WaitForStop();
 
+		/* STEP 2.2 cover own balls */
+		std::vector<cv::Point2i> triangle;
+		triangle.push_back(cv::Point(100, frameBGR.rows - 50));
+		triangle.push_back(cv::Point(230, frameBGR.rows - 60));
+		triangle.push_back(cv::Point(240, frameBGR.rows));
+		triangle.push_back(cv::Point(0, frameBGR.rows));
+		cv::fillConvexPoly(thresholdedImages[BALL], triangle, cv::Scalar::all(0));
+		cv::fillConvexPoly(display_roi, triangle, cv::Scalar(255,0,255));
+		triangle.clear();
+		triangle.push_back(cv::Point(frameBGR.cols - 100, frameBGR.rows - 50));
+		triangle.push_back(cv::Point(frameBGR.cols - 230, frameBGR.rows - 60));
+		triangle.push_back(cv::Point(frameBGR.cols - 240, frameBGR.rows));
+		triangle.push_back(cv::Point(frameBGR.cols - 0, frameBGR.rows));
+		cv::fillConvexPoly(thresholdedImages[BALL], triangle, cv::Scalar::all(0));
+		cv::fillConvexPoly(display_roi, triangle, cv::Scalar(255,0,255));
 
 		/**************************************************/
 		/*	STEP 3. check that path to gate is clean      */
@@ -416,15 +431,17 @@ void Robot::Run()
 		if (sonarsEnabled) {
 			sonars = arduino->GetSonarReadings();
 			somethingOnWay = (
-				(sonars.x < 11 && sonars.x > 0) ||
-				(sonars.y < 11 && sonars.y > 0) ||
-				(sonars.z < 11 && sonars.z > 0));
+				(sonars.x < 10 && sonars.x > 0) ||
+				(sonars.y < 10 && sonars.y > 0) ||
+				(sonars.z < 10 && sonars.z > 0));
 		}
 		notEnoughtGreen = false;
 		if (greenAreaDetectionEnabled) {
 			notEnoughtGreen = countNonZero(thresholdedImages[FIELD]) < 640 * 120;
 			somethingOnWay |= notEnoughtGreen;
 		}
+		// step 6.9
+		int closestBallDir = finder.ballCountLeft > 3 ? -1 : finder.ballCountRight> 3 ? 1 : 0;
 		/**************************************************/
 		/* STEP 7. feed these variables to Autopilot	  */
 		/**************************************************/
@@ -445,23 +462,26 @@ void Robot::Run()
 
 
 		if (autoPilotEnabled || autoPilot.testMode) {
-			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay, borderDistance.distance);			
+			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay, borderDistance.distance, closestBallDir);			
 		}
-
-	/*	int gate = arduino->getGate();
-		int start = arduino->getStart();
-		if (gate > -1) {
-			OBJECT newGate = gate == 0 ? GATE1 : GATE2;
-			if(newGate != targetGate){
-				targetGate = newGate;
+		
+		//---------------------------------------------
+		
+		if (sonarsEnabled) { // TODO: make new flag
+			int gate = arduino->getGate();
+			int start = arduino->getStart();
+			if (gate > -1) {
+				OBJECT newGate = gate == 0 ? GATE1 : GATE2;
+				if(newGate != targetGate){
+					targetGate = newGate;
+					last_state = STATE_END_OF_GAME;
+				}
+			}
+			if (start == 1) {
+				autoPilotEnabled = !autoPilotEnabled;
 				last_state = STATE_END_OF_GAME;
 			}
 		}
-		if (start == 1) {
-			autoPilotEnabled = !autoPilotEnabled;
-			last_state = STATE_END_OF_GAME;
-		}*/
-		
 		/**************************************************/
 		/* STEP 8. kick and drive (done in AutoPilot	  */
 		/**************************************************/
@@ -704,7 +724,7 @@ void Robot::Run()
 
 		int j = 0;
 		for (auto s : subtitles2) {
-			cv::putText(display, s, cv::Point(10, display.rows - 160 + j), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+			cv::putText(display, s, cv::Point(10, display.rows - 150 + j), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
 			j += 20;
 		}
 
