@@ -482,6 +482,16 @@ void Robot::Run()
 			//				STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(D)ance", STATE_DANCE)
 				//STATE_BUTTON("(R)emote Control", STATE_REMOTE_CONTROL)
+				createButton(std::string("Save video: ") + (captureFrames ? "on" : "off"), [this, &captureDir, &time, &videoRecorder, &frameBGR]{
+					if (this->captureFrames) {
+						// save old video
+					}
+
+					this->captureFrames = !this->captureFrames;
+					this->captureFrames ? videoRecorder.Start() : videoRecorder.Stop();
+
+					this->last_state = STATE_END_OF_GAME; // force dialog redraw
+				});
 				STATE_BUTTON("Settings", STATE_SETTINGS)
 				STATE_BUTTON("Manual (C)ontrol", STATE_MANUAL_CONTROL)
 				STATE_BUTTON("(T)est CoilGun", STATE_TEST_COILGUN)
