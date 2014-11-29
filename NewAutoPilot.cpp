@@ -34,12 +34,13 @@ NewAutoPilot::NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *a
 	ballInTribbler = false;
 	sightObstructed = false;
 	somethingOnWay = false;
-	closestBallsDir = 0;
+//	ballCount = 
+	lastBallCount = cv::Point2i(0,0);
 
 	threads.create_thread(boost::bind(&NewAutoPilot::Run, this));
 }
 
-void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance, int closestBallsDir)
+void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance, cv::Point2i ballCount)
 {
 	boost::mutex::scoped_lock lock(mutex);
 	ballInSight = ballLocation != NULL;
@@ -50,8 +51,7 @@ void NewAutoPilot::UpdateState(ObjectPosition *ballLocation, ObjectPosition *gat
 	this->sightObstructed = sightObstructed;
 	this->somethingOnWay = somethingOnWay;
 	this->borderDistance = borderDistance;
-	if (closestBallsDir != 0)
-		this->closestBallsDir = closestBallsDir;
+	this->ballCount = ballCount;
 	if (!testMode) {
 		lastUpdate = boost::posix_time::microsec_clock::local_time();
 		if (driveMode == DRIVEMODE_IDLE) driveMode = DRIVEMODE_LOCATE_BALL;
@@ -89,8 +89,8 @@ NewDriveMode LocateBall::step(NewAutoPilot&newAutoPilot, double dt)
 	auto &ballInSight = newAutoPilot.ballInSight;
 	auto &wheels = newAutoPilot.wheels;
 	auto &lastBallLocation = newAutoPilot.lastBallLocation;
-	auto &closestBallsDir = newAutoPilot.closestBallsDir;
-
+	auto &lastBallCount = newAutoPilot.lastBallCount;
+	
 	if (ballInTribbler) return DRIVEMODE_LOCATE_GATE;
 	if (ballInSight) return DRIVEMODE_DRIVE_TO_BALL;
 
@@ -99,20 +99,20 @@ NewDriveMode LocateBall::step(NewAutoPilot&newAutoPilot, double dt)
 
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateStart).total_milliseconds();
-	int s = sign((int)lastBallLocation.horizontalAngle);
-
+	int dir = lastBallCount.x > lastBallCount.y;
+    
 	if (rotateDuration < 5700){
 		if (rotateDuration < 1000) {
-			wheels->Rotate(closestBallsDir > 0, 50);
+			wheels->Rotate(dir, 50);
 		}
 		else if (rotateDuration < 2500){
-			wheels->Rotate(closestBallsDir > 0, 35);
+			wheels->Rotate(dir, 35);
 		}
 		else if (rotateDuration < 4500) {
-			wheels->Rotate(closestBallsDir > 0, 20);
+			wheels->Rotate(dir, 20);
 		}
 		else if (rotateDuration < 5000) {
-			wheels->Rotate(closestBallsDir > 0, 15);
+			wheels->Rotate(dir, 15);
 		}
 		else{
 			wheels->Stop();
@@ -144,6 +144,7 @@ NewDriveMode DriveToHome::step(NewAutoPilot&newAutoPilot, double dt)
 void DriveToBall::onEnter(NewAutoPilot&newAutoPilot)
 {
 	DriveInstruction::onEnter(newAutoPilot);
+	newAutoPilot.lastBallCount = newAutoPilot.ballCount;
 	newAutoPilot.wheels->Stop();
 	std::chrono::milliseconds dura(200);
 	std::this_thread::sleep_for(dura);

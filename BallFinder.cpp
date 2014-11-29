@@ -48,10 +48,10 @@ cv::Point2i BallFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &fr
 			ball_distance = M.m01 / M.m00;
 			ball_shift = M.m10 / M.m00;
 			ball_indexes.push_back(std::make_pair(ball_distance, i));
-			if (ball_distance > 200) {
-				if (ball_shift < 200) ballCountLeft++;
-				if (ball_shift > 440) ballCountRight++;			
-			}
+			//if (ball_distance > 200) {
+				if (ball_shift < 320) ballCountLeft++;
+				if (ball_shift > 320) ballCountRight++;			
+			//}
 		}
 	}
 

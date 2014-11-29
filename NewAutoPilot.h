@@ -163,7 +163,8 @@ private:
 	std::atomic_bool sightObstructed;
 	std::atomic_bool somethingOnWay;
 	std::atomic_int borderDistance;
-	std::atomic_int closestBallsDir;
+	boost::atomic<cv::Point2i> ballCount;
+	cv::Point2i lastBallCount;
 
 
 
@@ -191,7 +192,7 @@ protected:
 	void WriteInfoOnScreen();
 public:
 	NewAutoPilot(WheelController *wheels, CoilGun *coilgun, Arduino *arduino);
-	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance, int closestBallsDir);
+	void UpdateState(ObjectPosition *ballLocation, ObjectPosition *gateLocation, bool ballInTribbler, bool sightObstructed, bool somethingOnWay, int borderDistance, cv::Point2i ballCount);
 	void setTestMode(NewDriveMode mode);
 	void enableTestMode(bool enable);
 	void Run();

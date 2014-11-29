@@ -317,10 +317,10 @@ void Robot::Run()
 		/*	STEP 1. Convert picture to HSV colorspace	  */
 		/**************************************************/
 
-		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 		if (gaussianBlurEnabled) {
-			cv::GaussianBlur(frameHSV, frameHSV, cv::Size(11, 11), 4);
+			cv::GaussianBlur(frameBGR, frameBGR, cv::Size(11, 11), 4);
 		}
+		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
 		if (!nightVisionEnabled || state == STATE_AUTOCALIBRATE) {
 			if (state == STATE_AUTOCALIBRATE) {
@@ -441,7 +441,7 @@ void Robot::Run()
 			somethingOnWay |= notEnoughtGreen;
 		}
 		// step 6.9
-		int closestBallDir = finder.ballCountLeft > 3 ? -1 : finder.ballCountRight> 3 ? 1 : 0;
+		cv::Point2i ballCount(finder.ballCountLeft, finder.ballCountRight);
 		/**************************************************/
 		/* STEP 7. feed these variables to Autopilot	  */
 		/**************************************************/
@@ -462,7 +462,7 @@ void Robot::Run()
 
 
 		if (autoPilotEnabled || autoPilot.testMode) {
-			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay, borderDistance.distance, closestBallDir);			
+			autoPilot.UpdateState(ballFound ? &ballPos : NULL, targetGatePos, ballInTribbler, sightObstructed, somethingOnWay, borderDistance.distance, ballCount);			
 		}
 		
 		//---------------------------------------------
