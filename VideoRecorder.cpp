@@ -71,7 +71,6 @@ void VideoRecorder::RecordFrame(const cv::Mat &frame, const std::string subtitle
 	*outputVideo << frame;
 #else
 	
-	std::cout << std::setw (10) << 77 << std::endl;
 	std::string f = std::to_string(frameCounter);
 	padTo(f,20);
 	std::string frameName = fileName + "/" + f + ".jpg";

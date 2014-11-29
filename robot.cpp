@@ -289,7 +289,6 @@ void Robot::Run()
 			pt.put("nightVision", nightVisionEnabled);
 			write_ini("conf/settings.ini", pt);
 		}
-		display_empty.copyTo(display);
 		time = boost::posix_time::microsec_clock::local_time();
 		boost::posix_time::time_duration::tick_type dt = (time - lastStepTime).total_milliseconds();
 		boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateTime).total_milliseconds();
@@ -305,6 +304,7 @@ void Robot::Run()
 			videoRecorder.RecordFrame(display, subtitles.str());
 		}
 #endif
+		display_empty.copyTo(display);
 		frameBGR = camera->Capture();
 		
 #ifndef RECORD_AFTER_PROCESSING
