@@ -42,6 +42,7 @@ public:
 		WaitForStop();
 	}
 	void Run();
+	void Run2();
 
 };
 
