@@ -8,6 +8,7 @@ BasicWheel::BasicWheel(const std::string &name): ThreadedClass("wheel "+ name)
 	update_speed = false;
 	target_speed = 0;
 	actual_speed = 0;
+error = false;
 }
 
 
@@ -117,19 +118,30 @@ void SerialWheel::UpdateSpeed()
 		}
 		writeString("s\n");
 		std::string line = readLine();
-		if (line.length() > 0)
+		if (line.length() > 2)
 			actual_speed = atoi(line.substr(3).c_str());
 		else
 			actual_speed = 0;
 	}
+	catch(std::exception const&  ex)
+	{
+		std::cout << "Error writing or reading wheel speed: " << ex.what() << std::endl;
+		stop_thread = true;
+		error = true;
+	}
 	catch (...){
 		std::cout << "Error writing or reading wheel speed " << std::endl;
 		stop_thread = true;
+		error = true;
 	}
 };
 
-SerialWheel::~SerialWheel(){
+	SerialWheel::~SerialWheel(){
+	std::cout << "~SerialWheel 1" << std::endl;
 	WaitForStop();
-	SetSpeed(0);
-	UpdateSpeed();
+	std::cout << "~SerialWheel 2" << std::endl;
+	if (!error) {
+		SetSpeed(0);
+		UpdateSpeed();
+	}
 }

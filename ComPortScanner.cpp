@@ -21,8 +21,9 @@ std::string ComPortScanner::CheckPort(boost::asio::io_service &io_service, const
 			if (id == "discharged") continue;
 			if (id == "~x~~x~?") continue;
 			if (id.empty()) continue;
+			if (id.substr(0, 4) == "<sta") continue;
 			if (id == "<id:0>") throw std::runtime_error(("ID not set in port " + portNum).c_str());
-			if (id.substr(0, 4) != "<id:") throw std::runtime_error(("Invalid ID " + id + " received from port " + portNum).c_str());
+			if (id.substr(0, 4) != "<id:") continue; //throw std::runtime_error(("Invalid ID " + id + " received from port " + portNum).c_str());
 
 			id = id.substr(4, 1);
 			std::cout << "Found port " << portNum << ", id: " << id << std::endl;
@@ -35,12 +36,12 @@ std::string ComPortScanner::CheckPort(boost::asio::io_service &io_service, const
 	}
 	return "";
 }
-bool ComPortScanner::VerifyObject(boost::asio::io_service &io_service, const std::string &conf_file, OBJECT_ID id) 
+bool ComPortScanner::VerifyObject(boost::asio::io_service &io_service, const std::string &conf_file, int id) 
 {
 	bool ok = true;
 	boost::property_tree::ptree ports;
 	try {
-		read_ini(conf_file, ports);
+		read_ini("conf/"+conf_file+".ini", ports);
 	}
 	catch (...) {
 		std::cout << "Error reading old port configuration: " << std::endl;
@@ -125,6 +126,39 @@ bool ComPortScanner::Scan(boost::asio::io_service &io_service)
 		unlink("conf/ports.ini");
 #endif
 		rename("conf/ports_new.ini", "conf/ports.ini");
+		return true;
+	}
+	return false;
+
+
+
+}
+
+bool ComPortScanner::ScanObject(boost::asio::io_service &io_service, const std::string &conf_file, int id)
+{
+//	std::map<short, std::string> portMap;
+	boost::property_tree::ptree ports;
+
+
+	bool ok = true;
+	for (int i = 0; i < 20; i++) {
+		std::stringstream portNum;
+		portNum << prefix << i;
+		std::string id = CheckPort(io_service, portNum.str());
+		if (!id.empty()) {
+			ports.put(id, portNum.str());
+		}
+	}
+	if (true){
+		write_ini("conf/"+conf_file+"_new.ini", ports);
+	}
+	if (VerifyObject(io_service, conf_file, id)) {
+#ifdef WIN32
+		_unlink(("conf/"+conf_file+".ini").c_str());
+#else
+		unlink(("conf/"+conf_file+".ini").c_str());
+#endif
+		rename(("conf/"+conf_file+"_new.ini").c_str(), ("conf/"+conf_file+".ini").c_str());
 		return true;
 	}
 	return false;

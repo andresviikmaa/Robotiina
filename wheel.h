@@ -1,7 +1,7 @@
 #pragma  once
 #include "types.h"
 #include "simpleserial.h"
-#include <boost/atomic.hpp>
+#include <atomic>
 #include <boost/timer/timer.hpp>
 #include "ThreadedClass.h"
 
@@ -23,13 +23,14 @@ public:
 	}
 
 protected:
-	volatile bool stall;
+	std::atomic_bool stall;
 	//boost::mutex mutex;
-	volatile int target_speed;
-	volatile int actual_speed;
+	std::atomic_int target_speed;
+	std::atomic_int actual_speed;
 	int last_speed = 0;
-    volatile bool update_speed;
+    	std::atomic_bool update_speed;
 	int id = 0;
+        std::atomic_bool error;
 
 
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();

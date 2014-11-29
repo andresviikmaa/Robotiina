@@ -146,18 +146,12 @@ bool Robot::Launch(int argc, char* argv[])
 					ptree pt;
 					read_ini("conf/ports.ini", pt);
 					std::string port = pt.get<std::string>(std::to_string(ID_COILGUN));
-					std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
 
 					coilBoard = new CoilBoard(io, port);
-					//coilBoard = new CoilGun();
-
-					arduino = new ArduinoBoard(io, port2);
 				}
 				else {
 					coilBoard = new CoilGun();
-					arduino = new Arduino();
 				}
-				//arduino = new Arduino();
 	
 			}
 		}
@@ -166,6 +160,30 @@ bool Robot::Launch(int argc, char* argv[])
 			//throw std::runtime_error("error to open wheel port(s)");
 		}
 		std::cout << "Done" << std::endl;
+		std::cout << "Initializing Arduino... " << std::endl;
+				if (config.count("skip-ports") == 0) {
+					ComPortScanner scanner2;
+					if ((portsOk = scanner2.VerifyObject(io, "arduino", ID_AUDRINO)) == false){
+						std::cout << "Chek failed, rescanning all ports" << std::endl;
+						portsOk = scanner2.ScanObject(io, "arduino", ID_AUDRINO);
+					}
+					if (portsOk) {
+						using boost::property_tree::ptree;
+						ptree pt;
+						read_ini("conf/arduino.ini", pt);
+						std::string port2 = pt.get<std::string>(std::to_string(ID_AUDRINO));
+
+						arduino = new ArduinoBoard(io, port2);
+					} else {
+						arduino = new Arduino();
+					}
+				}
+				else {
+					coilBoard = new CoilGun();
+					arduino = new Arduino();
+				}
+		std::cout << "Done" << std::endl;
+		
 	}
 	else {
 		throw std::runtime_error("unable find wheels use \"--skip-ports\" parameter to launch without wheels ");

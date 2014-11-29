@@ -10,14 +10,19 @@ class Arduino
 protected:
 	cv::Point3i sonars = { 100, 100, 100 };
 	IButtonClickListener *buttonListener = NULL;
-	bool strt = 0;
+	bool start = 0;
+	bool old_start = 0;
 	bool gte = -1;
 public:
 	Arduino(){}
 	virtual ~Arduino(){}
 	void Run(){};
 	const cv::Point3i &GetSonarReadings(){ return sonars; }
-	int getStart() { int tmp= strt; strt=0; return tmp;};
+	int getStart() { 
+		int tmp = start; 
+		start=0; 
+		return tmp;
+	};
 	int getGate() { return gte;  };
 	virtual bool BallInTribbler(){ throw std::runtime_error("Not implemented"); };
 	std::string GetDebugInfo();
