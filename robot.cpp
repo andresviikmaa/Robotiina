@@ -284,6 +284,8 @@ void Robot::Run()
 
 	}
 
+	cv::Mat white(frameBGR.rows, frameBGR.cols, frameBGR.type(), cv::Scalar(255, 255, 255));
+	cv::Mat black(frameBGR.rows, frameBGR.cols, frameBGR.type(), cv::Scalar(40, 40, 40));
 	cv::Mat green(frameBGR.rows, frameBGR.cols, frameBGR.type(), cv::Scalar(21, 188, 80));
 	cv::Mat yellow(frameBGR.rows, frameBGR.cols, frameBGR.type(), cv::Scalar(61, 255, 244));
 	cv::Mat blue(frameBGR.rows, frameBGR.cols, frameBGR.type(), cv::Scalar(236, 137, 48));
@@ -396,7 +398,8 @@ void Robot::Run()
 		// copy thresholded images before they are destroyed
 		if (nightVisionEnabled && state != STATE_AUTOCALIBRATE) {
 			green.copyTo(display_roi, thresholdedImages[FIELD]);
-			green.copyTo(display_roi, thresholdedImages[INNER_BORDER]);
+			white.copyTo(display_roi, thresholdedImages[INNER_BORDER]);
+			black.copyTo(display_roi, thresholdedImages[OUTER_BORDER]);
 			orange.copyTo(display_roi, thresholdedImages[BALL]);
 			yellow.copyTo(display_roi, thresholdedImages[GATE2]);
 			blue.copyTo(display_roi, thresholdedImages[GATE1]);
@@ -672,7 +675,7 @@ void Robot::Run()
 			START_DIALOG
 				createButton("Move Left", [this] {this->wheels->Drive(40, 90); });
 				createButton("Move Right", [this]{this->wheels->Drive(40, -90); });
-				createButton("Move Forward", [this]{this->wheels->Drive(100, 0); });
+				createButton("Move Forward", [this]{this->wheels->Drive(190, 0); });
 				createButton("Move Back", [this]{this->wheels->Drive(-40, 0); });
 				createButton("Rotate Right", [this]{this->wheels->Rotate(0, 20); });
 				createButton("Rotate Left", [this]{this->wheels->Rotate(1, 20); });
