@@ -104,7 +104,7 @@ NewDriveMode LocateBall::step(NewAutoPilot&newAutoPilot, double dt)
  		   
 	if (rotateDuration < 5700){
 	    if(true) {
-		float speed = 50*fabs(cos( (float)rotateDuration / 1000));
+		float speed = 30*fabs(cos( (float)rotateDuration / 1000));
 		//float speed = -0.008*rotateDuration + 50;
 		//std::cout << speed <<","<< rotateDuration << std::endl;
 		wheels->Rotate(dir, speed);
@@ -200,7 +200,7 @@ NewDriveMode DriveToBall::step(NewAutoPilot&newAutoPilot, double dt)
 		else{
 			speed = lastBallLocation.distance * 0.29 - 94;
 		}
-		wheels->DriveRotate(speed, /*-lastBallLocation.horizontalAngle*/ 0, lastBallLocation.horizontalAngle < 0?rotate:-rotate);
+		wheels->DriveRotate(speed, -lastBallLocation.horizontalAngle, lastBallLocation.horizontalAngle < 0?rotate:-rotate);
 	}
 	return DRIVEMODE_DRIVE_TO_BALL;
 }
