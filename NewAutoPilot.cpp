@@ -100,9 +100,16 @@ NewDriveMode LocateBall::step(NewAutoPilot&newAutoPilot, double dt)
 	boost::posix_time::ptime time = boost::posix_time::microsec_clock::local_time();
 	boost::posix_time::time_duration::tick_type rotateDuration = (time - rotateStart).total_milliseconds();
 	int dir = lastBallCount.x > lastBallCount.y;
-    
+ 
+ 		   
 	if (rotateDuration < 5700){
-		if (rotateDuration < 1000) {
+	    if(true) {
+		float speed = 50*fabs(cos( (float)rotateDuration / 1000));
+		//float speed = -0.008*rotateDuration + 50;
+		//std::cout << speed <<","<< rotateDuration << std::endl;
+		wheels->Rotate(dir, speed);
+	    
+		} else if (rotateDuration < 1000) {
 			wheels->Rotate(dir, 50);
 		}
 		else if (rotateDuration < 2500){

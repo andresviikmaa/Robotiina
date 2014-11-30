@@ -41,6 +41,7 @@ bool ComPortScanner::VerifyObject(boost::asio::io_service &io_service, const std
 	bool ok = true;
 	boost::property_tree::ptree ports;
 	try {
+		std::cout << "conf/" << conf_file << ".ini"<<std::endl;
 		read_ini("conf/"+conf_file+".ini", ports);
 	}
 	catch (...) {
@@ -152,12 +153,14 @@ bool ComPortScanner::ScanObject(boost::asio::io_service &io_service, const std::
 	if (true){
 		write_ini("conf/"+conf_file+"_new.ini", ports);
 	}
-	if (VerifyObject(io_service, conf_file, id)) {
+	if (VerifyObject(io_service, conf_file+"_new", id)) {
 #ifdef WIN32
 		_unlink(("conf/"+conf_file+".ini").c_str());
 #else
 		unlink(("conf/"+conf_file+".ini").c_str());
 #endif
+		std::cout <<  ("conf/"+conf_file+".ini")<<std::endl;
+		std::cout << ("conf/"+conf_file+"_new.ini")<<std::endl;
 		rename(("conf/"+conf_file+"_new.ini").c_str(), ("conf/"+conf_file+".ini").c_str());
 		return true;
 	}

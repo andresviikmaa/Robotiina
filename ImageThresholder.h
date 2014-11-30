@@ -1,6 +1,6 @@
 #include "types.h"
 #define EDSIZE 24
-#define ERODESIZE 20
+#define ERODESIZE 10
 
 class ImageThresholder : public ThreadedClass
 {
@@ -16,8 +16,10 @@ public:
 				do {
 					inRange(frameHSV, cv::Scalar(r.hue.low, r.sat.low, r.val.low), cv::Scalar(r.hue.high, r.sat.high, r.val.high), thresholdedImages[object]);
 				} while (thresholdedImages[object].size().height == 0);
-	           //cv::erode(thresholdedImages[object],thresholdedImages[object],elemErode2);
- 	           //cv::dilate(thresholdedImages[object],thresholdedImages[object],elemErode2);
+  	         if (object == GATE1 || object == GATE2) {
+	            cv::erode(thresholdedImages[object],thresholdedImages[object],elemErode2);
+	            }
+ 	           cv::dilate(thresholdedImages[object],thresholdedImages[object],elemErode2);
  
 			});
 		}

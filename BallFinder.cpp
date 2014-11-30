@@ -26,6 +26,7 @@ cv::Point2i BallFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &fr
 
 	cv::Scalar color(0, 0, 0);
 	cv::Scalar color2(255, 255, 255);
+	cv::Scalar color3(0, 0, 255);
 
 	findContours(imgThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); // Find the contours in the image
 
@@ -52,6 +53,10 @@ cv::Point2i BallFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &fr
 				if (ball_shift < 320) ballCountLeft++;
 				if (ball_shift > 320) ballCountRight++;			
 			//}
+			
+	cv::Rect bounding_rect = cv::boundingRect(contours[i]);
+	rectangle(frameBGR, bounding_rect.tl(), bounding_rect.br(), color3, 1, 8, 0);
+			
 		}
 	}
 
@@ -96,11 +101,12 @@ cv::Point2i BallFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &fr
 				}
 			}
 			//distance between found ball and chosen ball
-			if (smallestDistance > 60){
+			if (smallestDistance > 609){
 				return cv::Point2d(-1, -1);
 			}
 
 		}
+		/*
 		//VALIDATE BALL
 		//For ball validation, drawed contour should cover balls shadow.
 		int thickness = (int)ceil(cv::contourArea(contours[closest_ball_index], false) / 50);
@@ -109,14 +115,14 @@ cv::Point2i BallFinder::LocateOnScreen(ThresholdedImages &HSVRanges, cv::Mat &fr
 		drawContours(HSVRanges[OUTER_BORDER], contours, closest_ball_index, color, -5, 8, hierarchy);
 		drawContours(frameBGR, contours, closest_ball_index, color, thickness, 8, hierarchy);
 		drawContours(frameBGR, contours, closest_ball_index, color, -5, 8, hierarchy);
-
+		*/
 		bool valid = validateBall(HSVRanges, closestBall, frameHSV, frameBGR);
 		if (!valid){
 			notValidPosition = closestBall;
-			cv::circle(frameBGR, closestBall, 5, cv::Scalar(100, 0, 225), -1); //not valid ball is purple
+			cv::circle(frameBGR, closestBall, 5, cv::Scalar(100, 0, 225), 3); //not valid ball is purple
 		}
 		else{
-			cv::circle(frameBGR, closestBall, 12, cv::Scalar(225, 225, 225), 3); //valid ball is white
+			cv::circle(frameBGR, closestBall, 12, cv::Scalar(225, 225, 225), 2); //valid ball is white
 			return	closestBall;
 		}
 		ball_indexes.pop_back();

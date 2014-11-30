@@ -51,7 +51,7 @@ void ArduinoBoard::Run2(){
 		//std::this_thread::sleep_for(dura);
 		//resp = readLineAsync(60).c_str();
 		resp = readLine().c_str();
-		std::cout << "Arduino, resp='"<< resp <<"'"<<std::endl;
+		//std::cout << "Arduino, resp='"<< resp <<"'"<<std::endl;
  		//"<start:"+strt+">"+"<gate:"+gate+">"+"<s1:"+distance0+">"+"<s2:"+distance1+">"+"<s3:"+distance2+">"
 		resp = ">" + resp;
 		boost::split(items, resp, boost::is_any_of(">"));

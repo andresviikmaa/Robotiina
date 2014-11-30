@@ -336,7 +336,7 @@ void Robot::Run()
 		/**************************************************/
 
 		if (gaussianBlurEnabled) {
-			cv::GaussianBlur(frameBGR, frameBGR, cv::Size(11, 11), 4);
+			cv::GaussianBlur(frameBGR, frameBGR, cv::Size(3, 3), 4);
 		}
 		cvtColor(frameBGR, frameHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
@@ -670,12 +670,12 @@ void Robot::Run()
 		}
 		else if (STATE_MANUAL_CONTROL == state) {
 			START_DIALOG
-				createButton("Move Left", [this] {this->wheels->Drive(60, 90); });
-				createButton("Move Right", [this]{this->wheels->Drive(60, -90); });
-				createButton("Move Forward", [this]{this->wheels->Drive(190, 0); });
-				createButton("Move Back", [this]{this->wheels->Drive(-60, 0); });
-				createButton("Rotate Right", [this]{this->wheels->Rotate(0, 30); });
-				createButton("Rotate Left", [this]{this->wheels->Rotate(1, 30); });
+				createButton("Move Left", [this] {this->wheels->Drive(40, 90); });
+				createButton("Move Right", [this]{this->wheels->Drive(40, -90); });
+				createButton("Move Forward", [this]{this->wheels->Drive(100, 0); });
+				createButton("Move Back", [this]{this->wheels->Drive(-40, 0); });
+				createButton("Rotate Right", [this]{this->wheels->Rotate(0, 20); });
+				createButton("Rotate Left", [this]{this->wheels->Rotate(1, 20); });
 				STATE_BUTTON("Back", STATE_NONE)
 			END_DIALOG
 		}
