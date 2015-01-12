@@ -32,7 +32,7 @@ private:
 	volatile bool homeGateInSight = false;
 	volatile bool ballInTribbler = false;
 	volatile bool somethingOnWay = false;
-	cv::Point3i sonars{ 100, 100, 100 };
+	cv::Point3i sonars = { 100, 100, 100 };
 
 
 	boost::atomic<bool> stop_thread;
