@@ -22,9 +22,16 @@ Robotex 2014 participant
 * start robotiina.bat to launch it or launch it form IDE
 
 
-###On Linux
+###On Linux (Ubuntu)
 
-* install cmake, opencv 2.4.x, boost 1.5?.x
+* install cmake, gcc and git
+ * sudo apt-get install build-essential cmake git 
+* install  opencv 2.4.9, boost 1.55.0
+ * sudo apt-get install libopencv-dev
+ * sudo apt-get install libboost-all-dev
+* clone repro
+ * git clone https://github.com/andresviikmaa/Robotiina
+ * cd robotiina
 * run cmake .
 * run make
 * to start program execute ./robotiina
