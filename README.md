@@ -26,6 +26,8 @@ Robotex 2014 participant
 
 * install cmake, gcc and git
  * sudo apt-get install build-essential cmake git 
+* system update
+  * sudo apt-get update
 * install  opencv 2.4.9, boost 1.55.0
  * sudo apt-get install libopencv-dev
  * sudo apt-get install libboost-all-dev
